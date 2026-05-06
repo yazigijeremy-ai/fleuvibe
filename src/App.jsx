@@ -3,11 +3,11 @@ import { useState, useEffect, useRef } from "react";
 // ─── SUPABASE CONFIG ─────────────────────────────────────────────────────────
 const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
+const WEATHER_KEY = "3a42db1ac015f3b988b8051c5f469bd7";
 
 const supabase = (() => {
   const headers = { "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` };
   const authHeaders = (token) => ({ ...headers, "Authorization": `Bearer ${token}` });
-
   return {
     auth: {
       signUp: async (email, password, fullName) => {
@@ -38,6 +38,35 @@ const supabase = (() => {
   };
 })();
 
+// ─── WEATHER ─────────────────────────────────────────────────────────────────
+const fetchWeather = async (lat, lon) => {
+  try {
+    const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${WEATHER_KEY}&units=metric&lang=fr`);
+    const d = await r.json();
+    if (d.cod !== 200) return null;
+    const windKmh = Math.round(d.wind.speed * 3.6);
+    const condition = d.weather[0].main;
+    const temp = Math.round(d.main.temp);
+    const description = d.weather[0].description;
+    const rain = d.rain?.["1h"] || 0;
+
+    // Navigation recommendation
+    let navStatus = "good";
+    let navLabel = "Conditions idéales";
+    let navColor = "#1a9e6e";
+    if (windKmh > 40 || rain > 5) { navStatus = "bad"; navLabel = "Déconseillé"; navColor = "#dc2626"; }
+    else if (windKmh > 25 || rain > 2 || condition === "Thunderstorm") { navStatus = "medium"; navLabel = "Conditions difficiles"; navColor = "#f59e0b"; }
+    else if (condition === "Rain" || condition === "Drizzle") { navStatus = "medium"; navLabel = "Navigable avec prudence"; navColor = "#f59e0b"; }
+
+    const icon = {
+      Clear: "☀️", Clouds: "⛅", Rain: "🌧️", Drizzle: "🌦️",
+      Thunderstorm: "⛈️", Snow: "❄️", Mist: "🌫️", Fog: "🌫️",
+    }[condition] || "🌤️";
+
+    return { temp, description, windKmh, rain, icon, navStatus, navLabel, navColor, condition };
+  } catch { return null; }
+};
+
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const CONTINENTS = {
   ALL:{name:"Monde entier",flag:"🌍"},EU:{name:"Europe",flag:"🇪🇺"},AM:{name:"Amériques",flag:"🌎"},
@@ -47,13 +76,12 @@ const COUNTRIES = {
   BE:{name:"Belgique",flag:"🇧🇪",continent:"EU"},FR:{name:"France",flag:"🇫🇷",continent:"EU"},
   DE:{name:"Allemagne",flag:"🇩🇪",continent:"EU"},CH:{name:"Suisse",flag:"🇨🇭",continent:"EU"},
   NO:{name:"Norvège",flag:"🇳🇴",continent:"EU"},SI:{name:"Slovénie",flag:"🇸🇮",continent:"EU"},
-  HR:{name:"Croatie",flag:"🇭🇷",continent:"EU"},NL:{name:"Pays-Bas",flag:"🇳🇱",continent:"EU"},
+  NL:{name:"Pays-Bas",flag:"🇳🇱",continent:"EU"},
   US:{name:"États-Unis",flag:"🇺🇸",continent:"AM"},CA:{name:"Canada",flag:"🇨🇦",continent:"AM"},
-  BR:{name:"Brésil",flag:"🇧🇷",continent:"AM"},PE:{name:"Pérou",flag:"🇵🇪",continent:"AM"},
-  CL:{name:"Chili",flag:"🇨🇱",continent:"AM"},NZ:{name:"Nouvelle-Zélande",flag:"🇳🇿",continent:"OC"},
-  AU:{name:"Australie",flag:"🇦🇺",continent:"OC"},NP:{name:"Népal",flag:"🇳🇵",continent:"AS"},
-  TH:{name:"Thaïlande",flag:"🇹🇭",continent:"AS"},VN:{name:"Vietnam",flag:"🇻🇳",continent:"AS"},
-  ZM:{name:"Zambie",flag:"🇿🇲",continent:"AF"},UG:{name:"Ouganda",flag:"🇺🇬",continent:"AF"},
+  BR:{name:"Brésil",flag:"🇧🇷",continent:"AM"},CL:{name:"Chili",flag:"🇨🇱",continent:"AM"},
+  NZ:{name:"Nouvelle-Zélande",flag:"🇳🇿",continent:"OC"},AU:{name:"Australie",flag:"🇦🇺",continent:"OC"},
+  NP:{name:"Népal",flag:"🇳🇵",continent:"AS"},TH:{name:"Thaïlande",flag:"🇹🇭",continent:"AS"},
+  VN:{name:"Vietnam",flag:"🇻🇳",continent:"AS"},ZM:{name:"Zambie",flag:"🇿🇲",continent:"AF"},
 };
 
 const ROUTES = [
@@ -71,49 +99,86 @@ const ROUTES = [
 
 const DIFF_COLOR={Facile:"#1a9e6e",Intermédiaire:"#f59e0b",Sportif:"#dc2626"};
 
+// ─── WEATHER BADGE COMPONENT ─────────────────────────────────────────────────
+function WeatherBadge({ coords, small = false }) {
+  const [weather, setWeather] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchWeather(coords[0], coords[1]).then(w => {
+      setWeather(w);
+      setLoading(false);
+    });
+  }, []);
+
+  if (loading) return <span style={{ fontSize: "0.68rem", color: "#3a6a5a" }}>🌤️ ...</span>;
+  if (!weather) return null;
+
+  if (small) return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", padding: "2px 7px", background: `${weather.navColor}15`, border: `1px solid ${weather.navColor}30`, borderRadius: "8px", fontSize: "0.67rem", color: weather.navColor, fontWeight: 600 }}>
+      {weather.icon} {weather.temp}°C
+    </span>
+  );
+
+  return (
+    <div style={{ padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: `1px solid ${weather.navColor}40`, borderRadius: "12px", marginTop: "10px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <span style={{ fontSize: "1.6rem" }}>{weather.icon}</span>
+          <div>
+            <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#daf0e8" }}>{weather.temp}°C</div>
+            <div style={{ fontSize: "0.72rem", color: "#5a8a78", textTransform: "capitalize" }}>{weather.description}</div>
+          </div>
+        </div>
+        <div style={{ textAlign: "right" }}>
+          <div style={{ padding: "4px 10px", background: `${weather.navColor}20`, border: `1px solid ${weather.navColor}40`, borderRadius: "8px", fontSize: "0.72rem", fontWeight: 700, color: weather.navColor }}>
+            {weather.navStatus === "good" ? "✅" : weather.navStatus === "medium" ? "⚠️" : "🚫"} {weather.navLabel}
+          </div>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
+        <span style={{ fontSize: "0.72rem", color: "#4a7a6a" }}>💨 Vent : <strong style={{ color: "#8ab8b0" }}>{weather.windKmh} km/h</strong></span>
+        <span style={{ fontSize: "0.72rem", color: "#4a7a6a" }}>💧 Pluie : <strong style={{ color: "#8ab8b0" }}>{weather.rain} mm/h</strong></span>
+        <span style={{ fontSize: "0.72rem", color: "#4a7a6a" }}>🌡️ Ressenti : <strong style={{ color: "#8ab8b0" }}>{weather.temp}°C</strong></span>
+      </div>
+    </div>
+  );
+}
+
 // ─── APP ─────────────────────────────────────────────────────────────────────
 export default function FleuVibe() {
-  const [session, setSession] = useState(null); // { user, token }
+  const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [favorites, setFavorites] = useState([]);
-  const [authPage, setAuthPage] = useState("login"); // login | signup
+  const [authPage, setAuthPage] = useState("login");
   const [showAuth, setShowAuth] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [authForm, setAuthForm] = useState({ email: "", password: "", fullName: "" });
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
-
   const [page, setPage] = useState("explore");
   const [selectedRoute, setSelectedRoute] = useState(null);
   const [continent, setContinent] = useState("ALL");
   const [search, setSearch] = useState("");
   const [view, setView] = useState("list");
+  const [weatherFilter, setWeatherFilter] = useState(false);
   const [loaded, setLoaded] = useState(false);
-
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const layersRef = useRef([]);
 
   useEffect(() => { setTimeout(() => setLoaded(true), 100); }, []);
 
-  // Load session from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("fleuvibe_session");
     if (saved) {
-      try {
-        const s = JSON.parse(saved);
-        setSession(s);
-        loadProfile(s.user.id, s.token);
-      } catch {}
+      try { const s = JSON.parse(saved); setSession(s); loadProfile(s.user.id, s.token); } catch {}
     }
   }, []);
 
   const loadProfile = async (userId, token) => {
     const p = await supabase.profiles.get(userId, token);
-    if (p) {
-      setProfile(p);
-      try { setFavorites(JSON.parse(p.favorites || "[]")); } catch { setFavorites([]); }
-    }
+    if (p) { setProfile(p); try { setFavorites(JSON.parse(p.favorites || "[]")); } catch { setFavorites([]); } }
   };
 
   const handleSignUp = async () => {
@@ -126,9 +191,7 @@ export default function FleuVibe() {
       await supabase.profiles.upsert({ id: data.user.id, full_name: authForm.fullName, username: authForm.email.split("@")[0], favorites: "[]" }, data.access_token);
       await loadProfile(data.user.id, data.access_token);
       setShowAuth(false); setAuthForm({ email: "", password: "", fullName: "" });
-    } else {
-      setAuthError("Vérifie ton email pour confirmer ton compte !");
-    }
+    } else { setAuthError("Vérifie ton email pour confirmer ton compte !"); }
     setAuthLoading(false);
   };
 
@@ -213,12 +276,12 @@ export default function FleuVibe() {
         @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
         @keyframes wave{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
         @keyframes pop{0%{transform:scale(0.9);opacity:0}100%{transform:scale(1);opacity:1}}
+        @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
         .wave-bg{animation:wave 20s linear infinite}
         .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(7px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
         input::placeholder{color:#3a6a5a}
         input:focus{border-color:rgba(26,158,110,0.55)!important;outline:none}
         .heart{transition:all 0.2s ease}.heart:hover{transform:scale(1.2)}
-        .nav-btn{transition:all 0.18s ease;cursor:pointer;border:none;background:none}
       `}</style>
 
       {/* Wave BG */}
@@ -230,82 +293,47 @@ export default function FleuVibe() {
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: "980px", margin: "0 auto", padding: "16px 14px" }}>
 
-        {/* ── HEADER ── */}
+        {/* HEADER */}
         <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span style={{ fontSize: "1.6rem", animation: "float 3s ease-in-out infinite" }}>🌊</span>
             <h1 style={{ fontSize: "clamp(1.5rem,4vw,2.2rem)", fontWeight: 800, letterSpacing: "-0.5px", background: "linear-gradient(135deg,#a8edcf 0%,#1a9e6e 50%,#38bdf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>FleuVibe</h1>
             <span style={{ background: "rgba(26,158,110,0.2)", border: "1px solid rgba(26,158,110,0.4)", borderRadius: "6px", padding: "2px 6px", fontSize: "0.6rem", color: "#7ecfb0", fontWeight: 700 }}>WORLD</span>
           </div>
-
-          {/* Auth button */}
           {session ? (
             <button className="btn" onClick={() => setShowProfile(true)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 14px", background: "rgba(26,158,110,0.15)", border: "1px solid rgba(26,158,110,0.3)", borderRadius: "10px", color: "#a8edcf", fontSize: "0.82rem", fontWeight: 600 }}>
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.85rem", fontWeight: 700, color: "#fff" }}>
-                {userName[0].toUpperCase()}
-              </div>
+              <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.85rem", fontWeight: 700, color: "#fff" }}>{userName[0].toUpperCase()}</div>
               {userName}
             </button>
           ) : (
-            <button className="btn" onClick={() => setShowAuth(true)} style={{ padding: "8px 18px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", borderRadius: "10px", color: "#fff", fontWeight: 700, fontSize: "0.82rem", boxShadow: "0 3px 12px rgba(26,158,110,0.25)" }}>
-              🔐 Connexion
-            </button>
+            <button className="btn" onClick={() => setShowAuth(true)} style={{ padding: "8px 18px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", borderRadius: "10px", color: "#fff", fontWeight: 700, fontSize: "0.82rem", boxShadow: "0 3px 12px rgba(26,158,110,0.25)" }}>🔐 Connexion</button>
           )}
         </div>
 
-        {/* ── NAV ── */}
+        {/* NAV */}
         <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.06s", display: "flex", gap: "5px", marginBottom: "18px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "13px", padding: "4px", flexWrap: "wrap" }}>
-          {[
-            ["explore", "🗺️ Explorer"],
-            ["favorites", `❤️ Favoris${favorites.length > 0 ? ` (${favorites.length})` : ""}`],
-          ].map(([id, label]) => (
-            <button key={id} className="btn" onClick={() => setPage(id)} style={{ flex: 1, minWidth: "100px", padding: "9px 12px", borderRadius: "9px", background: page === id ? "rgba(26,158,110,0.22)" : "transparent", border: page === id ? "1px solid rgba(26,158,110,0.4)" : "1px solid transparent", color: page === id ? "#a8edcf" : "#4a7a6a", fontSize: "0.82rem", fontWeight: page === id ? 700 : 500 }}>{label}</button>
+          {[["explore", "🗺️ Explorer"], ["weather", "🌤️ Météo"], ["favorites", `❤️ Favoris${favorites.length > 0 ? ` (${favorites.length})` : ""}`]].map(([id, label]) => (
+            <button key={id} className="btn" onClick={() => setPage(id)} style={{ flex: 1, minWidth: "90px", padding: "9px 12px", borderRadius: "9px", background: page === id ? "rgba(26,158,110,0.22)" : "transparent", border: page === id ? "1px solid rgba(26,158,110,0.4)" : "1px solid transparent", color: page === id ? "#a8edcf" : "#4a7a6a", fontSize: "0.82rem", fontWeight: page === id ? 700 : 500 }}>{label}</button>
           ))}
         </div>
 
-        {/* ── EXPLORE / FAVORITES ── */}
-        {(page === "explore" || page === "favorites") && (
+        {/* ══ PAGE: EXPLORE ══ */}
+        {page === "explore" && (
           <div>
-            {page === "explore" && (
-              <>
-                {/* Continent filter */}
-                <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", justifyContent: "center", marginBottom: "12px" }}>
-                  {Object.entries(CONTINENTS).map(([code, c]) => {
-                    const count = code === "ALL" ? ROUTES.length : ROUTES.filter(r => COUNTRIES[r.country]?.continent === code).length;
-                    return <button key={code} className="btn" onClick={() => setContinent(code)} style={{ padding: "6px 11px", borderRadius: "9px", background: continent === code ? "rgba(26,158,110,0.2)" : "rgba(255,255,255,0.03)", border: `1px solid ${continent === code ? "#1a9e6e" : "rgba(255,255,255,0.07)"}`, color: continent === code ? "#a8edcf" : "#4a7a6a", fontSize: "0.75rem", fontWeight: 600 }}>{c.flag} {c.name} ({count})</button>;
-                  })}
-                </div>
-
-                {/* Search + view */}
-                <div style={{ display: "flex", gap: "7px", marginBottom: "14px" }}>
-                  <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍  Rechercher..." style={{ ...s.inp, flex: 1 }} />
-                  <div style={{ display: "flex", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", overflow: "hidden" }}>
-                    {[["list", "📋"], ["map", "🗺️"]].map(([v, ic]) => <button key={v} className="btn" onClick={() => setView(v)} style={{ padding: "0 13px", background: view === v ? "rgba(26,158,110,0.25)" : "transparent", color: view === v ? "#a8edcf" : "#4a7a6a", fontSize: "0.95rem" }}>{ic}</button>)}
-                  </div>
-                </div>
-              </>
-            )}
-
-            {page === "favorites" && !session && (
-              <div style={{ textAlign: "center", padding: "50px 20px" }}>
-                <div style={{ fontSize: "3rem", marginBottom: "12px" }}>❤️</div>
-                <h3 style={{ color: "#a8edcf", marginBottom: "8px" }}>Connecte-toi pour voir tes favoris</h3>
-                <p style={{ color: "#4a7a6a", fontSize: "0.84rem", marginBottom: "16px" }}>Sauvegarde tes parcours préférés et retrouve-les partout.</p>
-                <button className="btn" onClick={() => setShowAuth(true)} style={{ padding: "10px 24px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", borderRadius: "10px", color: "#fff", fontWeight: 700, fontSize: "0.85rem" }}>🔐 Se connecter</button>
+            <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", justifyContent: "center", marginBottom: "12px" }}>
+              {Object.entries(CONTINENTS).map(([code, c]) => {
+                const count = code === "ALL" ? ROUTES.length : ROUTES.filter(r => COUNTRIES[r.country]?.continent === code).length;
+                return <button key={code} className="btn" onClick={() => setContinent(code)} style={{ padding: "6px 11px", borderRadius: "9px", background: continent === code ? "rgba(26,158,110,0.2)" : "rgba(255,255,255,0.03)", border: `1px solid ${continent === code ? "#1a9e6e" : "rgba(255,255,255,0.07)"}`, color: continent === code ? "#a8edcf" : "#4a7a6a", fontSize: "0.75rem", fontWeight: 600 }}>{c.flag} {c.name} ({count})</button>;
+              })}
+            </div>
+            <div style={{ display: "flex", gap: "7px", marginBottom: "14px" }}>
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="🔍  Rechercher..." style={{ ...s.inp, flex: 1 }} />
+              <div style={{ display: "flex", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", overflow: "hidden" }}>
+                {[["list", "📋"], ["map", "🗺️"]].map(([v, ic]) => <button key={v} className="btn" onClick={() => setView(v)} style={{ padding: "0 13px", background: view === v ? "rgba(26,158,110,0.25)" : "transparent", color: view === v ? "#a8edcf" : "#4a7a6a", fontSize: "0.95rem" }}>{ic}</button>)}
               </div>
-            )}
+            </div>
 
-            {page === "favorites" && session && favorites.length === 0 && (
-              <div style={{ textAlign: "center", padding: "50px 20px" }}>
-                <div style={{ fontSize: "3rem", marginBottom: "12px" }}>🏞️</div>
-                <h3 style={{ color: "#a8edcf", marginBottom: "8px" }}>Aucun favori pour l'instant</h3>
-                <p style={{ color: "#4a7a6a", fontSize: "0.84rem", marginBottom: "16px" }}>Clique sur le ❤️ sur un parcours pour le sauvegarder ici.</p>
-                <button className="btn" onClick={() => setPage("explore")} style={{ padding: "9px 20px", background: "rgba(26,158,110,0.15)", border: "1px solid rgba(26,158,110,0.3)", borderRadius: "10px", color: "#a8edcf", fontWeight: 600, fontSize: "0.83rem" }}>🗺️ Explorer les parcours</button>
-              </div>
-            )}
-
-            {/* MAP */}
-            {page === "explore" && view === "map" && (
+            {view === "map" && (
               <div>
                 <div style={{ borderRadius: "16px", overflow: "hidden", border: "1px solid rgba(26,158,110,0.15)" }}>
                   <div ref={mapRef} style={{ height: "460px", width: "100%" }} />
@@ -322,14 +350,14 @@ export default function FleuVibe() {
                         <button onClick={() => setSelectedRoute(null)} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#5a8a78", borderRadius: "7px", padding: "4px 8px", cursor: "pointer", fontSize: "0.74rem" }}>✕</button>
                       </div>
                     </div>
-                    <p style={{ color: "#8ab8b0", fontSize: "0.82rem", lineHeight: 1.6 }}>{selectedRoute.description}</p>
+                    <p style={{ color: "#8ab8b0", fontSize: "0.82rem", lineHeight: 1.6, marginBottom: "8px" }}>{selectedRoute.description}</p>
+                    <WeatherBadge coords={selectedRoute.coords} />
                   </div>
                 )}
               </div>
             )}
 
-            {/* LIST */}
-            {(page === "favorites" ? (session && favorites.length > 0) : view === "list") && (
+            {view === "list" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 {filteredRoutes.map((route, i) => {
                   const isSel = selectedRoute?.id === route.id;
@@ -348,8 +376,9 @@ export default function FleuVibe() {
                               </div>
                               <div style={{ color: "#3a5a50", fontSize: "0.73rem" }}>📍 {route.river} · {COUNTRIES[route.country]?.name}</div>
                             </div>
-                            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                              <button className="heart btn" onClick={e => { e.stopPropagation(); toggleFavorite(route.id); }} style={{ fontSize: "1.2rem", background: "none", color: isFav ? "#ef4444" : "#3a5a50" }}>{isFav ? "❤️" : "🤍"}</button>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", justifyContent: "flex-end" }}>
+                              <WeatherBadge coords={route.coords} small={true} />
+                              <button className="heart btn" onClick={e => { e.stopPropagation(); toggleFavorite(route.id); }} style={{ fontSize: "1.1rem", background: "none", color: isFav ? "#ef4444" : "#3a5a50" }}>{isFav ? "❤️" : "🤍"}</button>
                               <span style={{ padding: "2px 7px", borderRadius: "20px", fontSize: "0.67rem", fontWeight: 600, background: `${DIFF_COLOR[route.difficulty]}16`, color: DIFF_COLOR[route.difficulty], border: `1px solid ${DIFF_COLOR[route.difficulty]}28` }}>{route.difficulty}</span>
                             </div>
                           </div>
@@ -362,10 +391,7 @@ export default function FleuVibe() {
                           {isSel && (
                             <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                               <p style={{ color: "#8ab8b0", fontSize: "0.82rem", lineHeight: 1.6, marginBottom: "10px" }}>{route.description}</p>
-                              <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
-                                <span style={{ width: 6, height: 6, borderRadius: "50%", background: route.open ? "#1a9e6e" : "#dc2626", display: "inline-block" }} />
-                                <span style={{ fontSize: "0.74rem", color: route.open ? "#6ecfb0" : "#f87171" }}>{route.open ? "Navigable actuellement" : "Fermé actuellement"}</span>
-                              </div>
+                              <WeatherBadge coords={route.coords} />
                             </div>
                           )}
                         </div>
@@ -378,12 +404,84 @@ export default function FleuVibe() {
           </div>
         )}
 
+        {/* ══ PAGE: WEATHER ══ */}
+        {page === "weather" && (
+          <div>
+            <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ textAlign: "center", marginBottom: "22px" }}>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: 700, color: "#a8edcf", marginBottom: "6px" }}>🌤️ Conditions en temps réel</h2>
+              <p style={{ color: "#4a7a6a", fontSize: "0.83rem" }}>Météo actuelle sur chaque parcours pour planifier ta sortie.</p>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {ROUTES.map((route, i) => (
+                <div key={route.id} className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: `${0.08 + i * 0.04}s`, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", overflow: "hidden" }}>
+                  <div style={{ height: "2.5px", background: `linear-gradient(90deg,${route.color},transparent)` }} />
+                  <div style={{ padding: "14px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "10px" }}>
+                      <span style={{ fontSize: "1.1rem" }}>{route.emoji}</span>
+                      <div>
+                        <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "#daf0e8" }}>{route.name} {COUNTRIES[route.country]?.flag}</h3>
+                        <p style={{ color: "#3a5a50", fontSize: "0.72rem" }}>{route.river} · {route.region}</p>
+                      </div>
+                    </div>
+                    <WeatherBadge coords={route.coords} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ══ PAGE: FAVORITES ══ */}
+        {page === "favorites" && (
+          <div>
+            {!session && (
+              <div style={{ textAlign: "center", padding: "50px 20px" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "12px" }}>❤️</div>
+                <h3 style={{ color: "#a8edcf", marginBottom: "8px" }}>Connecte-toi pour voir tes favoris</h3>
+                <button className="btn" onClick={() => setShowAuth(true)} style={{ padding: "10px 24px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", borderRadius: "10px", color: "#fff", fontWeight: 700, fontSize: "0.85rem" }}>🔐 Se connecter</button>
+              </div>
+            )}
+            {session && favorites.length === 0 && (
+              <div style={{ textAlign: "center", padding: "50px 20px" }}>
+                <div style={{ fontSize: "3rem", marginBottom: "12px" }}>🏞️</div>
+                <h3 style={{ color: "#a8edcf", marginBottom: "8px" }}>Aucun favori pour l'instant</h3>
+                <button className="btn" onClick={() => setPage("explore")} style={{ padding: "9px 20px", background: "rgba(26,158,110,0.15)", border: "1px solid rgba(26,158,110,0.3)", borderRadius: "10px", color: "#a8edcf", fontWeight: 600, fontSize: "0.83rem" }}>🗺️ Explorer</button>
+              </div>
+            )}
+            {session && favorites.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {ROUTES.filter(r => favorites.includes(r.id)).map((route, i) => (
+                  <div key={route.id} className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: `${0.1 + i * 0.04}s`, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "13px", overflow: "hidden" }}>
+                    <div style={{ height: "2.5px", background: `linear-gradient(90deg,${route.color},transparent)` }} />
+                    <div style={{ padding: "12px 13px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <span style={{ fontSize: "1.1rem" }}>{route.emoji}</span>
+                          <div>
+                            <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "#daf0e8" }}>{route.name} {COUNTRIES[route.country]?.flag}</h3>
+                            <p style={{ color: "#3a5a50", fontSize: "0.72rem" }}>{route.river} · {route.region}</p>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <WeatherBadge coords={route.coords} small={true} />
+                          <button className="heart btn" onClick={() => toggleFavorite(route.id)} style={{ fontSize: "1.1rem", background: "none", color: "#ef4444" }}>❤️</button>
+                        </div>
+                      </div>
+                      <WeatherBadge coords={route.coords} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <div style={{ textAlign: "center", marginTop: "28px", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.04)", color: "#1a4a3a", fontSize: "0.69rem" }}>
-          <p>FleuVibe World · v6.0 · Powered by Supabase</p>
+          <p>FleuVibe World · v7.0 · Météo: OpenWeatherMap · Auth: Supabase</p>
         </div>
       </div>
 
-      {/* ══ AUTH MODAL ══ */}
+      {/* AUTH MODAL */}
       {showAuth && (
         <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowAuth(false); }}>
           <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(26,158,110,0.3)", borderRadius: "18px", padding: "24px", maxWidth: "400px", width: "100%", animation: "pop 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
@@ -391,30 +489,15 @@ export default function FleuVibe() {
               <span style={{ fontSize: "2rem" }}>🌊</span>
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#daf0e8", marginTop: "6px" }}>{authPage === "login" ? "Connexion à FleuVibe" : "Créer un compte"}</h2>
             </div>
-
             {authError && <div style={{ padding: "9px 12px", background: "rgba(220,38,38,0.12)", border: "1px solid rgba(220,38,38,0.25)", borderRadius: "9px", color: "#f87171", fontSize: "0.8rem", marginBottom: "14px" }}>{authError}</div>}
-
             <div style={{ display: "flex", flexDirection: "column", gap: "11px" }}>
-              {authPage === "signup" && (
-                <div>
-                  <label style={s.label}>Prénom et nom</label>
-                  <input value={authForm.fullName} onChange={e => setAuthForm(f => ({ ...f, fullName: e.target.value }))} placeholder="Jean Dupont" style={s.inp} />
-                </div>
-              )}
-              <div>
-                <label style={s.label}>Email</label>
-                <input type="email" value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))} placeholder="jean@exemple.com" style={s.inp} />
-              </div>
-              <div>
-                <label style={s.label}>Mot de passe</label>
-                <input type="password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••••" style={s.inp} onKeyDown={e => e.key === "Enter" && (authPage === "login" ? handleSignIn() : handleSignUp())} />
-              </div>
-
-              <button className="btn" onClick={authPage === "login" ? handleSignIn : handleSignUp} disabled={authLoading} style={{ padding: "11px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "11px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", boxShadow: "0 4px 14px rgba(26,158,110,0.28)", opacity: authLoading ? 0.7 : 1, marginTop: "4px" }}>
+              {authPage === "signup" && <div><label style={s.label}>Prénom et nom</label><input value={authForm.fullName} onChange={e => setAuthForm(f => ({ ...f, fullName: e.target.value }))} placeholder="Jean Dupont" style={s.inp} /></div>}
+              <div><label style={s.label}>Email</label><input type="email" value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))} placeholder="jean@exemple.com" style={s.inp} /></div>
+              <div><label style={s.label}>Mot de passe</label><input type="password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} placeholder="••••••••" style={s.inp} onKeyDown={e => e.key === "Enter" && (authPage === "login" ? handleSignIn() : handleSignUp())} /></div>
+              <button className="btn" onClick={authPage === "login" ? handleSignIn : handleSignUp} disabled={authLoading} style={{ padding: "11px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "11px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", opacity: authLoading ? 0.7 : 1, marginTop: "4px" }}>
                 {authLoading ? "⏳ Chargement..." : authPage === "login" ? "🔐 Se connecter" : "✨ Créer mon compte"}
               </button>
-
-              <div style={{ textAlign: "center", paddingTop: "4px" }}>
+              <div style={{ textAlign: "center" }}>
                 <button className="btn" onClick={() => { setAuthPage(authPage === "login" ? "signup" : "login"); setAuthError(""); }} style={{ color: "#5a9a80", fontSize: "0.8rem", background: "none", textDecoration: "underline" }}>
                   {authPage === "login" ? "Pas encore de compte ? S'inscrire" : "Déjà un compte ? Se connecter"}
                 </button>
@@ -424,20 +507,17 @@ export default function FleuVibe() {
         </div>
       )}
 
-      {/* ══ PROFILE MODAL ══ */}
+      {/* PROFILE MODAL */}
       {showProfile && session && (
         <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowProfile(false); }}>
           <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(26,158,110,0.3)", borderRadius: "18px", padding: "24px", maxWidth: "360px", width: "100%", animation: "pop 0.25s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
             <div style={{ textAlign: "center", marginBottom: "20px" }}>
-              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.8rem", fontWeight: 700, color: "#fff", margin: "0 auto 12px" }}>
-                {userName[0].toUpperCase()}
-              </div>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.8rem", fontWeight: 700, color: "#fff", margin: "0 auto 12px" }}>{userName[0].toUpperCase()}</div>
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#daf0e8" }}>{userName}</h2>
               <p style={{ color: "#4a7a6a", fontSize: "0.78rem", marginTop: "3px" }}>{session.user.email}</p>
             </div>
-
             <div style={{ display: "flex", gap: "10px", marginBottom: "18px" }}>
-              {[["❤️", favorites.length, "Favoris"], ["🌍", ROUTES.length, "Parcours dispo"]].map(([ic, val, label]) => (
+              {[["❤️", favorites.length, "Favoris"], ["🌍", ROUTES.length, "Parcours"]].map(([ic, val, label]) => (
                 <div key={label} style={{ flex: 1, padding: "12px", background: "rgba(26,158,110,0.08)", border: "1px solid rgba(26,158,110,0.18)", borderRadius: "11px", textAlign: "center" }}>
                   <div style={{ fontSize: "1.3rem" }}>{ic}</div>
                   <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#a8edcf" }}>{val}</div>
@@ -445,20 +525,6 @@ export default function FleuVibe() {
                 </div>
               ))}
             </div>
-
-            {favorites.length > 0 && (
-              <div style={{ marginBottom: "16px" }}>
-                <p style={{ color: "#4a7a6a", fontSize: "0.72rem", fontWeight: 600, marginBottom: "8px" }}>MES PARCOURS FAVORIS</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                  {ROUTES.filter(r => favorites.includes(r.id)).map(r => (
-                    <button key={r.id} className="btn" onClick={() => { setShowProfile(false); setPage("explore"); setSelectedRoute(r); }} style={{ padding: "7px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "8px", color: "#a8c8bc", fontSize: "0.78rem", textAlign: "left", display: "flex", alignItems: "center", gap: "7px" }}>
-                      <span>{r.emoji}</span><span>{r.name}</span><span style={{ marginLeft: "auto" }}>{COUNTRIES[r.country]?.flag}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <button className="btn" onClick={handleSignOut} style={{ width: "100%", padding: "10px", background: "rgba(220,38,38,0.12)", border: "1px solid rgba(220,38,38,0.22)", borderRadius: "10px", color: "#f87171", fontWeight: 600, fontSize: "0.84rem" }}>
               🚪 Se déconnecter
             </button>
