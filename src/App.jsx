@@ -6,7 +6,10 @@ const WEATHER_KEY = "3a42db1ac015f3b988b8051c5f469bd7";
 const OPENAI_KEY = import.meta.env.VITE_OPENAI_KEY;
 
 // ─── OPENAI ───────────────────────────────────────────────────────────────────
+const aiCache = new Map();
 const callAI = async (messages, maxTokens = 200) => {
+  const key = JSON.stringify(messages);
+  if (aiCache.has(key)) return aiCache.get(key);
   try {
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -15,24 +18,30 @@ const callAI = async (messages, maxTokens = 200) => {
     });
     const d = await r.json();
     if (d.error) throw new Error(d.error.message);
-    return d.choices[0].message.content.trim();
-  } catch (e) { console.error("AI error:", e); return null; }
+    const content = d.choices[0].message.content.trim();
+    aiCache.set(key, content);
+    return content;
+  } catch (e) { console.error("AI:", e); return null; }
 };
 
-const generateDescription = (spot) => callAI([{ role: "user", content: `Génère une description courte et inspirante (2-3 phrases) pour ce spot nautique:\nNom: ${spot.name}, Plan d'eau: ${spot.river}, Pays: ${COUNTRIES[spot.country]?.name}, Région: ${spot.region}\nDifficulté: ${spot.difficulty}, Activités: ${spot.activities.join(", ")}, Type: ${spot.type === "RIVER" ? "Rivière" : spot.type === "LAKE" ? "Lac" : "Mer/Côte"}\nStyle: évocateur, aventurier, donne envie de partir. En français.` }], 150);
+const generateDescription = (spot) => callAI([{ role: "user", content: `Génère une description courte et inspirante (2-3 phrases) pour ce spot nautique:\nNom: ${spot.name}, Plan d'eau: ${spot.river}, Pays: ${COUNTRIES[spot.country]?.name}, Région: ${spot.region}\nDifficulté: ${spot.difficulty}, Activités: ${spot.activities.join(", ")}\nStyle: évocateur, aventurier. En français.` }], 150);
 
 const semanticSearch = async (query) => {
-  const result = await callAI([{ role: "user", content: `Analyse cette requête: "${query}"\nExtrais les filtres: type (RIVER/LAKE/SEA), difficulty (Facile/Intermédiaire/Sportif), countries (codes ISO), activities.\nRéponds UNIQUEMENT en JSON valide: {"type":null,"difficulty":null,"countries":[],"activities":[]}\nSi non mentionné, mets null ou [].` }], 100);
+  const result = await callAI([{ role: "user", content: `Analyse cette requête: "${query}"\nExtrais les filtres nautiques: type (RIVER/LAKE/SEA), difficulty (Facile/Intermédiaire/Sportif), countries (codes ISO), activities.\nRéponds UNIQUEMENT en JSON valide: {"type":null,"difficulty":null,"countries":[],"activities":[]}\nSi non mentionné, mets null ou [].` }], 100);
   try { return JSON.parse(result); } catch { return {}; }
 };
 
-const getWeatherAdvice = (weather, spotName, difficulty) => callAI([{ role: "user", content: `Conseil météo pour "${spotName}" (difficulté ${difficulty}):\n${weather.temp}°C, vent ${weather.windKmh} km/h, pluie ${weather.rain} mm/h, ${weather.desc}\n2 phrases max, conseils pratiques en français (équipement, sécurité).` }], 100);
+const getWeatherAdvice = (weather, spotName, difficulty) => callAI([{ role: "user", content: `Conseil météo pour "${spotName}" (difficulté ${difficulty}):\n${weather.temp}°C, vent ${weather.windKmh} km/h, pluie ${weather.rain} mm/h, ${weather.desc}\n2 phrases max, conseils pratiques en français.` }], 100);
 
 const generateReviewSuggestion = (spotName) => callAI([{ role: "user", content: `Génère un avis naturel pour le spot nautique "${spotName}". Style: enthousiaste, utile. 2 phrases max en français.` }], 80);
 
-const summarizeReviews = (reviews) => callAI([{ role: "user", content: `Résume ces avis en 2 phrases (points positifs, négatifs, note moy):\n${reviews.map(r => `${r.rating}/5: ${r.comment}`).join("\n")}\nEn français, concis.` }], 100);
+const summarizeReviews = (reviews) => callAI([{ role: "user", content: `Résume ces avis en 2 phrases (points positifs, négatifs):\n${reviews.map(r => `${r.rating}/5: ${r.comment}`).join("\n")}\nEn français, concis.` }], 100);
 
 const getRecommendations = (currentSpot, similarSpots) => callAI([{ role: "user", content: `Un kayakiste a aimé "${currentSpot.name}" (${currentSpot.difficulty}, ${currentSpot.type}).\nRecommande 2 spots parmi: ${similarSpots.map(s => s.name).join(", ")}.\n2-3 phrases inspirantes en français.` }], 120);
+
+const generateExpeditionChecklist = (route) => callAI([{ role: "user", content: `Génère une checklist d'expédition pour ${route.name} (${route.distance}, ${route.difficulty}). Inclus équipement nautique, camping, sécurité. Format: liste courte à puces en français.` }], 200);
+
+const translateText = (text, lang) => callAI([{ role: "user", content: `Traduis ce texte en ${lang === "en" ? "anglais" : lang === "es" ? "espagnol" : "allemand"}: "${text}"\nRéponds uniquement avec la traduction.` }], 100);
 
 // ─── SUPABASE ─────────────────────────────────────────────────────────────────
 const sb = (() => {
@@ -71,6 +80,34 @@ const getWeather = async (lat, lon) => {
   } catch { return null; }
 };
 
+// ─── LEVELS & GAMIFICATION ────────────────────────────────────────────────────
+const LEVELS = [
+  { name: "Moussaillon", minXP: 0, icon: "🪣", color: "#6b7280" },
+  { name: "Pagayeur", minXP: 100, icon: "🛶", color: "#3b82f6" },
+  { name: "Navigateur", minXP: 500, icon: "🚣", color: "#10b981" },
+  { name: "Explorateur", minXP: 1500, icon: "🗺️", color: "#f59e0b" },
+  { name: "Légende", minXP: 5000, icon: "🏆", color: "#ef4444" },
+];
+
+const BADGES_DEF = {
+  firstSpot: { name: "Première vague", icon: "🌊", condition: (s) => s.totalSpotsVisited >= 1 },
+  globeTrotter: { name: "Globe-trotter", icon: "🌍", condition: (s) => s.countriesVisited >= 5 },
+  reviewer: { name: "Critique", icon: "✍️", condition: (s) => s.totalReviews >= 3 },
+  community: { name: "Ambassadeur", icon: "🤝", condition: (s) => s.spotsAdded >= 1 },
+  expedition: { name: "Grand voyageur", icon: "⛺", condition: (s) => s.longExpeditions >= 1 },
+};
+
+// ─── LEGAL INFO ───────────────────────────────────────────────────────────────
+const LEGAL_INFO = {
+  FR: { license: "Aucune pour kayak de loisir", minAge: 14, emergency: "15 / 18 / 112", rules: "Gilet obligatoire, balisage des itinéraires" },
+  BE: { license: "Aucune pour kayak -500m des côtes", minAge: 12, emergency: "112", rules: "VHF recommandé sur la Meuse, respecter les zones" },
+  US: { license: "Varies by state", minAge: 16, emergency: "911", rules: "Life jacket mandatory under 13, no alcohol" },
+  CH: { license: "Permis bateau si moteur", minAge: 10, emergency: "117 / 144", rules: "Gilet obligatoire, respecter les zones de baignade" },
+  NO: { license: "Aucune pour kayak", minAge: 0, emergency: "112", rules: "Toujours informer quelqu'un de votre itinéraire" },
+  PT: { license: "Aucune pour kayak côtier", minAge: 12, emergency: "112", rules: "Gilet obligatoire, VHF recommandé en mer" },
+  default: { license: "Vérifier sur place", minAge: 12, emergency: "112", rules: "Renseignez-vous auprès des autorités locales" },
+};
+
 // ─── DATA ─────────────────────────────────────────────────────────────────────
 const CONTINENTS = {
   ALL: { name: "Monde entier", flag: "🌍" }, EU: { name: "Europe", flag: "🇪🇺" }, AM: { name: "Amériques", flag: "🌎" },
@@ -89,8 +126,8 @@ const COUNTRIES = {
   US: { name: "États-Unis", flag: "🇺🇸", continent: "AM" }, CA: { name: "Canada", flag: "🇨🇦", continent: "AM" },
   BR: { name: "Brésil", flag: "🇧🇷", continent: "AM" }, CL: { name: "Chili", flag: "🇨🇱", continent: "AM" },
   MX: { name: "Mexique", flag: "🇲🇽", continent: "AM" }, CO: { name: "Colombie", flag: "🇨🇴", continent: "AM" },
-  PE: { name: "Pérou", flag: "🇵🇪", continent: "AM" }, AR: { name: "Argentine", flag: "🇦🇷", continent: "AM" },
-  CR: { name: "Costa Rica", flag: "🇨🇷", continent: "AM" },
+  PE: { name: "Pérou", flag: "🇵🇪", continent: "AM" }, CR: { name: "Costa Rica", flag: "🇨🇷", continent: "AM" },
+  AR: { name: "Argentine", flag: "🇦🇷", continent: "AM" },
   NZ: { name: "Nouvelle-Zélande", flag: "🇳🇿", continent: "OC" }, AU: { name: "Australie", flag: "🇦🇺", continent: "OC" },
   FJ: { name: "Fidji", flag: "🇫🇯", continent: "OC" }, PF: { name: "Polynésie", flag: "🇵🇫", continent: "OC" },
   NP: { name: "Népal", flag: "🇳🇵", continent: "AS" }, TH: { name: "Thaïlande", flag: "🇹🇭", continent: "AS" },
@@ -106,55 +143,84 @@ const DIFF_COLOR = { Facile: "#1a9e6e", Intermédiaire: "#f59e0b", Sportif: "#dc
 const SPONSORED = [
   { id: "s1", name: "Ardennes Belges", flag: "🇧🇪", color: "#1a9e6e", badge: "Partenaire Officiel", desc: "450 km de rivières navigables en Wallonie." },
   { id: "s2", name: "Ardèche Tourisme", flag: "🇫🇷", color: "#dc2626", badge: "Région Spotlight", desc: "Les gorges de l'Ardèche, joyau naturel classé." },
-  { id: "s3", name: "Visit Slovenia", flag: "🇸🇮", color: "#10b981", badge: "Coup de Cœur", desc: "La Soča aux eaux émeraude — plus belle rivière d'Europe." },
-  { id: "s4", name: "Lac d'Annecy", flag: "🇫🇷", color: "#0891b2", badge: "Lac Partenaire", desc: "Le lac le plus pur d'Europe. SUP, kayak et voile." },
-  { id: "s5", name: "Algarve Tourism", flag: "🇵🇹", color: "#7c3aed", badge: "Côte Partenaire", desc: "Les côtes rocheuses de l'Algarve, paradis du kayak." },
+  { id: "s3", name: "Visit Slovenia", flag: "🇸🇮", color: "#10b981", badge: "Coup de Cœur", desc: "La Soča aux eaux émeraude." },
+  { id: "s4", name: "Lac d'Annecy", flag: "🇫🇷", color: "#0891b2", badge: "Lac Partenaire", desc: "Le lac le plus pur d'Europe." },
+  { id: "s5", name: "Algarve Tourism", flag: "🇵🇹", color: "#7c3aed", badge: "Côte Partenaire", desc: "Paradis du kayak de mer." },
+];
+
+const HIDDEN_GEMS = [
+  { id: 1001, name: "Petite Lesse Sauvage", country: "BE", region: "Ardennes", difficulty: "Intermédiaire", coords: [50.150, 5.080], season: "mai–oct", secret: "Entrée par chemin forestier à 2km du village. Aucun touriste.", emoji: "💎", type: "RIVER", activities: ["Kayak", "Camping"], description: "Un trésor caché des Ardennes, loin de toute foule." },
+  { id: 1002, name: "Gorge Secrète de l'Allier", country: "FR", region: "Auvergne", difficulty: "Sportif", coords: [45.100, 3.400], season: "avr–sept", secret: "Accessible uniquement à pied 3km. Rapides classe III non cartographiés.", emoji: "🏔️", type: "RIVER", activities: ["Kayak", "Rafting"], description: "Les gorges les plus sauvages du Massif Central, inconnues des guides." },
+  { id: 1003, name: "Lac Volcanique Vert", country: "IS", region: "Highlands", difficulty: "Facile", coords: [64.600, -19.000], season: "juil–août", secret: "GPS uniquement. Route F26 4x4 obligatoire. Eaux à 18°C en été.", emoji: "🌋", type: "LAKE", activities: ["Kayak", "SUP", "Baignade"], description: "Un lac volcanique émeraude au cœur des Highlands islandais, impossible à trouver sans coordonnées." },
+];
+
+const PROVIDERS = [
+  { id: "p1", name: "Kayaks de Lesse", type: "Location", country: "BE", region: "Wallonie", river: "Lesse", description: "Location kayak et canoë sur la Lesse. Navettes incluses.", price: 25, currency: "€", priceLabel: "/ pers.", rating: 4.8, reviews: 234, activities: ["Kayak", "Canoë"], available: true, emoji: "🛶", badges: ["Top Prestataire"], commission: 12, routeIds: [1], inclut: ["Kayak", "Gilet", "Pagaie", "Navette"], eco: true },
+  { id: "p2", name: "Ardèche Aventures", type: "Guide", country: "FR", region: "Ardèche", river: "Ardèche", description: "Guides certifiés pour les gorges de l'Ardèche.", price: 89, currency: "€", priceLabel: "/ pers. 2j", rating: 4.9, reviews: 412, activities: ["Kayak", "Camping"], available: true, emoji: "🌉", badges: ["N°1 Ardèche"], commission: 15, routeIds: [6], inclut: ["Guide", "Équipement", "Repas", "Camping"], eco: true },
+  { id: "p3", name: "Annecy SUP & Kayak", type: "Location", country: "FR", region: "Haute-Savoie", river: "Lac d'Annecy", description: "Location SUP, kayak sur le lac d'Annecy.", price: 18, currency: "€", priceLabel: "/ heure", rating: 4.8, reviews: 312, activities: ["SUP", "Kayak"], available: true, emoji: "🏔️", badges: ["Lac Premium"], commission: 12, routeIds: [10], inclut: ["SUP/Kayak", "Gilet", "Pagaie"], eco: true },
 ];
 
 const SPOTS = [
-  { id: 1, type: "RIVER", country: "BE", name: "Lesse · Houyet → Anseremme", river: "Lesse", region: "Wallonie", distance: "21 km", duration: "4–5h", difficulty: "Facile", activities: ["Kayak", "Canoë"], description: "Le parcours emblématique de Belgique, entre falaises calcaires et forêts denses.", color: "#1a9e6e", emoji: "🏞️", open: true, coords: [50.185, 5.002], sponsored: "Ardennes Belges" },
-  { id: 2, type: "RIVER", country: "BE", name: "Ourthe · La Roche → Hotton", river: "Ourthe", region: "Wallonie", distance: "18 km", duration: "3–4h", difficulty: "Intermédiaire", activities: ["Kayak", "Rafting"], description: "Méandres spectaculaires avec quelques rapides dans les Ardennes.", color: "#2563eb", emoji: "🌊", open: true, coords: [50.218, 5.578] },
-  { id: 3, type: "RIVER", country: "BE", name: "Semois · Bouillon → Alle", river: "Semois", region: "Gaume", distance: "34 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Camping"], description: "Immersion totale dans la nature gaumaise avec nuit en camping.", color: "#7c3aed", emoji: "⛺", open: true, coords: [49.870, 5.060] },
-  { id: 4, type: "RIVER", country: "BE", name: "Meuse · Namur → Dinant", river: "Meuse", region: "Wallonie", distance: "30 km", duration: "1 journée", difficulty: "Facile", activities: ["Canoë", "Kayak"], description: "Longer la Meuse entre citadelles médiévales et villages pittoresques.", color: "#0891b2", emoji: "🏰", open: true, coords: [50.362, 4.860], sponsored: "Ardennes Belges" },
-  { id: 5, type: "LAKE", country: "BE", name: "Lacs de l'Eau d'Heure", river: "Eau d'Heure", region: "Namur", distance: "15 km", duration: "3h", difficulty: "Facile", activities: ["Kayak", "SUP", "Voile", "Baignade"], description: "Le plus grand lac artificiel de Belgique. Parfait pour toutes les activités nautiques.", color: "#06b6d4", emoji: "🏖️", open: true, coords: [50.188, 4.558] },
-  { id: 6, type: "RIVER", country: "FR", name: "Ardèche · Vallon-Pont-d'Arc", river: "Ardèche", region: "Ardèche", distance: "30 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Canoë", "Camping"], description: "Le parcours mythique de France. Gorges sous le Pont d'Arc.", color: "#dc2626", emoji: "🌉", open: true, coords: [44.400, 4.390], sponsored: "Ardèche Tourisme" },
-  { id: 7, type: "RIVER", country: "FR", name: "Verdon · Gorges", river: "Verdon", region: "PACA", distance: "22 km", duration: "2 jours", difficulty: "Sportif", activities: ["Kayak", "Rafting"], description: "Le Grand Canyon européen. Eaux turquoise et falaises à pic de 700m.", color: "#06b6d4", emoji: "💎", open: true, coords: [43.760, 6.340] },
-  { id: 8, type: "RIVER", country: "FR", name: "Dordogne · Argentat", river: "Dordogne", region: "Corrèze", distance: "28 km", duration: "1 journée", difficulty: "Intermédiaire", activities: ["Kayak", "Canoë"], description: "Les gorges de la Dordogne entre falaises et villages médiévaux.", color: "#f97316", emoji: "🦅", open: true, coords: [45.090, 1.940] },
-  { id: 9, type: "RIVER", country: "FR", name: "Loire · Amboise → Tours", river: "Loire", region: "Indre-et-Loire", distance: "26 km", duration: "5h", difficulty: "Facile", activities: ["Kayak", "Canoë", "SUP"], description: "Glisser sur la Loire au fil des châteaux Renaissance UNESCO.", color: "#f59e0b", emoji: "👑", open: true, coords: [47.370, 0.820] },
-  { id: 10, type: "LAKE", country: "FR", name: "Lac d'Annecy · Tour complet", river: "Lac d'Annecy", region: "Haute-Savoie", distance: "35 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "SUP", "Voile", "Baignade"], description: "Le lac le plus pur d'Europe entouré par les Alpes.", color: "#0891b2", emoji: "🏔️", open: true, coords: [45.866, 6.165], sponsored: "Lac d'Annecy" },
-  { id: 11, type: "RIVER", country: "SI", name: "Soča · Bovec → Tolmin", river: "Soča", region: "Primorska", distance: "55 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Rafting", "SUP"], description: "La Soča aux eaux émeraude — l'une des plus belles rivières du monde.", color: "#10b981", emoji: "💚", open: true, coords: [46.240, 13.650], sponsored: "Visit Slovenia" },
-  { id: 12, type: "RIVER", country: "NO", name: "Sjoa · Åmot → Harpefoss", river: "Sjoa", region: "Innlandet", distance: "18 km", duration: "4h", difficulty: "Sportif", activities: ["Kayak", "Rafting"], description: "L'une des meilleures rivières de white-water en Europe.", color: "#dc2626", emoji: "🐺", open: true, coords: [61.680, 9.560] },
-  { id: 13, type: "SEA", country: "NO", name: "Fjords de Norvège", river: "Sognefjord", region: "Vestland", distance: "50 km", duration: "3 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Camping"], description: "Pagayer dans les fjords entre cascades et villages colorés.", color: "#1a9e6e", emoji: "🏔️", open: true, coords: [61.050, 6.850] },
-  { id: 14, type: "RIVER", country: "DE", name: "Rhin · Vallée Romantique", river: "Rhin", region: "Rhénanie", distance: "65 km", duration: "3 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Canoë"], description: "La vallée du Rhin romantique entre châteaux et vignobles UNESCO.", color: "#dc2626", emoji: "🏰", open: true, coords: [50.180, 7.620] },
-  { id: 15, type: "LAKE", country: "CH", name: "Lac Léman · Lausanne", river: "Lac Léman", region: "Vaud", distance: "60 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Voile", "SUP"], description: "Le plus grand lac d'Europe occidentale entre vignobles et Alpes.", color: "#2563eb", emoji: "🍇", open: true, coords: [46.500, 6.600] },
-  { id: 16, type: "SEA", country: "HR", name: "Îles Dalmates · Croatie", river: "Mer Adriatique", region: "Dalmatie", distance: "40 km", duration: "3 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Voile", "Plongée"], description: "Longer les îles dalmates en kayak. Criques secrètes et eau turquoise.", color: "#06b6d4", emoji: "⛵", open: true, coords: [43.508, 16.440] },
-  { id: 17, type: "SEA", country: "PT", name: "Algarve · Grottes Marines", river: "Côte Algarve", region: "Algarve", distance: "15 km", duration: "3h", difficulty: "Facile", activities: ["Kayak", "Plongée", "Baignade", "SUP"], description: "Les grottes et arches naturelles de l'Algarve.", color: "#f59e0b", emoji: "🌊", open: true, coords: [37.085, -8.668], sponsored: "Algarve Tourism" },
-  { id: 18, type: "SEA", country: "GR", name: "Îles Ioniques · Grèce", river: "Mer Ionienne", region: "Îles Ioniennes", distance: "30 km", duration: "2 jours", difficulty: "Facile", activities: ["Kayak", "Plongée", "Baignade"], description: "Pagayer entre les îles grecques aux eaux cristallines.", color: "#2563eb", emoji: "🏛️", open: true, coords: [38.620, 20.630] },
-  { id: 19, type: "LAKE", country: "IS", name: "Þingvallavatn · Islande", river: "Þingvallavatn", region: "Suðurland", distance: "12 km", duration: "3h", difficulty: "Facile", activities: ["Kayak", "Plongée", "SUP"], description: "Plongée dans les failles tectoniques entre deux continents.", color: "#7c3aed", emoji: "🌋", open: true, coords: [64.183, -21.117] },
-  { id: 20, type: "RIVER", country: "US", name: "Colorado · Grand Canyon", river: "Colorado", region: "Arizona", distance: "360 km", duration: "2 semaines", difficulty: "Sportif", activities: ["Rafting", "Kayak", "Camping"], description: "L'expédition ultime dans le Grand Canyon.", color: "#f97316", emoji: "🏜️", open: true, coords: [36.100, -112.100] },
-  { id: 21, type: "SEA", country: "US", name: "Hawaï · Surf & Kayak", river: "Pacifique", region: "Hawaï", distance: "10 km", duration: "2h", difficulty: "Facile", activities: ["Surf", "Kayak", "SUP", "Baignade"], description: "Les vagues légendaires d'Hawaï. La tradition du surf.", color: "#f59e0b", emoji: "🌺", open: true, coords: [21.300, -157.800] },
-  { id: 22, type: "RIVER", country: "CA", name: "Nahanni · Virginia Falls", river: "Nahanni", region: "Territoires NW", distance: "300 km", duration: "10 jours", difficulty: "Sportif", activities: ["Kayak", "Canoë", "Camping"], description: "Top 10 mondial. Chutes deux fois plus hautes que Niagara.", color: "#7c3aed", emoji: "🐻", open: true, coords: [61.600, -125.700] },
-  { id: 23, type: "RIVER", country: "BR", name: "Amazone · Manaus", river: "Amazone", region: "Amazonas", distance: "150 km", duration: "5 jours", difficulty: "Facile", activities: ["Bateau électrique", "Canoë", "Camping"], description: "S'enfoncer dans la jungle amazonienne depuis Manaus.", color: "#16a34a", emoji: "🦜", open: true, coords: [-3.100, -60.025] },
-  { id: 24, type: "RIVER", country: "CO", name: "Caño Cristales · Arc-en-ciel", river: "Caño Cristales", region: "Meta", distance: "8 km", duration: "2h", difficulty: "Facile", activities: ["Kayak", "Baignade"], description: "La rivière aux 5 couleurs. La plus belle rivière du monde.", color: "#dc2626", emoji: "🌈", open: true, coords: [2.270, -73.780] },
-  { id: 25, type: "RIVER", country: "CL", name: "Futaleufú · Patagonie", river: "Futaleufú", region: "Los Lagos", distance: "20 km", duration: "2 jours", difficulty: "Sportif", activities: ["Rafting", "Kayak"], description: "Top 5 mondial white water. Eaux turquoise en Patagonie.", color: "#06b6d4", emoji: "🏔️", open: true, coords: [-43.200, -71.860] },
-  { id: 26, type: "SEA", country: "MX", name: "Riviera Maya · Cenotes", river: "Mer des Caraïbes", region: "Quintana Roo", distance: "8 km", duration: "2h", difficulty: "Facile", activities: ["Kayak", "Plongée", "Baignade"], description: "Explorer les cenotes et la mer des Caraïbes turquoise.", color: "#06b6d4", emoji: "🐠", open: true, coords: [20.630, -87.080] },
-  { id: 27, type: "RIVER", country: "CR", name: "Pacuare · Costa Rica", river: "Río Pacuare", region: "Turrialba", distance: "28 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Rafting", "Kayak", "Camping"], description: "Le meilleur rafting d'Amérique Centrale.", color: "#16a34a", emoji: "🐊", open: true, coords: [9.900, -83.680] },
-  { id: 28, type: "RIVER", country: "NP", name: "Trisuli · Himalaya", river: "Trisuli", region: "Gandaki", distance: "50 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Rafting", "Kayak"], description: "Rafting dans l'Himalaya depuis Katmandou.", color: "#dc2626", emoji: "🏔️", open: true, coords: [27.800, 84.400] },
-  { id: 29, type: "SEA", country: "VN", name: "Baie d'Halong · Kayak", river: "Baie d'Halong", region: "Quảng Ninh", distance: "10 km", duration: "2h", difficulty: "Facile", activities: ["Kayak", "SUP"], description: "Explorer les grottes secrètes de la Baie d'Halong.", color: "#10b981", emoji: "🌅", open: true, coords: [20.910, 107.184] },
-  { id: 30, type: "SEA", country: "ID", name: "Bali · Surf & SUP", river: "Océan Indien", region: "Bali", distance: "10 km", duration: "2h", difficulty: "Intermédiaire", activities: ["Surf", "SUP", "Plongée"], description: "Les vagues légendaires de Bali pour surfeurs et paddlers.", color: "#f97316", emoji: "🏄", open: true, coords: [-8.409, 115.188] },
-  { id: 31, type: "SEA", country: "PH", name: "El Nido · Palawan", river: "Mer de Chine", region: "Palawan", distance: "20 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Plongée", "Baignade"], description: "Les lagons cachés de Palawan. Eaux cristallines.", color: "#06b6d4", emoji: "🏝️", open: true, coords: [11.177, 119.388] },
-  { id: 32, type: "RIVER", country: "IN", name: "Gange · Rishikesh Rafting", river: "Gange", region: "Uttarakhand", distance: "16 km", duration: "3h", difficulty: "Intermédiaire", activities: ["Rafting", "Kayak"], description: "Rafting sacré sur le Gange à Rishikesh.", color: "#f59e0b", emoji: "🕉️", open: true, coords: [30.086, 78.296] },
-  { id: 33, type: "RIVER", country: "ZM", name: "Zambèze · Chutes Victoria", river: "Zambèze", region: "Livingstone", distance: "70 km", duration: "3 jours", difficulty: "Sportif", activities: ["Rafting", "Kayak", "Camping"], description: "Rafting sous les embruns des Chutes Victoria.", color: "#f97316", emoji: "🦁", open: true, coords: [-17.930, 25.856] },
-  { id: 34, type: "SEA", country: "MA", name: "Essaouira · Kitesurf", river: "Atlantique", region: "Marrakech-Safi", distance: "10 km", duration: "2h", difficulty: "Intermédiaire", activities: ["Kitesurf", "Surf", "SUP"], description: "La capitale mondiale du kitesurf. Alizés constants.", color: "#f59e0b", emoji: "🪁", open: true, coords: [31.512, -9.770] },
-  { id: 35, type: "SEA", country: "ZA", name: "Cape Town · Kayak Baleines", river: "Atlantique", region: "Western Cape", distance: "12 km", duration: "3h", difficulty: "Facile", activities: ["Kayak", "Plongée", "Baignade"], description: "Kayak avec pingouins et baleines. Table Mountain en fond.", color: "#7c3aed", emoji: "🐋", open: true, coords: [-34.357, 18.474] },
-  { id: 36, type: "SEA", country: "AU", name: "Great Barrier Reef", river: "Mer de Corail", region: "Queensland", distance: "20 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Plongée", "SUP"], description: "Pagayer au-dessus de la plus grande barrière de corail.", color: "#10b981", emoji: "🐢", open: true, coords: [-18.286, 147.699] },
-  { id: 37, type: "RIVER", country: "NZ", name: "Whanganui · Great Journey", river: "Whanganui", region: "Manawatū", distance: "145 km", duration: "5 jours", difficulty: "Facile", activities: ["Canoë", "Kayak", "Camping"], description: "L'une des Great Walks de Nouvelle-Zélande sur l'eau.", color: "#16a34a", emoji: "🥝", open: true, coords: [-39.600, 174.800] },
-  { id: 38, type: "SEA", country: "PF", name: "Bora Bora · SUP Lagon", river: "Pacifique", region: "Polynésie française", distance: "10 km", duration: "2h", difficulty: "Facile", activities: ["SUP", "Kayak", "Plongée", "Baignade"], description: "SUP dans le lagon de Bora Bora. Raies mantas et eau à 28°C.", color: "#7c3aed", emoji: "🌺", open: true, coords: [-16.500, -151.741] },
-  { id: 39, type: "SEA", country: "FJ", name: "Fidji · Kayak Îles", river: "Pacifique", region: "Viti Levu", distance: "15 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Plongée", "SUP"], description: "Pagayer entre les îles paradisiaques des Fidji.", color: "#06b6d4", emoji: "🌴", open: true, coords: [-17.713, 178.065] },
-  { id: 40, type: "LAKE", country: "PE", name: "Lac Titicaca · Uros", river: "Lac Titicaca", region: "Puno", distance: "20 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Bateau traditionnel"], description: "Le plus haut lac navigable du monde à 3800m.", color: "#0891b2", emoji: "🌄", open: true, coords: [-15.840, -69.330] },
+  { id: 1, type: "RIVER", country: "BE", name: "Lesse · Houyet → Anseremme", river: "Lesse", region: "Wallonie", distance: "21 km", duration: "4–5h", difficulty: "Facile", activities: ["Kayak", "Canoë"], description: "Le parcours emblématique de Belgique, entre falaises calcaires et forêts denses.", color: "#1a9e6e", emoji: "🏞️", open: true, coords: [50.185, 5.002], sponsored: "Ardennes Belges", camping: true, waterPoints: true, emergencyContact: "112" },
+  { id: 2, type: "RIVER", country: "BE", name: "Ourthe · La Roche → Hotton", river: "Ourthe", region: "Wallonie", distance: "18 km", duration: "3–4h", difficulty: "Intermédiaire", activities: ["Kayak", "Rafting"], description: "Méandres spectaculaires avec quelques rapides dans les Ardennes.", color: "#2563eb", emoji: "🌊", open: true, coords: [50.218, 5.578], camping: false, waterPoints: true },
+  { id: 3, type: "RIVER", country: "BE", name: "Semois · Bouillon → Alle", river: "Semois", region: "Gaume", distance: "34 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Camping"], description: "Immersion totale dans la nature gaumaise avec nuit en camping.", color: "#7c3aed", emoji: "⛺", open: true, coords: [49.870, 5.060], camping: true, waterPoints: true },
+  { id: 4, type: "RIVER", country: "BE", name: "Meuse · Namur → Dinant", river: "Meuse", region: "Wallonie", distance: "30 km", duration: "1 journée", difficulty: "Facile", activities: ["Canoë", "Kayak"], description: "Longer la Meuse entre citadelles médiévales et villages pittoresques.", color: "#0891b2", emoji: "🏰", open: true, coords: [50.362, 4.860], sponsored: "Ardennes Belges", camping: false, waterPoints: true },
+  { id: 5, type: "LAKE", country: "BE", name: "Lacs de l'Eau d'Heure", river: "Eau d'Heure", region: "Namur", distance: "15 km", duration: "3h", difficulty: "Facile", activities: ["Kayak", "SUP", "Voile", "Baignade"], description: "Le plus grand lac artificiel de Belgique. Parfait pour toutes les activités nautiques.", color: "#06b6d4", emoji: "🏖️", open: true, coords: [50.188, 4.558], camping: false, waterPoints: true },
+  { id: 6, type: "RIVER", country: "FR", name: "Ardèche · Vallon-Pont-d'Arc", river: "Ardèche", region: "Ardèche", distance: "30 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Canoë", "Camping"], description: "Le parcours mythique de France. Gorges sous le Pont d'Arc.", color: "#dc2626", emoji: "🌉", open: true, coords: [44.400, 4.390], sponsored: "Ardèche Tourisme", camping: true, waterPoints: true },
+  { id: 7, type: "RIVER", country: "FR", name: "Verdon · Gorges", river: "Verdon", region: "PACA", distance: "22 km", duration: "2 jours", difficulty: "Sportif", activities: ["Kayak", "Rafting"], description: "Le Grand Canyon européen. Eaux turquoise et falaises à pic de 700m.", color: "#06b6d4", emoji: "💎", open: true, coords: [43.760, 6.340], camping: true, waterPoints: false },
+  { id: 8, type: "RIVER", country: "FR", name: "Dordogne · Argentat", river: "Dordogne", region: "Corrèze", distance: "28 km", duration: "1 journée", difficulty: "Intermédiaire", activities: ["Kayak", "Canoë"], description: "Les gorges de la Dordogne entre falaises et villages médiévaux.", color: "#f97316", emoji: "🦅", open: true, coords: [45.090, 1.940], camping: false, waterPoints: true },
+  { id: 9, type: "RIVER", country: "FR", name: "Loire · Amboise → Tours", river: "Loire", region: "Indre-et-Loire", distance: "26 km", duration: "5h", difficulty: "Facile", activities: ["Kayak", "Canoë", "SUP"], description: "Glisser sur la Loire au fil des châteaux Renaissance UNESCO.", color: "#f59e0b", emoji: "👑", open: true, coords: [47.370, 0.820], camping: false, waterPoints: true },
+  { id: 10, type: "LAKE", country: "FR", name: "Lac d'Annecy · Tour complet", river: "Lac d'Annecy", region: "Haute-Savoie", distance: "35 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "SUP", "Voile", "Baignade"], description: "Le lac le plus pur d'Europe entouré par les Alpes.", color: "#0891b2", emoji: "🏔️", open: true, coords: [45.866, 6.165], sponsored: "Lac d'Annecy", camping: false, waterPoints: true },
+  { id: 11, type: "RIVER", country: "SI", name: "Soča · Bovec → Tolmin", river: "Soča", region: "Primorska", distance: "55 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Rafting", "SUP"], description: "La Soča aux eaux émeraude — l'une des plus belles rivières du monde.", color: "#10b981", emoji: "💚", open: true, coords: [46.240, 13.650], sponsored: "Visit Slovenia", camping: true, waterPoints: true },
+  { id: 12, type: "RIVER", country: "NO", name: "Sjoa · Åmot → Harpefoss", river: "Sjoa", region: "Innlandet", distance: "18 km", duration: "4h", difficulty: "Sportif", activities: ["Kayak", "Rafting"], description: "L'une des meilleures rivières de white-water en Europe.", color: "#dc2626", emoji: "🐺", open: true, coords: [61.680, 9.560], camping: true, waterPoints: true },
+  { id: 13, type: "SEA", country: "NO", name: "Fjords de Norvège", river: "Sognefjord", region: "Vestland", distance: "50 km", duration: "3 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Camping"], description: "Pagayer dans les fjords entre cascades et villages colorés.", color: "#1a9e6e", emoji: "🏔️", open: true, coords: [61.050, 6.850], camping: true, waterPoints: true },
+  { id: 14, type: "RIVER", country: "DE", name: "Rhin · Vallée Romantique", river: "Rhin", region: "Rhénanie", distance: "65 km", duration: "3 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Canoë"], description: "La vallée du Rhin romantique entre châteaux et vignobles UNESCO.", color: "#dc2626", emoji: "🏰", open: true, coords: [50.180, 7.620], camping: true, waterPoints: true },
+  { id: 15, type: "LAKE", country: "CH", name: "Lac Léman · Lausanne", river: "Lac Léman", region: "Vaud", distance: "60 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Voile", "SUP"], description: "Le plus grand lac d'Europe occidentale entre vignobles et Alpes.", color: "#2563eb", emoji: "🍇", open: true, coords: [46.500, 6.600], camping: false, waterPoints: true },
+  { id: 16, type: "SEA", country: "HR", name: "Îles Dalmates · Croatie", river: "Mer Adriatique", region: "Dalmatie", distance: "40 km", duration: "3 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Voile", "Plongée"], description: "Longer les îles dalmates en kayak. Criques secrètes et eau turquoise.", color: "#06b6d4", emoji: "⛵", open: true, coords: [43.508, 16.440], camping: true, waterPoints: true },
+  { id: 17, type: "SEA", country: "PT", name: "Algarve · Grottes Marines", river: "Côte Algarve", region: "Algarve", distance: "15 km", duration: "3h", difficulty: "Facile", activities: ["Kayak", "Plongée", "Baignade", "SUP"], description: "Les grottes et arches naturelles de l'Algarve.", color: "#f59e0b", emoji: "🌊", open: true, coords: [37.085, -8.668], sponsored: "Algarve Tourism", camping: false, waterPoints: true },
+  { id: 18, type: "SEA", country: "GR", name: "Îles Ioniques · Grèce", river: "Mer Ionienne", region: "Îles Ioniennes", distance: "30 km", duration: "2 jours", difficulty: "Facile", activities: ["Kayak", "Plongée", "Baignade"], description: "Pagayer entre les îles grecques aux eaux cristallines.", color: "#2563eb", emoji: "🏛️", open: true, coords: [38.620, 20.630], camping: true, waterPoints: true },
+  { id: 19, type: "LAKE", country: "IS", name: "Þingvallavatn · Islande", river: "Þingvallavatn", region: "Suðurland", distance: "12 km", duration: "3h", difficulty: "Facile", activities: ["Kayak", "Plongée", "SUP"], description: "Plongée dans les failles tectoniques entre deux continents.", color: "#7c3aed", emoji: "🌋", open: true, coords: [64.183, -21.117], camping: true, waterPoints: true },
+  { id: 20, type: "RIVER", country: "US", name: "Colorado · Grand Canyon", river: "Colorado", region: "Arizona", distance: "360 km", duration: "14 jours", difficulty: "Sportif", activities: ["Rafting", "Kayak", "Camping"], description: "L'expédition ultime dans le Grand Canyon.", color: "#f97316", emoji: "🏜️", open: true, coords: [36.100, -112.100], camping: true, waterPoints: false },
+  { id: 21, type: "SEA", country: "US", name: "Hawaï · Surf & Kayak", river: "Pacifique", region: "Hawaï", distance: "10 km", duration: "2h", difficulty: "Facile", activities: ["Surf", "Kayak", "SUP"], description: "Les vagues légendaires d'Hawaï.", color: "#f59e0b", emoji: "🌺", open: true, coords: [21.300, -157.800], camping: false, waterPoints: true },
+  { id: 22, type: "RIVER", country: "CA", name: "Nahanni · Virginia Falls", river: "Nahanni", region: "Territoires NW", distance: "300 km", duration: "10 jours", difficulty: "Sportif", activities: ["Kayak", "Canoë", "Camping"], description: "Top 10 mondial. Chutes deux fois plus hautes que Niagara.", color: "#7c3aed", emoji: "🐻", open: true, coords: [61.600, -125.700], camping: true, waterPoints: true },
+  { id: 23, type: "RIVER", country: "BR", name: "Amazone · Manaus", river: "Amazone", region: "Amazonas", distance: "150 km", duration: "5 jours", difficulty: "Facile", activities: ["Bateau électrique", "Canoë"], description: "S'enfoncer dans la jungle amazonienne depuis Manaus.", color: "#16a34a", emoji: "🦜", open: true, coords: [-3.100, -60.025], camping: true, waterPoints: true },
+  { id: 24, type: "RIVER", country: "CO", name: "Caño Cristales · Arc-en-ciel", river: "Caño Cristales", region: "Meta", distance: "8 km", duration: "2h", difficulty: "Facile", activities: ["Kayak", "Baignade"], description: "La rivière aux 5 couleurs. La plus belle rivière du monde.", color: "#dc2626", emoji: "🌈", open: true, coords: [2.270, -73.780], camping: false, waterPoints: true },
+  { id: 25, type: "RIVER", country: "CL", name: "Futaleufú · Patagonie", river: "Futaleufú", region: "Los Lagos", distance: "20 km", duration: "2 jours", difficulty: "Sportif", activities: ["Rafting", "Kayak"], description: "Top 5 mondial white water. Eaux turquoise en Patagonie.", color: "#06b6d4", emoji: "🏔️", open: true, coords: [-43.200, -71.860], camping: true, waterPoints: true },
+  { id: 26, type: "SEA", country: "MX", name: "Riviera Maya · Cenotes", river: "Mer des Caraïbes", region: "Quintana Roo", distance: "8 km", duration: "2h", difficulty: "Facile", activities: ["Kayak", "Plongée", "Baignade"], description: "Explorer les cenotes et la mer des Caraïbes turquoise.", color: "#06b6d4", emoji: "🐠", open: true, coords: [20.630, -87.080], camping: false, waterPoints: true },
+  { id: 27, type: "RIVER", country: "CR", name: "Pacuare · Costa Rica", river: "Río Pacuare", region: "Turrialba", distance: "28 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Rafting", "Kayak", "Camping"], description: "Le meilleur rafting d'Amérique Centrale.", color: "#16a34a", emoji: "🐊", open: true, coords: [9.900, -83.680], camping: true, waterPoints: true },
+  { id: 28, type: "RIVER", country: "NP", name: "Trisuli · Himalaya", river: "Trisuli", region: "Gandaki", distance: "50 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Rafting", "Kayak"], description: "Rafting dans l'Himalaya depuis Katmandou.", color: "#dc2626", emoji: "🏔️", open: true, coords: [27.800, 84.400], camping: true, waterPoints: true },
+  { id: 29, type: "SEA", country: "VN", name: "Baie d'Halong · Kayak", river: "Baie d'Halong", region: "Quảng Ninh", distance: "10 km", duration: "2h", difficulty: "Facile", activities: ["Kayak", "SUP"], description: "Explorer les grottes secrètes de la Baie d'Halong.", color: "#10b981", emoji: "🌅", open: true, coords: [20.910, 107.184], camping: false, waterPoints: true },
+  { id: 30, type: "SEA", country: "ID", name: "Bali · Surf & SUP", river: "Océan Indien", region: "Bali", distance: "10 km", duration: "2h", difficulty: "Intermédiaire", activities: ["Surf", "SUP", "Plongée"], description: "Les vagues légendaires de Bali pour surfeurs et paddlers.", color: "#f97316", emoji: "🏄", open: true, coords: [-8.409, 115.188], camping: false, waterPoints: true },
+  { id: 31, type: "SEA", country: "PH", name: "El Nido · Palawan", river: "Mer de Chine", region: "Palawan", distance: "20 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Plongée", "Baignade"], description: "Les lagons cachés de Palawan. Eaux cristallines.", color: "#06b6d4", emoji: "🏝️", open: true, coords: [11.177, 119.388], camping: true, waterPoints: true },
+  { id: 32, type: "RIVER", country: "IN", name: "Gange · Rishikesh Rafting", river: "Gange", region: "Uttarakhand", distance: "16 km", duration: "3h", difficulty: "Intermédiaire", activities: ["Rafting", "Kayak"], description: "Rafting sacré sur le Gange à Rishikesh.", color: "#f59e0b", emoji: "🕉️", open: true, coords: [30.086, 78.296], camping: false, waterPoints: true },
+  { id: 33, type: "RIVER", country: "ZM", name: "Zambèze · Chutes Victoria", river: "Zambèze", region: "Livingstone", distance: "70 km", duration: "3 jours", difficulty: "Sportif", activities: ["Rafting", "Kayak", "Camping"], description: "Rafting sous les embruns des Chutes Victoria.", color: "#f97316", emoji: "🦁", open: true, coords: [-17.930, 25.856], camping: true, waterPoints: true },
+  { id: 34, type: "SEA", country: "MA", name: "Essaouira · Kitesurf", river: "Atlantique", region: "Marrakech-Safi", distance: "10 km", duration: "2h", difficulty: "Intermédiaire", activities: ["Kitesurf", "Surf", "SUP"], description: "La capitale mondiale du kitesurf. Alizés constants.", color: "#f59e0b", emoji: "🪁", open: true, coords: [31.512, -9.770], camping: false, waterPoints: true },
+  { id: 35, type: "SEA", country: "ZA", name: "Cape Town · Kayak Baleines", river: "Atlantique", region: "Western Cape", distance: "12 km", duration: "3h", difficulty: "Facile", activities: ["Kayak", "Plongée", "Baignade"], description: "Kayak avec pingouins et baleines. Table Mountain en fond.", color: "#7c3aed", emoji: "🐋", open: true, coords: [-34.357, 18.474], camping: false, waterPoints: true },
+  { id: 36, type: "SEA", country: "AU", name: "Great Barrier Reef", river: "Mer de Corail", region: "Queensland", distance: "20 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Plongée", "SUP"], description: "Pagayer au-dessus de la plus grande barrière de corail.", color: "#10b981", emoji: "🐢", open: true, coords: [-18.286, 147.699], camping: false, waterPoints: true },
+  { id: 37, type: "RIVER", country: "NZ", name: "Whanganui · Great Journey", river: "Whanganui", region: "Manawatū", distance: "145 km", duration: "5 jours", difficulty: "Facile", activities: ["Canoë", "Kayak", "Camping"], description: "L'une des Great Walks de Nouvelle-Zélande sur l'eau.", color: "#16a34a", emoji: "🥝", open: true, coords: [-39.600, 174.800], camping: true, waterPoints: true },
+  { id: 38, type: "SEA", country: "PF", name: "Bora Bora · SUP Lagon", river: "Pacifique", region: "Polynésie française", distance: "10 km", duration: "2h", difficulty: "Facile", activities: ["SUP", "Kayak", "Plongée"], description: "SUP dans le lagon de Bora Bora. Raies mantas et eau à 28°C.", color: "#7c3aed", emoji: "🌺", open: true, coords: [-16.500, -151.741], camping: false, waterPoints: true },
+  { id: 39, type: "SEA", country: "FJ", name: "Fidji · Kayak Îles", river: "Pacifique", region: "Viti Levu", distance: "15 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Plongée", "SUP"], description: "Pagayer entre les îles paradisiaques des Fidji.", color: "#06b6d4", emoji: "🌴", open: true, coords: [-17.713, 178.065], camping: true, waterPoints: true },
+  { id: 40, type: "LAKE", country: "PE", name: "Lac Titicaca · Uros", river: "Lac Titicaca", region: "Puno", distance: "20 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Bateau traditionnel"], description: "Le plus haut lac navigable du monde à 3800m.", color: "#0891b2", emoji: "🌄", open: true, coords: [-15.840, -69.330], camping: false, waterPoints: true },
 ];
 
 // ─── COMPONENTS ───────────────────────────────────────────────────────────────
+
+function LevelBadge({ xp }) {
+  const level = [...LEVELS].reverse().find(l => xp >= l.minXP) || LEVELS[0];
+  const idx = LEVELS.findIndex(l => l === level);
+  const nextLevel = LEVELS[idx + 1];
+  const progress = nextLevel ? ((xp - level.minXP) / (nextLevel.minXP - level.minXP)) * 100 : 100;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "rgba(255,255,255,0.05)", padding: "6px 12px", borderRadius: "12px", border: `1px solid ${level.color}30` }}>
+      <span style={{ fontSize: "1.3rem" }}>{level.icon}</span>
+      <div>
+        <div style={{ fontSize: "0.7rem", fontWeight: 700, color: level.color }}>{level.name}</div>
+        <div style={{ fontSize: "0.6rem", color: "#4a7a6a" }}>{xp} XP</div>
+        {nextLevel && <div style={{ width: "60px", height: "3px", background: "rgba(255,255,255,0.1)", borderRadius: "2px", marginTop: "2px" }}><div style={{ width: `${progress}%`, height: "100%", background: level.color, borderRadius: "2px", transition: "width 0.5s" }} /></div>}
+      </div>
+    </div>
+  );
+}
 
 function WeatherWidget({ coords, spotName, difficulty, small = false }) {
   const [w, setW] = useState(null);
@@ -169,11 +235,7 @@ function WeatherWidget({ coords, spotName, difficulty, small = false }) {
     setLoadingAdvice(false);
   };
   if (!w) return <span style={{ fontSize: "0.68rem", color: "#3a6a5a" }}>🌤️ ...</span>;
-  if (small) return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", padding: "2px 8px", background: `${w.col}15`, border: `1px solid ${w.col}30`, borderRadius: "20px", fontSize: "0.65rem", color: w.col, fontWeight: 600 }}>
-      {w.icon} {w.temp}°C
-    </span>
-  );
+  if (small) return <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", padding: "2px 8px", background: `${w.col}15`, border: `1px solid ${w.col}30`, borderRadius: "20px", fontSize: "0.65rem", color: w.col, fontWeight: 600 }}>{w.icon} {w.temp}°C</span>;
   return (
     <div style={{ padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: `1px solid ${w.col}40`, borderRadius: "14px", marginTop: "10px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
@@ -181,9 +243,7 @@ function WeatherWidget({ coords, spotName, difficulty, small = false }) {
           <span style={{ fontSize: "1.6rem" }}>{w.icon}</span>
           <div><div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#daf0e8" }}>{w.temp}°C</div><div style={{ fontSize: "0.68rem", color: "#5a8a78", textTransform: "capitalize" }}>{w.desc}</div></div>
         </div>
-        <div style={{ padding: "4px 10px", background: `${w.col}20`, border: `1px solid ${w.col}40`, borderRadius: "20px", fontSize: "0.68rem", fontWeight: 700, color: w.col }}>
-          {w.s === "good" ? "✅" : w.s === "med" ? "⚠️" : "🚫"} {w.l}
-        </div>
+        <div style={{ padding: "4px 10px", background: `${w.col}20`, border: `1px solid ${w.col}40`, borderRadius: "20px", fontSize: "0.68rem", fontWeight: 700, color: w.col }}>{w.s === "good" ? "✅" : w.s === "med" ? "⚠️" : "🚫"} {w.l}</div>
       </div>
       <div style={{ display: "flex", gap: "14px", alignItems: "center", marginBottom: advice ? "8px" : 0 }}>
         <span style={{ fontSize: "0.68rem", color: "#4a7a6a" }}>💨 <strong style={{ color: "#8ab8b0" }}>{w.windKmh} km/h</strong></span>
@@ -197,16 +257,144 @@ function WeatherWidget({ coords, spotName, difficulty, small = false }) {
   );
 }
 
+function LegalWarning({ country }) {
+  const [open, setOpen] = useState(false);
+  const legal = LEGAL_INFO[country] || LEGAL_INFO.default;
+  return (
+    <div style={{ marginTop: "8px" }}>
+      <button onClick={e => { e.stopPropagation(); setOpen(o => !o); }} style={{ background: "none", border: "1px solid rgba(245,158,11,0.25)", padding: "3px 9px", borderRadius: "20px", color: "#fbbf24", fontSize: "0.65rem", cursor: "pointer" }}>
+        ⚖️ Réglementation {COUNTRIES[country]?.flag} {open ? "▲" : "▼"}
+      </button>
+      {open && (
+        <div style={{ marginTop: "6px", padding: "9px 11px", background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.18)", borderRadius: "10px" }}>
+          <p style={{ fontSize: "0.68rem", color: "#a8edcf", marginBottom: "3px" }}>📋 Licence : {legal.license}</p>
+          <p style={{ fontSize: "0.68rem", color: "#a8edcf", marginBottom: "3px" }}>🚸 Âge minimum : {legal.minAge} ans</p>
+          <p style={{ fontSize: "0.68rem", color: "#a8edcf", marginBottom: "3px" }}>🆘 Urgences : {legal.emergency}</p>
+          <p style={{ fontSize: "0.68rem", color: "#f87171" }}>⚠️ {legal.rules}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ExpeditionPlanner({ spot }) {
+  const [checklist, setChecklist] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const isLong = spot.duration?.includes("jour") || spot.duration?.includes("semaine") || parseInt(spot.distance) > 50;
+  if (!isLong) return null;
+  const generate = async (e) => {
+    e.stopPropagation();
+    setLoading(true);
+    setChecklist(await generateExpeditionChecklist(spot));
+    setLoading(false);
+  };
+  return (
+    <div style={{ marginTop: "10px", padding: "10px 12px", background: "rgba(26,158,110,0.06)", border: "1px solid rgba(26,158,110,0.18)", borderRadius: "12px" }}>
+      <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf", marginBottom: "6px" }}>⛺ Mode expédition longue durée</p>
+      <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "7px" }}>
+        {["Kayak/Canoë", "Pagaie secours", "Gilet", "Trousse 1ers soins", "GPS/VHF"].map(item => <span key={item} style={{ fontSize: "0.6rem", padding: "2px 7px", background: "rgba(26,158,110,0.1)", borderRadius: "20px", color: "#7ecfb0" }}>✓ {item}</span>)}
+      </div>
+      <button onClick={generate} disabled={loading} style={{ background: "none", border: "1px solid rgba(26,158,110,0.3)", padding: "4px 10px", borderRadius: "20px", color: "#a8edcf", fontSize: "0.68rem", cursor: "pointer" }}>
+        {loading ? "⏳ Génération..." : "📋 Checklist IA personnalisée"}
+      </button>
+      {checklist && <p style={{ fontSize: "0.72rem", color: "#8ab8b0", marginTop: "8px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{checklist}</p>}
+    </div>
+  );
+}
+
+function ProviderComparator({ routeId }) {
+  const routeProviders = PROVIDERS.filter(p => p.routeIds?.includes(routeId));
+  if (routeProviders.length < 1) return null;
+  return (
+    <div style={{ marginTop: "10px" }}>
+      <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf", marginBottom: "7px" }}>📊 Prestataires disponibles</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+        {routeProviders.map(p => (
+          <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px" }}>
+            <div>
+              <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#c8e8d8" }}>{p.emoji} {p.name}</div>
+              <div style={{ fontSize: "0.62rem", color: "#4a7a6a" }}>{p.inclut?.slice(0, 3).join(" · ")} {p.eco ? "· 🌿 Éco" : ""}</div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ fontSize: "0.9rem", fontWeight: 800, color: "#a8edcf" }}>{p.price}{p.currency}</div>
+              <div style={{ fontSize: "0.62rem", color: "#f59e0b" }}>⭐ {p.rating} ({p.reviews})</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LiveConditions({ spotId }) {
+  const [reports, setReports] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [waterLevel, setWaterLevel] = useState("normal");
+  const [crowd, setCrowd] = useState("moyenne");
+  const submitReport = (e) => {
+    e.stopPropagation();
+    setReports([{ id: Date.now(), waterLevel, crowd, date: new Date().toISOString() }, ...reports]);
+    setShowForm(false);
+  };
+  return (
+    <div style={{ marginTop: "10px", padding: "10px 12px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "7px" }}>
+        <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf" }}>📸 Conditions en direct</p>
+        <button onClick={e => { e.stopPropagation(); setShowForm(f => !f); }} style={{ background: "rgba(26,158,110,0.15)", border: "none", padding: "3px 9px", borderRadius: "20px", color: "#a8edcf", fontSize: "0.65rem", cursor: "pointer" }}>+ Partager</button>
+      </div>
+      {showForm && (
+        <div style={{ marginBottom: "8px", padding: "8px", background: "rgba(26,158,110,0.06)", borderRadius: "9px" }}>
+          <select value={waterLevel} onChange={e => setWaterLevel(e.target.value)} onClick={e => e.stopPropagation()} style={{ width: "100%", marginBottom: "5px", padding: "5px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "8px", color: "#e8f4f0", fontSize: "0.7rem", outline: "none" }}>
+            <option value="bas">💧 Niveau bas</option><option value="normal">💧 Niveau normal</option><option value="haut">🌊 Crue</option>
+          </select>
+          <select value={crowd} onChange={e => setCrowd(e.target.value)} onClick={e => e.stopPropagation()} style={{ width: "100%", marginBottom: "6px", padding: "5px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "8px", color: "#e8f4f0", fontSize: "0.7rem", outline: "none" }}>
+            <option value="vide">👤 Désert</option><option value="moyenne">👥 Calme</option><option value="plein">👨‍👩‍👧‍👦 Bondé</option>
+          </select>
+          <button onClick={submitReport} style={{ width: "100%", padding: "5px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "8px", color: "#fff", fontSize: "0.7rem", cursor: "pointer" }}>📤 Publier</button>
+        </div>
+      )}
+      {reports.length === 0 ? <p style={{ fontSize: "0.65rem", color: "#3a6a5a" }}>Aucun rapport récent. Sois le premier !</p> : reports.map(r => (
+        <div key={r.id} style={{ display: "flex", gap: "10px", fontSize: "0.65rem", color: "#8ab8b0", padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+          <span>💧 {r.waterLevel === "bas" ? "Bas" : r.waterLevel === "haut" ? "Crue" : "Normal"}</span>
+          <span>👥 {r.crowd === "vide" ? "Désert" : r.crowd === "plein" ? "Bondé" : "Calme"}</span>
+          <span style={{ color: "#3a6a5a", marginLeft: "auto" }}>{new Date(r.date).toLocaleTimeString("fr")}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SeasonalCalendar() {
+  const months = ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"];
+  const statuses = ["off", "off", "low", "good", "ideal", "ideal", "ideal", "ideal", "good", "low", "off", "off"];
+  const colors = { off: "#dc2626", low: "#f59e0b", good: "#10b981", ideal: "#1a9e6e" };
+  const labels = { off: "Fermé", low: "Possible", good: "Bon", ideal: "Idéal" };
+  const cur = new Date().getMonth();
+  return (
+    <div style={{ marginTop: "10px", padding: "9px 11px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
+      <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf", marginBottom: "7px" }}>📅 Navigabilité saisonnière</p>
+      <div style={{ display: "flex", gap: "3px", flexWrap: "wrap" }}>
+        {months.map((m, i) => (
+          <div key={m} style={{ textAlign: "center", padding: "3px 4px", background: `${colors[statuses[i]]}20`, border: `1px solid ${colors[statuses[i]]}40`, borderRadius: "7px", minWidth: "32px", outline: i === cur ? `2px solid ${colors[statuses[i]]}` : "none" }}>
+            <div style={{ fontSize: "0.55rem", color: colors[statuses[i]], fontWeight: i === cur ? 700 : 400 }}>{m}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: "flex", gap: "8px", marginTop: "6px" }}>
+        {Object.entries(colors).map(([k, v]) => <span key={k} style={{ fontSize: "0.58rem", color: v }}>■ {labels[k]}</span>)}
+      </div>
+    </div>
+  );
+}
+
 function AIDescriptionButton({ spot, isPremium, onShowPremium }) {
   const [loading, setLoading] = useState(false);
   const [aiDesc, setAiDesc] = useState(null);
-  const [error, setError] = useState(null);
   const generate = async (e) => {
     e.stopPropagation();
     if (!isPremium) { onShowPremium(); return; }
-    setLoading(true); setError(null); setAiDesc(null);
-    try { setAiDesc(await generateDescription(spot)); }
-    catch { setError("Erreur IA. Réessaie !"); }
+    setLoading(true);
+    setAiDesc(await generateDescription(spot));
     setLoading(false);
   };
   return (
@@ -216,12 +404,11 @@ function AIDescriptionButton({ spot, isPremium, onShowPremium }) {
       </button>
       {aiDesc && (
         <div style={{ marginTop: "10px", padding: "12px 14px", background: "linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1))", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "12px" }}>
-          <div style={{ fontSize: "0.62rem", color: "#a5b4fc", fontWeight: 700, marginBottom: "5px" }}>🤖 DESCRIPTION GÉNÉRÉE PAR IA</div>
+          <div style={{ fontSize: "0.62rem", color: "#a5b4fc", fontWeight: 700, marginBottom: "5px" }}>🤖 DESCRIPTION IA</div>
           <p style={{ fontSize: "0.84rem", color: "#c4b5fd", lineHeight: 1.65, fontStyle: "italic" }}>{aiDesc}</p>
           <button onClick={(e) => { e.stopPropagation(); setAiDesc(null); }} style={{ marginTop: "8px", padding: "3px 10px", background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "20px", color: "#a5b4fc", fontSize: "0.65rem", cursor: "pointer" }}>🔄 Régénérer</button>
         </div>
       )}
-      {error && <p style={{ fontSize: "0.7rem", color: "#f87171", marginTop: "6px" }}>{error}</p>}
     </div>
   );
 }
@@ -238,51 +425,6 @@ function StarRating({ value, onChange, readonly = false }) {
   );
 }
 
-function ReviewSummary({ reviews }) {
-  const [summary, setSummary] = useState(null);
-  const [loading, setLoading] = useState(false);
-  if (reviews.length < 2) return null;
-  const generate = async (e) => { e.stopPropagation(); setLoading(true); setSummary(await summarizeReviews(reviews)); setLoading(false); };
-  return (
-    <div style={{ marginBottom: "10px" }}>
-      <button onClick={generate} disabled={loading} style={{ background: "none", border: "1px solid rgba(26,158,110,0.2)", padding: "3px 9px", borderRadius: "20px", color: "#7ecfb0", fontSize: "0.65rem", cursor: "pointer" }}>
-        📋 {loading ? "..." : "Résumé IA des avis"}
-      </button>
-      {summary && <p style={{ fontSize: "0.72rem", color: "#a8edcf", padding: "7px 9px", background: "rgba(26,158,110,0.06)", borderRadius: "9px", marginTop: "5px" }}>📋 {summary}</p>}
-    </div>
-  );
-}
-
-function AIReviewSuggestion({ spotName, onSuggestion }) {
-  const [loading, setLoading] = useState(false);
-  const generate = async (e) => { e.stopPropagation(); setLoading(true); const s = await generateReviewSuggestion(spotName); if (s) onSuggestion(s); setLoading(false); };
-  return (
-    <button onClick={generate} disabled={loading} style={{ background: "none", border: "1px solid rgba(99,102,241,0.3)", padding: "4px 9px", borderRadius: "20px", color: "#a5b4fc", fontSize: "0.68rem", cursor: "pointer", marginBottom: "8px" }}>
-      🪄 {loading ? "Génération..." : "Suggestion IA"}
-    </button>
-  );
-}
-
-function SpotRecommendations({ spot, allSpots }) {
-  const [recs, setRecs] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const generate = async (e) => {
-    e.stopPropagation();
-    setLoading(true);
-    const similar = allSpots.filter(s => s.id !== spot.id && s.type === spot.type).slice(0, 6);
-    setRecs(await getRecommendations(spot, similar));
-    setLoading(false);
-  };
-  return (
-    <div style={{ marginTop: "10px", padding: "10px 12px", background: "rgba(26,158,110,0.05)", border: "1px solid rgba(26,158,110,0.15)", borderRadius: "12px" }}>
-      <button onClick={generate} disabled={loading} style={{ background: "none", border: "1px solid rgba(26,158,110,0.3)", padding: "5px 12px", borderRadius: "20px", color: "#a8edcf", fontSize: "0.72rem", cursor: "pointer" }}>
-        🧭 {loading ? "..." : "Spots similaires recommandés"}
-      </button>
-      {recs && <p style={{ fontSize: "0.75rem", color: "#8ab8b0", marginTop: "8px", lineHeight: 1.6 }}>✨ {recs}</p>}
-    </div>
-  );
-}
-
 function ReviewsSection({ spot, session, userName, allSpots }) {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -291,9 +433,16 @@ function ReviewsSection({ spot, session, userName, allSpots }) {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState("");
+  const [summary, setSummary] = useState(null);
+  const [recs, setRecs] = useState(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [loadingRecs, setLoadingRecs] = useState(false);
+  const [loadingSuggestion, setLoadingSuggestion] = useState(false);
+
   useEffect(() => { load(); }, [spot.id]);
   const load = async () => { setLoading(true); const d = await sb.reviews.get(spot.id); setReviews(Array.isArray(d) ? d : []); setLoading(false); };
   const avg = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null;
+
   const submit = async () => {
     if (!rating) { setErr("Choisis une note !"); return; }
     if (!comment.trim()) { setErr("Écris un commentaire !"); return; }
@@ -301,6 +450,15 @@ function ReviewsSection({ spot, session, userName, allSpots }) {
     await sb.reviews.add({ route_id: spot.id, user_id: session.user.id, rating, comment: comment.trim(), user_name: userName }, session.token);
     setRating(0); setComment(""); setShowForm(false); await load(); setSubmitting(false);
   };
+
+  const getSuggestion = async (e) => {
+    e.stopPropagation();
+    setLoadingSuggestion(true);
+    const s = await generateReviewSuggestion(spot.name);
+    if (s) setComment(s);
+    setLoadingSuggestion(false);
+  };
+
   return (
     <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
@@ -308,13 +466,18 @@ function ReviewsSection({ spot, session, userName, allSpots }) {
           <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#a8edcf" }}>⭐ Avis</span>
           {avg && <><span style={{ fontSize: "0.95rem", fontWeight: 800, color: "#f59e0b" }}>{avg}</span><StarRating value={Math.round(avg)} readonly /><span style={{ fontSize: "0.65rem", color: "#3a6a5a" }}>({reviews.length})</span></>}
         </div>
-        {session && !showForm && <button onClick={() => setShowForm(true)} style={{ padding: "4px 12px", background: "rgba(26,158,110,0.12)", border: "1px solid rgba(26,158,110,0.28)", borderRadius: "20px", color: "#7ecfb0", fontSize: "0.72rem", fontWeight: 600 }}>✍️ Laisser un avis</button>}
+        <div style={{ display: "flex", gap: "5px" }}>
+          {reviews.length >= 2 && <button onClick={async e => { e.stopPropagation(); setLoadingSummary(true); setSummary(await summarizeReviews(reviews)); setLoadingSummary(false); }} disabled={loadingSummary} style={{ padding: "3px 8px", background: "none", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", color: "#7ecfb0", fontSize: "0.62rem", cursor: "pointer" }}>📋 {loadingSummary ? "..." : "Résumé IA"}</button>}
+          {session && !showForm && <button onClick={() => setShowForm(true)} style={{ padding: "4px 12px", background: "rgba(26,158,110,0.12)", border: "1px solid rgba(26,158,110,0.28)", borderRadius: "20px", color: "#7ecfb0", fontSize: "0.72rem", fontWeight: 600 }}>✍️ Avis</button>}
+        </div>
       </div>
-      <ReviewSummary reviews={reviews} />
+      {summary && <p style={{ fontSize: "0.72rem", color: "#a8edcf", padding: "7px 9px", background: "rgba(26,158,110,0.06)", borderRadius: "9px", marginBottom: "8px" }}>📋 {summary}</p>}
       {showForm && (
         <div style={{ padding: "12px", background: "rgba(26,158,110,0.06)", border: "1px solid rgba(26,158,110,0.18)", borderRadius: "12px", marginBottom: "10px" }}>
           <div style={{ marginBottom: "8px" }}><p style={{ fontSize: "0.7rem", color: "#4a7a6a", marginBottom: "5px" }}>Ta note</p><StarRating value={rating} onChange={setRating} /></div>
-          <AIReviewSuggestion spotName={spot.name} onSuggestion={setComment} />
+          <button onClick={getSuggestion} disabled={loadingSuggestion} style={{ background: "none", border: "1px solid rgba(99,102,241,0.3)", padding: "4px 9px", borderRadius: "20px", color: "#a5b4fc", fontSize: "0.68rem", cursor: "pointer", marginBottom: "8px" }}>
+            🪄 {loadingSuggestion ? "Génération..." : "Suggestion IA"}
+          </button>
           <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Partage ton expérience..." rows={2} style={{ width: "100%", padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(26,158,110,0.18)", borderRadius: "10px", color: "#e8f4f0", fontSize: "0.8rem", resize: "vertical", outline: "none", marginBottom: "8px" }} />
           {err && <p style={{ color: "#f87171", fontSize: "0.7rem", marginBottom: "6px" }}>{err}</p>}
           <div style={{ display: "flex", gap: "6px" }}>
@@ -340,13 +503,41 @@ function ReviewsSection({ spot, session, userName, allSpots }) {
           ))}
         </div>
       )}
-      <SpotRecommendations spot={spot} allSpots={allSpots} />
+      <div style={{ marginTop: "10px", padding: "8px 11px", background: "rgba(26,158,110,0.05)", borderRadius: "11px", border: "1px solid rgba(26,158,110,0.12)" }}>
+        <button onClick={async e => { e.stopPropagation(); setLoadingRecs(true); const similar = allSpots.filter(s => s.id !== spot.id && s.type === spot.type).slice(0, 6); setRecs(await getRecommendations(spot, similar)); setLoadingRecs(false); }} disabled={loadingRecs} style={{ background: "none", border: "1px solid rgba(26,158,110,0.3)", padding: "5px 12px", borderRadius: "20px", color: "#a8edcf", fontSize: "0.72rem", cursor: "pointer" }}>
+          🧭 {loadingRecs ? "..." : "Spots similaires recommandés"}
+        </button>
+        {recs && <p style={{ fontSize: "0.75rem", color: "#8ab8b0", marginTop: "8px", lineHeight: 1.6 }}>✨ {recs}</p>}
+      </div>
     </div>
+  );
+}
+
+function TranslateButton({ text, onTranslated }) {
+  const [lang, setLang] = useState("fr");
+  const [loading, setLoading] = useState(false);
+  const flags = { fr: "🇫🇷", en: "🇬🇧", es: "🇪🇸", de: "🇩🇪" };
+  const next = { fr: "en", en: "es", es: "de", de: "fr" };
+  const translate = async (e) => {
+    e.stopPropagation();
+    const nextLang = next[lang];
+    if (nextLang === "fr") { onTranslated(text); setLang("fr"); return; }
+    setLoading(true);
+    const translated = await translateText(text, nextLang);
+    if (translated) onTranslated(translated);
+    setLang(nextLang);
+    setLoading(false);
+  };
+  return (
+    <button onClick={translate} disabled={loading} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", padding: "2px 8px", borderRadius: "20px", fontSize: "0.62rem", color: "#6a9a8c", cursor: "pointer" }}>
+      {loading ? "⏳" : `🌐 ${flags[lang]}`}
+    </button>
   );
 }
 
 function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, onShowPremium, allSpots }) {
   const [open, setOpen] = useState(false);
+  const [desc, setDesc] = useState(spot.description);
   const typeColor = { RIVER: "#2563eb", LAKE: "#0891b2", SEA: "#7c3aed" }[spot.type] || "#1a9e6e";
   const typeIcon = { RIVER: "🏞️", LAKE: "🏔️", SEA: "🌊" }[spot.type] || "🌊";
   const typeName = { RIVER: "Rivière", LAKE: "Lac", SEA: "Mer" }[spot.type] || "";
@@ -362,7 +553,9 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
               <h3 style={{ fontSize: "0.92rem", fontWeight: 700, color: "#daf0e8" }}>{spot.name}</h3>
               <span style={{ fontSize: "0.85rem" }}>{COUNTRIES[spot.country]?.flag}</span>
               <span style={{ padding: "1px 6px", background: `${typeColor}18`, border: `1px solid ${typeColor}30`, borderRadius: "20px", fontSize: "0.58rem", color: typeColor, fontWeight: 600 }}>{typeIcon} {typeName}</span>
-              {spot.community && <span style={{ padding: "1px 5px", background: "rgba(245,158,11,0.12)", color: "#fbbf24", border: "1px solid rgba(245,158,11,0.22)", borderRadius: "10px", fontSize: "0.58rem" }}>Communauté</span>}
+              {spot.camping && <span style={{ fontSize: "0.58rem", background: "rgba(26,158,110,0.12)", color: "#7ecfb0", padding: "1px 5px", borderRadius: "10px" }}>⛺</span>}
+              {spot.waterPoints && <span style={{ fontSize: "0.58rem", background: "rgba(8,145,178,0.12)", color: "#67e8f9", padding: "1px 5px", borderRadius: "10px" }}>💧</span>}
+              {spot.community && <span style={{ padding: "1px 5px", background: "rgba(245,158,11,0.12)", color: "#fbbf24", borderRadius: "10px", fontSize: "0.58rem" }}>🌟</span>}
             </div>
             <div style={{ color: "#4a7a6a", fontSize: "0.7rem" }}>📍 {spot.river} · {spot.region} · {COUNTRIES[spot.country]?.name}</div>
           </div>
@@ -375,17 +568,26 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
         <div style={{ display: "flex", gap: "14px", marginBottom: "8px" }}>
           <span style={{ fontSize: "0.7rem", color: "#4a7a6a" }}>📏 {spot.distance}</span>
           <span style={{ fontSize: "0.7rem", color: "#4a7a6a" }}>⏱️ {spot.duration}</span>
+          {spot.emergencyContact && <span style={{ fontSize: "0.7rem", color: "#4a7a6a" }}>🆘 {spot.emergencyContact}</span>}
         </div>
         <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
           {spot.activities.map(a => <span key={a} style={{ padding: "2px 8px", background: `${spot.color}12`, border: `1px solid ${spot.color}24`, borderRadius: "20px", fontSize: "0.65rem", color: "#8ae8cc", fontWeight: 500 }}>{a}</span>)}
         </div>
         {open && (
           <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-            <p style={{ color: "#8ab8b0", fontSize: "0.82rem", lineHeight: 1.65, marginBottom: "12px" }}>{spot.description}</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+              <p style={{ color: "#8ab8b0", fontSize: "0.82rem", lineHeight: 1.65, flex: 1 }}>{desc}</p>
+              <TranslateButton text={spot.description} onTranslated={setDesc} />
+            </div>
             <AIDescriptionButton spot={spot} isPremium={isPremium} onShowPremium={onShowPremium} />
             <WeatherWidget coords={spot.coords} spotName={spot.name} difficulty={spot.difficulty} />
+            <SeasonalCalendar />
+            <LiveConditions spotId={spot.id} />
+            <ExpeditionPlanner spot={spot} />
+            <ProviderComparator routeId={spot.id} />
+            <LegalWarning country={spot.country} />
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
-              <button onClick={e => { e.stopPropagation(); onBook(spot); }} style={{ padding: "8px 18px", background: `linear-gradient(135deg,${spot.color},${spot.color}bb)`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.78rem" }}>🛶 Voir le parcours</button>
+              <button onClick={e => { e.stopPropagation(); onBook(spot); }} style={{ padding: "8px 18px", background: `linear-gradient(135deg,${spot.color},${spot.color}bb)`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.78rem" }}>🛶 Réserver ce spot</button>
             </div>
             <ReviewsSection spot={spot} session={session} userName={userName} allSpots={allSpots} />
           </div>
@@ -395,10 +597,10 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
   );
 }
 
-function PremiumModal({ onClose }) {
+function PremiumModal({ onClose, onActivate }) {
   const plans = [
     { name: "Mensuel", price: "4,99€", period: "/mois", features: ["Météo avancée 7j", "Favoris illimités", "Sans pub"] },
-    { name: "Annuel", price: "39,99€", period: "/an", popular: true, features: ["Tout du mensuel", "🤖 Descriptions IA", "🧠 Conseils météo IA", "🪄 Suggestions d'avis", "📋 Résumés d'avis", "🧭 Recommandations", "Économisez 33%"] },
+    { name: "Annuel", price: "39,99€", period: "/an", popular: true, features: ["Tout du mensuel", "🤖 Descriptions IA", "🧠 Conseils météo IA", "🪄 Suggestions d'avis", "📋 Résumés d'avis", "🧭 Recommandations", "🌐 Traduction IA", "Économisez 33%"] },
   ];
   return (
     <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -422,7 +624,7 @@ function PremiumModal({ onClose }) {
             </div>
           ))}
         </div>
-        <button style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)" }}>
+        <button onClick={() => { onActivate(); onClose(); }} style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)" }}>
           ⭐ Commencer l'essai gratuit 7 jours
         </button>
         <p style={{ textAlign: "center", fontSize: "0.62rem", color: "#3a6a5a", marginTop: "8px" }}>Sans engagement · Annulable à tout moment</p>
@@ -449,7 +651,7 @@ function BookingModal({ spot, onClose }) {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div><label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "5px", fontWeight: 500 }}>Date souhaitée</label><input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ width: "100%", padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.25)", borderRadius: "12px", color: "#e8f4f0", fontSize: "0.84rem", outline: "none" }} /></div>
-              <div><label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "5px", fontWeight: 500 }}>Nombre de personnes</label>
+              <div><label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "5px", fontWeight: 500 }}>Personnes</label>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                   <button onClick={() => setPax(p => Math.max(1, p - 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "#a8edcf", fontSize: "1.1rem" }}>−</button>
                   <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "#daf0e8", minWidth: "30px", textAlign: "center" }}>{pax}</span>
@@ -482,10 +684,10 @@ function SubmitSpotModal({ onClose, onAdd, session, showAuth }) {
     <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(26,158,110,0.28)", borderRadius: "24px", padding: "22px", maxWidth: "480px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.55)" }}>
         {done ? (
-          <div style={{ textAlign: "center", padding: "28px 0" }}><div style={{ fontSize: "2.8rem", marginBottom: "10px" }}>🎉</div><h3 style={{ color: "#a8edcf", fontSize: "1.1rem", marginBottom: "6px" }}>Spot ajouté !</h3><p style={{ color: "#5a8a78", fontSize: "0.84rem" }}>Merci pour ta contribution à FleuVibe !</p></div>
+          <div style={{ textAlign: "center", padding: "28px 0" }}><div style={{ fontSize: "2.8rem", marginBottom: "10px" }}>🎉</div><h3 style={{ color: "#a8edcf" }}>Spot ajouté ! Merci 🌊</h3></div>
         ) : (
           <>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px" }}>
               <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#daf0e8" }}>➕ Ajouter un spot</h2>
               <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#5a8a78", borderRadius: "50%", width: 32, height: 32 }}>✕</button>
             </div>
@@ -498,7 +700,7 @@ function SubmitSpotModal({ onClose, onAdd, session, showAuth }) {
                   ))}
                 </div>
               </div>
-              {[["Nom du spot *", "name", "text", "Ex: Lesse · Houyet → Anseremme"], ["Rivière / Lac / Mer *", "river", "text", "Ex: Lesse"], ["Région", "region", "text", "Ex: Wallonie"], ["Distance", "distance", "text", "Ex: 21 km"], ["Durée", "duration", "text", "Ex: 4–5h"], ["Coordonnées GPS (lat, lng)", "coords", "text", "Ex: 50.185, 5.002"], ["Description", "description", "textarea", "Décris ce spot..."]].map(([label, key, type, ph]) => (
+              {[["Nom *", "name", "text", "Ex: Lesse · Houyet"], ["Rivière / Lac *", "river", "text", "Ex: Lesse"], ["Région", "region", "text", "Ex: Wallonie"], ["Distance", "distance", "text", "Ex: 21 km"], ["Durée", "duration", "text", "Ex: 4–5h"], ["Coordonnées GPS", "coords", "text", "Ex: 50.185, 5.002"], ["Description", "description", "textarea", "Décris ce spot..."]].map(([label, key, type, ph]) => (
                 <div key={key}>
                   <label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "4px", fontWeight: 500 }}>{label}</label>
                   {type === "textarea" ? <textarea value={form[key]} onChange={e => f(key, e.target.value)} placeholder={ph} rows={2} style={{ ...inp, resize: "vertical" }} /> : <input value={form[key]} onChange={e => f(key, e.target.value)} placeholder={ph} style={inp} />}
@@ -519,10 +721,10 @@ function SubmitSpotModal({ onClose, onAdd, session, showAuth }) {
               <div>
                 <label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "4px", fontWeight: 500 }}>Activités</label>
                 <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                  {["Kayak", "Canoë", "SUP", "Rafting", "Surf", "Voile", "Kitesurf", "Plongée", "Baignade", "Camping", "Pêche"].map(a => { const sel = form.activities.includes(a); return <button key={a} onClick={() => f("activities", sel ? form.activities.filter(x => x !== a) : [...form.activities, a])} style={{ padding: "4px 10px", borderRadius: "20px", border: `1px solid ${sel ? "#1a9e6e" : "rgba(255,255,255,0.07)"}`, background: sel ? "rgba(26,158,110,0.16)" : "rgba(255,255,255,0.02)", color: sel ? "#a8edcf" : "#4a7a6a", fontSize: "0.7rem", fontWeight: 500 }}>{a}</button>; })}
+                  {["Kayak", "Canoë", "SUP", "Rafting", "Surf", "Voile", "Kitesurf", "Plongée", "Baignade", "Camping", "Pêche"].map(a => { const sel = form.activities.includes(a); return <button key={a} onClick={() => f("activities", sel ? form.activities.filter(x => x !== a) : [...form.activities, a])} style={{ padding: "4px 10px", borderRadius: "20px", border: `1px solid ${sel ? "#1a9e6e" : "rgba(255,255,255,0.07)"}`, background: sel ? "rgba(26,158,110,0.16)" : "rgba(255,255,255,0.02)", color: sel ? "#a8edcf" : "#4a7a6a", fontSize: "0.7rem" }}>{a}</button>; })}
                 </div>
               </div>
-              <button onClick={submit} style={{ padding: "11px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.86rem", boxShadow: "0 3px 12px rgba(26,158,110,0.25)", marginTop: "4px" }}>🌊 Soumettre le spot</button>
+              <button onClick={submit} style={{ padding: "11px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.86rem", marginTop: "4px" }}>🌊 Soumettre le spot</button>
             </div>
           </>
         )}
@@ -538,6 +740,8 @@ export default function FleuVibe() {
   const [profile, setProfile] = useState(null);
   const [favorites, setFavorites] = useState([]);
   const [isPremium, setIsPremium] = useState(false);
+  const [userXP, setUserXP] = useState(0);
+  const [userStats, setUserStats] = useState({ totalSpotsVisited: 0, countriesVisited: 0, totalReviews: 0, spotsAdded: 0, longExpeditions: 0 });
   const [authMode, setAuthMode] = useState("login");
   const [showAuth, setShowAuth] = useState(false);
   const [showPremium, setShowPremium] = useState(false);
@@ -555,19 +759,41 @@ export default function FleuVibe() {
   const [selType, setSelType] = useState("ALL");
   const [selDiff, setSelDiff] = useState("ALL");
   const [selContinent, setSelContinent] = useState("ALL");
+  const [darkMode, setDarkMode] = useState(true);
   const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => { setTimeout(() => setLoaded(true), 100); }, []);
+  useEffect(() => {
+    setTimeout(() => setLoaded(true), 100);
+    const xp = parseInt(localStorage.getItem("fv_xp") || "0");
+    const stats = JSON.parse(localStorage.getItem("fv_stats") || "{}");
+    setUserXP(xp);
+    if (stats.totalSpotsVisited) setUserStats(stats);
+  }, []);
+
   useEffect(() => {
     const s = localStorage.getItem("fv_session");
     if (s) { try { const p = JSON.parse(s); setSession(p); loadProfile(p.user.id, p.token); } catch {} }
   }, []);
 
+  const addXP = (amount) => {
+    const newXP = userXP + amount;
+    setUserXP(newXP);
+    localStorage.setItem("fv_xp", String(newXP));
+  };
+
+  const earnedBadges = Object.values(BADGES_DEF).filter(b => b.condition(userStats));
+
   const loadProfile = async (id, t) => { const p = await sb.profiles.get(id, t); if (p) { setProfile(p); try { setFavorites(JSON.parse(p.favorites || "[]")); } catch { setFavorites([]); } } };
-  const handleSignUp = async () => { setAuthLoading(true); setAuthError(""); const d = await sb.auth.signUp(authForm.email, authForm.password, authForm.fullName); if (d.error) { setAuthError(d.error.message); setAuthLoading(false); return; } if (d.access_token) { const s = { user: d.user, token: d.access_token }; setSession(s); localStorage.setItem("fv_session", JSON.stringify(s)); await sb.profiles.upsert({ id: d.user.id, full_name: authForm.fullName, username: authForm.email.split("@")[0], favorites: "[]" }, d.access_token); await loadProfile(d.user.id, d.access_token); setShowAuth(false); setAuthForm({ email: "", password: "", fullName: "" }); } else { setAuthError("Vérifie ton email !"); } setAuthLoading(false); };
+  const handleSignUp = async () => { setAuthLoading(true); setAuthError(""); const d = await sb.auth.signUp(authForm.email, authForm.password, authForm.fullName); if (d.error) { setAuthError(d.error.message); setAuthLoading(false); return; } if (d.access_token) { const s = { user: d.user, token: d.access_token }; setSession(s); localStorage.setItem("fv_session", JSON.stringify(s)); await sb.profiles.upsert({ id: d.user.id, full_name: authForm.fullName, username: authForm.email.split("@")[0], favorites: "[]" }, d.access_token); await loadProfile(d.user.id, d.access_token); setShowAuth(false); setAuthForm({ email: "", password: "", fullName: "" }); addXP(50); } else { setAuthError("Vérifie ton email !"); } setAuthLoading(false); };
   const handleSignIn = async () => { setAuthLoading(true); setAuthError(""); const d = await sb.auth.signIn(authForm.email, authForm.password); if (d.error) { setAuthError(d.error.message); setAuthLoading(false); return; } const s = { user: d.user, token: d.access_token }; setSession(s); localStorage.setItem("fv_session", JSON.stringify(s)); await loadProfile(d.user.id, d.access_token); setShowAuth(false); setAuthForm({ email: "", password: "", fullName: "" }); setAuthLoading(false); };
   const handleSignOut = async () => { if (session) await sb.auth.signOut(session.token); setSession(null); setProfile(null); setFavorites([]); setIsPremium(false); localStorage.removeItem("fv_session"); setShowProfile(false); };
-  const toggleFav = async (id) => { if (!session) { setShowAuth(true); return; } const n = favorites.includes(id) ? favorites.filter(f => f !== id) : [...favorites, id]; setFavorites(n); await sb.profiles.updateFavs(session.user.id, n, session.token); };
+  const toggleFav = async (id) => {
+    if (!session) { setShowAuth(true); return; }
+    const n = favorites.includes(id) ? favorites.filter(f => f !== id) : [...favorites, id];
+    setFavorites(n);
+    if (!favorites.includes(id)) addXP(10);
+    await sb.profiles.updateFavs(session.user.id, n, session.token);
+  };
 
   const handleAISearch = async () => {
     if (!search.trim()) return;
@@ -577,7 +803,6 @@ export default function FleuVibe() {
     setAiSearchActive(true);
     setAiSearchLoading(false);
   };
-
   const clearAISearch = () => { setAiSearchActive(false); setAiFilters(null); setSearch(""); };
 
   const userName = profile?.full_name || profile?.username || session?.user?.email?.split("@")[0] || "Utilisateur";
@@ -585,6 +810,7 @@ export default function FleuVibe() {
 
   const filtered = spots.filter(s => {
     if (page === "favorites") return favorites.includes(s.id);
+    if (page === "expeditions") return s.duration?.includes("jour") || s.duration?.includes("semaine") || parseInt(s.distance) > 50;
     if (aiSearchActive && aiFilters) {
       if (aiFilters.type && s.type !== aiFilters.type) return false;
       if (aiFilters.difficulty && s.difficulty !== aiFilters.difficulty) return false;
@@ -600,11 +826,11 @@ export default function FleuVibe() {
   });
 
   return (
-    <div style={{ minHeight: "100vh", background: "radial-gradient(ellipse at 20% 0%,#0a1628 0%,#0d2240 50%,#0a3d2e 100%)", fontFamily: "'Inter',sans-serif", color: "#e8f4f0" }}>
+    <div style={{ minHeight: "100vh", background: darkMode ? "radial-gradient(ellipse at 20% 0%,#0a1628 0%,#0d2240 50%,#0a3d2e 100%)" : "linear-gradient(160deg,#f0f9f4,#e8f4f0)", fontFamily: "'Inter',sans-serif", color: darkMode ? "#e8f4f0" : "#1a2e28", transition: "background 0.3s" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
-        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:rgba(255,255,255,0.03);border-radius:10px}::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#1a9e6e,#0891b2);border-radius:10px}
+        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:rgba(255,255,255,0.03)}::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#1a9e6e,#0891b2);border-radius:10px}
         button{cursor:pointer;transition:all 0.2s ease}button:active{transform:scale(0.97)}
         .fade-in{opacity:0;transform:translateY(12px);transition:opacity 0.4s ease,transform 0.4s ease}
         .fade-in.loaded{opacity:1;transform:translateY(0)}
@@ -618,16 +844,18 @@ export default function FleuVibe() {
         select option{background:#0d2240}
       `}</style>
 
-      {/* ── HEADER STICKY ── */}
-      <div style={{ position: "sticky", top: 0, background: "rgba(10,22,40,0.92)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.06)", zIndex: 100, padding: "10px 20px" }}>
+      {/* ── HEADER ── */}
+      <div style={{ position: "sticky", top: 0, background: darkMode ? "rgba(10,22,40,0.92)" : "rgba(240,249,244,0.92)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.06)", zIndex: 100, padding: "10px 20px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={{ fontSize: "1.8rem", animation: "float 4s ease-in-out infinite" }}>🌊</span>
             <h1 className="shimmer-text" style={{ fontSize: "1.4rem", fontWeight: 800 }}>FleuVibe</h1>
             <span style={{ background: "rgba(26,158,110,0.2)", border: "1px solid rgba(26,158,110,0.4)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#7ecfb0", fontWeight: 700 }}>WORLD</span>
             <span style={{ background: "linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2))", border: "1px solid rgba(99,102,241,0.4)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#a5b4fc", fontWeight: 700 }}>🤖 IA</span>
+            <button onClick={() => setDarkMode(d => !d)} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: "0.9rem" }}>{darkMode ? "☀️" : "🌙"}</button>
           </div>
-          <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "7px", alignItems: "center", flexWrap: "wrap" }}>
+            {session && <LevelBadge xp={userXP} />}
             <button onClick={() => setShowSubmit(true)} style={{ padding: "7px 14px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", color: "#a8edcf", fontWeight: 600, fontSize: "0.72rem" }}>
               ➕ Ajouter{communityCount > 0 ? ` · ${communityCount}🌟` : ""}
             </button>
@@ -647,41 +875,47 @@ export default function FleuVibe() {
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "20px 16px" }}>
 
         {/* STATS */}
-        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(80px,1fr))", gap: "10px", marginBottom: "18px" }}>
-          {[["🌊", spots.length, "Spots"], ["🌍", Object.keys(COUNTRIES).length, "Pays"], ["🏞️", spots.filter(s => s.type === "RIVER").length, "Rivières"], ["🏔️", spots.filter(s => s.type === "LAKE").length, "Lacs"], ["🌊", spots.filter(s => s.type === "SEA").length, "Mers"], ["🤖", "GPT", "IA Active"], ...(session ? [["❤️", favorites.length, "Favoris"]] : [])].map(([ic, val, label]) => (
-            <div key={label} style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px", padding: "12px", textAlign: "center" }}>
-              <div style={{ fontSize: "1.1rem", marginBottom: "2px" }}>{ic}</div>
-              <div style={{ fontSize: "1rem", fontWeight: 700, color: "#a8edcf" }}>{val}</div>
-              <div style={{ fontSize: "0.58rem", color: "#4a7a6a" }}>{label}</div>
+        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(75px,1fr))", gap: "8px", marginBottom: "16px" }}>
+          {[["🌊", spots.length, "Spots"], ["🌍", Object.keys(COUNTRIES).length, "Pays"], ["🏞️", spots.filter(s => s.type === "RIVER").length, "Rivières"], ["🏔️", spots.filter(s => s.type === "LAKE").length, "Lacs"], ["🌊", spots.filter(s => s.type === "SEA").length, "Mers"], ["🤖", "GPT", "IA"], ["💎", HIDDEN_GEMS.length, "Pépites"], ...(session ? [["❤️", favorites.length, "Favoris"]] : [])].map(([ic, val, label]) => (
+            <div key={label} style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "10px", textAlign: "center" }}>
+              <div style={{ fontSize: "1rem", marginBottom: "2px" }}>{ic}</div>
+              <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "#a8edcf" }}>{val}</div>
+              <div style={{ fontSize: "0.56rem", color: "#4a7a6a" }}>{label}</div>
             </div>
           ))}
         </div>
 
+        {/* BADGES */}
+        {earnedBadges.length > 0 && (
+          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.04s", display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "12px" }}>
+            {earnedBadges.map(b => (
+              <span key={b.name} style={{ padding: "3px 9px", background: "rgba(26,158,110,0.1)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", fontSize: "0.65rem", color: "#a8edcf" }}>{b.icon} {b.name}</span>
+            ))}
+          </div>
+        )}
+
         {/* NAV */}
-        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.05s", display: "flex", gap: "4px", marginBottom: "16px", background: "rgba(255,255,255,0.03)", padding: "4px", borderRadius: "50px", flexWrap: "wrap" }}>
-          {[["explore", "🗺️ Explorer"], ["weather", "🌤️ Météo"], ["tourism", "⭐ Destinations"], ["favorites", `❤️ Favoris${favorites.length > 0 ? ` (${favorites.length})` : ""}`]].map(([id, label]) => (
-            <button key={id} onClick={() => { setPage(id); setSearch(""); clearAISearch(); }} style={{ flex: 1, minWidth: "80px", padding: "8px 16px", borderRadius: "50px", border: "none", fontSize: "0.72rem", fontWeight: 600, background: page === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: page === id ? "#fff" : "#6a9a8c" }}>{label}</button>
+        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.06s", display: "flex", gap: "4px", marginBottom: "16px", background: "rgba(255,255,255,0.03)", padding: "4px", borderRadius: "50px", flexWrap: "wrap" }}>
+          {[["explore", "🗺️ Explorer"], ["expeditions", "⛺ Expéditions"], ["hidden", "💎 Pépites"], ["weather", "🌤️ Météo"], ["tourism", "⭐ Destinations"], ["favorites", `❤️ Favoris${favorites.length > 0 ? ` (${favorites.length})` : ""}`]].map(([id, label]) => (
+            <button key={id} onClick={() => { setPage(id); setSearch(""); clearAISearch(); }} style={{ flex: 1, minWidth: "70px", padding: "7px 10px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: page === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: page === id ? "#fff" : "#6a9a8c" }}>{label}</button>
           ))}
         </div>
 
         {/* EXPLORE */}
-        {page === "explore" && (
+        {(page === "explore" || page === "expeditions") && (
           <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.1s" }}>
-            {/* BARRE DE RECHERCHE + IA */}
             <div style={{ position: "relative", marginBottom: "14px" }}>
               <input type="text" value={search} onChange={e => { setSearch(e.target.value); if (aiSearchActive) clearAISearch(); }}
                 onKeyDown={e => e.key === "Enter" && handleAISearch()}
-                placeholder='🔍  Recherche classique  ou  🤖 "kayak facile en Belgique"'
+                placeholder={page === "expeditions" ? "🔍  Filtrer les expéditions..." : '🔍  Recherche classique  ou  🤖 "kayak facile en Belgique"'}
                 style={{ width: "100%", padding: "13px 18px", paddingRight: "130px", background: "rgba(255,255,255,0.05)", border: `1px solid ${aiSearchActive ? "rgba(99,102,241,0.5)" : "rgba(255,255,255,0.08)"}`, borderRadius: "50px", color: "#e8f4f0", fontSize: "0.84rem" }} />
               <div style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", display: "flex", gap: "4px" }}>
                 {aiSearchActive && <button onClick={clearAISearch} style={{ padding: "5px 10px", background: "rgba(220,38,38,0.2)", border: "none", borderRadius: "20px", color: "#f87171", fontSize: "0.65rem", fontWeight: 600 }}>✕ Reset</button>}
-                <button onClick={handleAISearch} disabled={aiSearchLoading || !search.trim()} style={{ padding: "5px 12px", background: aiSearchLoading ? "rgba(99,102,241,0.3)" : "linear-gradient(135deg,#6366f1,#8b5cf6)", border: "none", borderRadius: "20px", color: "#fff", fontSize: "0.65rem", fontWeight: 700 }}>
+                {page === "explore" && <button onClick={handleAISearch} disabled={aiSearchLoading || !search.trim()} style={{ padding: "5px 12px", background: aiSearchLoading ? "rgba(99,102,241,0.3)" : "linear-gradient(135deg,#6366f1,#8b5cf6)", border: "none", borderRadius: "20px", color: "#fff", fontSize: "0.65rem", fontWeight: 700 }}>
                   {aiSearchLoading ? "⏳" : "🤖 IA"}
-                </button>
+                </button>}
               </div>
             </div>
-
-            {/* BANDEAU RECHERCHE IA */}
             {aiSearchActive && (
               <div style={{ padding: "8px 14px", background: "linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1))", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "12px", marginBottom: "12px", fontSize: "0.72rem", color: "#a5b4fc", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                 <span>🤖 Recherche IA · <strong>{filtered.length} résultats</strong></span>
@@ -690,30 +924,26 @@ export default function FleuVibe() {
                 {aiFilters?.countries?.map(c => <span key={c} style={{ padding: "1px 7px", background: "rgba(99,102,241,0.2)", borderRadius: "10px" }}>{COUNTRIES[c]?.flag} {c}</span>)}
               </div>
             )}
-
-            {/* FILTRES CLASSIQUES */}
-            {!aiSearchActive && (
+            {page === "explore" && !aiSearchActive && (
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px", justifyContent: "center" }}>
                 <div style={{ display: "flex", gap: "3px", background: "rgba(255,255,255,0.03)", padding: "4px", borderRadius: "50px" }}>
                   {[["ALL", "🌊 Tous"], ["RIVER", "🏞️ Rivières"], ["LAKE", "🏔️ Lacs"], ["SEA", "🌊 Mers"]].map(([id, label]) => (
-                    <button key={id} onClick={() => setSelType(id)} style={{ padding: "6px 14px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: selType === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: selType === id ? "#fff" : "#6a9a8c" }}>{label}</button>
+                    <button key={id} onClick={() => setSelType(id)} style={{ padding: "6px 12px", borderRadius: "50px", border: "none", fontSize: "0.68rem", fontWeight: 600, background: selType === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: selType === id ? "#fff" : "#6a9a8c" }}>{label}</button>
                   ))}
                 </div>
                 <div style={{ display: "flex", gap: "3px", background: "rgba(255,255,255,0.03)", padding: "4px", borderRadius: "50px" }}>
                   {["ALL", "Facile", "Intermédiaire", "Sportif"].map(d => (
-                    <button key={d} onClick={() => setSelDiff(d)} style={{ padding: "6px 14px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: selDiff === d ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: selDiff === d ? "#fff" : "#6a9a8c" }}>{d === "ALL" ? "Tous" : d}</button>
+                    <button key={d} onClick={() => setSelDiff(d)} style={{ padding: "6px 12px", borderRadius: "50px", border: "none", fontSize: "0.68rem", fontWeight: 600, background: selDiff === d ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: selDiff === d ? "#fff" : "#6a9a8c" }}>{d === "ALL" ? "Tous" : d}</button>
                   ))}
                 </div>
                 <div style={{ display: "flex", gap: "3px", background: "rgba(255,255,255,0.03)", padding: "4px", borderRadius: "50px", flexWrap: "wrap" }}>
                   {[["ALL", "🌍"], ["EU", "🇪🇺"], ["AM", "🌎"], ["AS", "🌏"], ["AF", "🌍"], ["OC", "🌊"]].map(([id, flag]) => (
-                    <button key={id} onClick={() => setSelContinent(id)} style={{ padding: "6px 12px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: selContinent === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: selContinent === id ? "#fff" : "#6a9a8c" }}>{flag} {id === "ALL" ? "Monde" : id}</button>
+                    <button key={id} onClick={() => setSelContinent(id)} style={{ padding: "6px 10px", borderRadius: "50px", border: "none", fontSize: "0.68rem", fontWeight: 600, background: selContinent === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: selContinent === id ? "#fff" : "#6a9a8c" }}>{flag} {id === "ALL" ? "Monde" : id}</button>
                   ))}
                 </div>
               </div>
             )}
-
-            <div style={{ fontSize: "0.68rem", color: "#4a7a6a", marginBottom: "14px" }}>{filtered.length} spots · {[...new Set(filtered.map(s => s.country))].length} pays</div>
-
+            <div style={{ fontSize: "0.68rem", color: "#4a7a6a", marginBottom: "12px" }}>{filtered.length} spots · {[...new Set(filtered.map(s => s.country))].length} pays{page === "expeditions" ? " · ⛺ Expéditions longue durée" : ""}</div>
             {filtered.length === 0 ? (
               <div style={{ padding: "50px", textAlign: "center", background: "rgba(255,255,255,0.03)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <span style={{ fontSize: "3rem" }}>🏄</span>
@@ -726,14 +956,50 @@ export default function FleuVibe() {
           </div>
         )}
 
+        {/* PÉPITES CACHÉES */}
+        {page === "hidden" && (
+          <div>
+            <div style={{ textAlign: "center", marginBottom: "18px" }}>
+              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fbbf24", marginBottom: "5px" }}>💎 Pépites Cachées</h2>
+              <p style={{ color: "#4a7a6a", fontSize: "0.8rem" }}>Spots secrets partagés par la communauté. Pas dans les guides.</p>
+            </div>
+            {HIDDEN_GEMS.map(gem => (
+              <div key={gem.id} style={{ marginBottom: "12px", background: "linear-gradient(135deg,rgba(245,158,11,0.06),rgba(255,255,255,0.02))", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "18px", overflow: "hidden" }}>
+                <div style={{ height: "3px", background: "linear-gradient(90deg,#f59e0b,#ef4444,transparent)" }} />
+                <div style={{ padding: "14px 16px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                    <span style={{ fontSize: "1.2rem" }}>{gem.emoji}</span>
+                    <div>
+                      <h3 style={{ fontSize: "0.92rem", fontWeight: 700, color: "#fbbf24" }}>{gem.name} {COUNTRIES[gem.country]?.flag}</h3>
+                      <div style={{ color: "#4a7a6a", fontSize: "0.7rem" }}>📍 {gem.region} · {COUNTRIES[gem.country]?.name} · {gem.difficulty}</div>
+                    </div>
+                    <span style={{ marginLeft: "auto", padding: "2px 8px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "20px", fontSize: "0.6rem", color: "#fbbf24" }}>📅 {gem.season}</span>
+                  </div>
+                  <p style={{ color: "#8ab8b0", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: "8px" }}>{gem.description}</p>
+                  <div style={{ padding: "8px 10px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.18)", borderRadius: "10px" }}>
+                    <p style={{ fontSize: "0.72rem", color: "#fbbf24" }}>🤫 <strong>Secret communauté :</strong> {gem.secret}</p>
+                  </div>
+                  <div style={{ display: "flex", gap: "5px", marginTop: "8px", flexWrap: "wrap" }}>
+                    {gem.activities?.map(a => <span key={a} style={{ padding: "2px 8px", background: "rgba(245,158,11,0.08)", borderRadius: "20px", fontSize: "0.65rem", color: "#fbbf24" }}>{a}</span>)}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div style={{ padding: "16px", background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: "18px", textAlign: "center" }}>
+              <p style={{ color: "#fbbf24", fontSize: "0.8rem", marginBottom: "10px" }}>🌟 Tu connais un spot secret ? Partage-le avec la communauté !</p>
+              <button onClick={() => setShowSubmit(true)} style={{ padding: "8px 20px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.8rem" }}>💎 Ajouter une pépite</button>
+            </div>
+          </div>
+        )}
+
         {/* MÉTÉO */}
         {page === "weather" && (
           <div>
             <div style={{ textAlign: "center", marginBottom: "18px" }}>
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a8edcf", marginBottom: "5px" }}>🌤️ Conditions en temps réel</h2>
-              <p style={{ color: "#4a7a6a", fontSize: "0.8rem" }}>Météo actuelle + 🤖 conseils IA sur chaque spot.</p>
+              <p style={{ color: "#4a7a6a", fontSize: "0.8rem" }}>Météo actuelle + 🤖 conseils IA.</p>
             </div>
-            {spots.slice(0, 20).map(s => (
+            {spots.slice(0, 18).map(s => (
               <div key={s.id} style={{ marginBottom: "10px", padding: "13px 15px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "8px" }}>
                   <span style={{ fontSize: "1.1rem" }}>{s.emoji}</span>
@@ -796,14 +1062,14 @@ export default function FleuVibe() {
         )}
 
         <div style={{ marginTop: "40px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.05)", textAlign: "center", fontSize: "0.65rem", color: "#2a5a4a" }}>
-          <p>🌊 FleuVibe World · v15.0 · {spots.length} spots · {Object.keys(COUNTRIES).length} pays · 🤖 Propulsé par OpenAI GPT-4o mini</p>
+          <p>🌊 FleuVibe World · v15.0 FINAL · {spots.length} spots · {Object.keys(COUNTRIES).length} pays · 🤖 OpenAI GPT-4o mini · 💎 {HIDDEN_GEMS.length} pépites</p>
         </div>
       </div>
 
       {/* MODALS */}
       {bookingSpot && <BookingModal spot={bookingSpot} onClose={() => setBookingSpot(null)} />}
-      {showPremium && <PremiumModal onClose={() => setShowPremium(false)} />}
-      {showSubmit && <SubmitSpotModal onClose={() => setShowSubmit(false)} onAdd={s => setSpots(x => [...x, s])} session={session} showAuth={() => { setShowSubmit(false); setShowAuth(true); }} />}
+      {showPremium && <PremiumModal onClose={() => setShowPremium(false)} onActivate={() => { setIsPremium(true); addXP(200); }} />}
+      {showSubmit && <SubmitSpotModal onClose={() => setShowSubmit(false)} onAdd={s => { setSpots(x => [...x, s]); addXP(100); }} session={session} showAuth={() => { setShowSubmit(false); setShowAuth(true); }} />}
 
       {/* AUTH */}
       {showAuth && (
@@ -832,27 +1098,32 @@ export default function FleuVibe() {
       {/* PROFILE */}
       {showProfile && session && (
         <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowProfile(false); }}>
-          <div style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "24px", maxWidth: "340px", width: "100%", padding: "26px", animation: "pop 0.3s ease" }}>
-            <div style={{ textAlign: "center", marginBottom: "18px" }}>
+          <div style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "24px", maxWidth: "360px", width: "100%", padding: "26px", animation: "pop 0.3s ease" }}>
+            <div style={{ textAlign: "center", marginBottom: "16px" }}>
               <div style={{ width: 60, height: 60, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", fontWeight: 700, color: "#fff", margin: "0 auto 10px" }}>{userName[0].toUpperCase()}</div>
               <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#daf0e8" }}>{userName}</h2>
               <p style={{ color: "#4a7a6a", fontSize: "0.73rem", marginTop: "2px" }}>{session.user.email}</p>
               {isPremium && <span style={{ display: "inline-block", marginTop: "6px", padding: "2px 10px", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "20px", fontSize: "0.65rem", color: "#f59e0b", fontWeight: 700 }}>⭐ Membre Premium</span>}
             </div>
-            <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+            <div style={{ marginBottom: "14px" }}><LevelBadge xp={userXP} /></div>
+            {earnedBadges.length > 0 && (
+              <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "14px" }}>
+                {earnedBadges.map(b => <span key={b.name} style={{ padding: "3px 8px", background: "rgba(26,158,110,0.1)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", fontSize: "0.62rem", color: "#a8edcf" }}>{b.icon} {b.name}</span>)}
+              </div>
+            )}
+            <div style={{ display: "flex", gap: "7px", marginBottom: "14px" }}>
               {[["❤️", favorites.length, "Favoris"], ["🌊", spots.length, "Spots"], ["🤖", isPremium ? "ON" : "OFF", "IA"]].map(([ic, val, label]) => (
-                <div key={label} style={{ flex: 1, padding: "10px 6px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", textAlign: "center" }}>
-                  <div style={{ fontSize: "1rem" }}>{ic}</div>
-                  <div style={{ fontSize: "0.9rem", fontWeight: 800, color: val === "OFF" ? "#dc2626" : "#a8edcf" }}>{val}</div>
-                  <div style={{ fontSize: "0.58rem", color: "#4a7a6a" }}>{label}</div>
+                <div key={label} style={{ flex: 1, padding: "9px 6px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.95rem" }}>{ic}</div>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 800, color: val === "OFF" ? "#dc2626" : "#a8edcf" }}>{val}</div>
+                  <div style={{ fontSize: "0.56rem", color: "#4a7a6a" }}>{label}</div>
                 </div>
               ))}
             </div>
-            {!isPremium && <button onClick={() => { setShowProfile(false); setShowPremium(true); }} style={{ width: "100%", padding: "10px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.82rem", marginBottom: "8px", boxShadow: "0 3px 10px rgba(245,158,11,0.25)" }}>⭐ Passer Premium — Débloquer l'IA</button>}
-            {isPremium && <button onClick={() => setIsPremium(false)} style={{ width: "100%", padding: "10px", background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "20px", color: "#a5b4fc", fontWeight: 600, fontSize: "0.82rem", marginBottom: "8px" }}>🤖 IA Premium Active ✓</button>}
-            {/* BOUTON TEST PREMIUM (à retirer en prod) */}
-            {!isPremium && <button onClick={() => { setIsPremium(true); setShowProfile(false); }} style={{ width: "100%", padding: "8px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "20px", color: "#a5b4fc", fontWeight: 500, fontSize: "0.72rem", marginBottom: "8px" }}>🧪 Tester Premium (dev)</button>}
-            <button onClick={handleSignOut} style={{ width: "100%", padding: "10px", background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: "20px", color: "#f87171", fontWeight: 600, fontSize: "0.82rem" }}>🚪 Se déconnecter</button>
+            {!isPremium && <button onClick={() => { setShowProfile(false); setShowPremium(true); }} style={{ width: "100%", padding: "10px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.82rem", marginBottom: "8px", boxShadow: "0 3px 10px rgba(245,158,11,0.25)" }}>⭐ Passer Premium</button>}
+            {!isPremium && <button onClick={() => { setIsPremium(true); addXP(200); setShowProfile(false); }} style={{ width: "100%", padding: "8px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "20px", color: "#a5b4fc", fontWeight: 500, fontSize: "0.72rem", marginBottom: "8px" }}>🧪 Tester Premium (dev)</button>}
+            {isPremium && <button onClick={() => setIsPremium(false)} style={{ width: "100%", padding: "9px", background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "20px", color: "#a5b4fc", fontWeight: 600, fontSize: "0.78rem", marginBottom: "8px" }}>🤖 IA Premium Active ✓</button>}
+            <button onClick={handleSignOut} style={{ width: "100%", padding: "9px", background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: "20px", color: "#f87171", fontWeight: 600, fontSize: "0.82rem" }}>🚪 Se déconnecter</button>
           </div>
         </div>
       )}
