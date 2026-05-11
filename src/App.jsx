@@ -542,28 +542,45 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
   const typeIcon = { RIVER: "🏞️", LAKE: "🏔️", SEA: "🌊" }[spot.type] || "🌊";
   const typeName = { RIVER: "Rivière", LAKE: "Lac", SEA: "Mer" }[spot.type] || "";
   return (
-    <div style={{ marginBottom: "12px", overflow: "hidden", cursor: "pointer", background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)", border: `1px solid ${open ? spot.color + "40" : "rgba(255,255,255,0.06)"}`, borderRadius: "18px", transition: "all 0.25s ease", boxShadow: open ? `0 0 20px ${spot.color}10` : "none" }} onClick={() => setOpen(o => !o)}>
-      <div style={{ height: "3px", background: `linear-gradient(90deg,${spot.color},${typeColor},transparent)` }} />
-      {spot.sponsored && <div style={{ padding: "3px 14px", background: "rgba(245,158,11,0.08)", borderBottom: "1px solid rgba(245,158,11,0.12)", fontSize: "0.6rem", color: "#fbbf24", fontWeight: 700 }}>⭐ {spot.sponsored.toUpperCase()}</div>}
-      <div style={{ padding: "14px 16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "3px", flexWrap: "wrap" }}>
-              <span style={{ fontSize: "1.1rem" }}>{spot.emoji}</span>
-              <h3 style={{ fontSize: "0.92rem", fontWeight: 700, color: "#daf0e8" }}>{spot.name}</h3>
-              <span style={{ fontSize: "0.85rem" }}>{COUNTRIES[spot.country]?.flag}</span>
-              <span style={{ padding: "1px 6px", background: `${typeColor}18`, border: `1px solid ${typeColor}30`, borderRadius: "20px", fontSize: "0.58rem", color: typeColor, fontWeight: 600 }}>{typeIcon} {typeName}</span>
-              {spot.camping && <span style={{ fontSize: "0.58rem", background: "rgba(26,158,110,0.12)", color: "#7ecfb0", padding: "1px 5px", borderRadius: "10px" }}>⛺</span>}
-              {spot.waterPoints && <span style={{ fontSize: "0.58rem", background: "rgba(8,145,178,0.12)", color: "#67e8f9", padding: "1px 5px", borderRadius: "10px" }}>💧</span>}
-              {spot.community && <span style={{ padding: "1px 5px", background: "rgba(245,158,11,0.12)", color: "#fbbf24", borderRadius: "10px", fontSize: "0.58rem" }}>🌟</span>}
+    <div style={{ marginBottom: "14px", overflow: "hidden", cursor: "pointer",
+      background: open ? `linear-gradient(135deg,${spot.color}08,rgba(255,255,255,0.02))` : "linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))",
+      backdropFilter: "blur(12px)",
+      border: `1px solid ${open ? spot.color + "40" : "rgba(255,255,255,0.06)"}`,
+      borderRadius: "24px",
+      transition: "all 0.4s cubic-bezier(0.2,0.9,0.4,1.1)",
+      boxShadow: open ? `0 20px 40px -12px ${spot.color}20` : "none",
+    }}
+      onMouseEnter={e => { if (!open) { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.borderColor = `${spot.color}30`; e.currentTarget.style.boxShadow = `0 12px 30px -10px ${spot.color}15`; } }}
+      onMouseLeave={e => { if (!open) { e.currentTarget.style.transform = ""; e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.boxShadow = "none"; } }}
+      onClick={() => setOpen(o => !o)}>
+      <div style={{ height: "4px", background: `linear-gradient(90deg,${spot.color},${typeColor},transparent)` }} />
+      {spot.sponsored && <div style={{ padding: "4px 16px", background: "rgba(245,158,11,0.08)", borderBottom: "1px solid rgba(245,158,11,0.12)", fontSize: "0.6rem", color: "#fbbf24", fontWeight: 700, letterSpacing: "0.5px" }}>⭐ RÉGION PARTENAIRE · {spot.sponsored.toUpperCase()}</div>}
+      <div style={{ padding: "16px 18px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1 }}>
+            <div style={{ width: 48, height: 48, background: `linear-gradient(135deg,${spot.color}20,${spot.color}05)`, borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", flexShrink: 0 }}>{spot.emoji}</div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px", flexWrap: "wrap" }}>
+                <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#daf0e8" }}>{spot.name}</h3>
+                <span style={{ fontSize: "0.85rem" }}>{COUNTRIES[spot.country]?.flag}</span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "0.68rem", color: "#5a8a78" }}>{COUNTRIES[spot.country]?.name}</span>
+                <span style={{ padding: "1px 7px", background: `${typeColor}18`, border: `1px solid ${typeColor}30`, borderRadius: "20px", fontSize: "0.58rem", color: typeColor, fontWeight: 600 }}>{typeIcon} {typeName}</span>
+                <span style={{ padding: "1px 7px", background: `${DIFF_COLOR[spot.difficulty]}15`, border: `1px solid ${DIFF_COLOR[spot.difficulty]}28`, borderRadius: "20px", fontSize: "0.58rem", fontWeight: 600, color: DIFF_COLOR[spot.difficulty] }}>{spot.difficulty}</span>
+                <WeatherWidget coords={spot.coords} spotName={spot.name} difficulty={spot.difficulty} small />
+                {spot.camping && <span style={{ fontSize: "0.58rem", background: "rgba(26,158,110,0.12)", color: "#7ecfb0", padding: "1px 5px", borderRadius: "10px" }}>⛺</span>}
+                {spot.community && <span style={{ fontSize: "0.58rem", background: "rgba(245,158,11,0.12)", color: "#fbbf24", padding: "1px 5px", borderRadius: "10px" }}>🌟</span>}
+              </div>
+              <div style={{ color: "#4a7a6a", fontSize: "0.68rem", marginTop: "3px" }}>📍 {spot.river} · {spot.region}</div>
             </div>
-            <div style={{ color: "#4a7a6a", fontSize: "0.7rem" }}>📍 {spot.river} · {spot.region} · {COUNTRIES[spot.country]?.name}</div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-            <WeatherWidget coords={spot.coords} spotName={spot.name} difficulty={spot.difficulty} small />
-            <button onClick={e => { e.stopPropagation(); onFav(spot.id); }} style={{ fontSize: "1.1rem", background: "none", border: "none", color: isFav ? "#ef4444" : "#3a5a50", padding: "2px" }}>{isFav ? "❤️" : "🤍"}</button>
-            <span style={{ padding: "2px 8px", borderRadius: "20px", fontSize: "0.65rem", fontWeight: 600, background: `${DIFF_COLOR[spot.difficulty]}16`, color: DIFF_COLOR[spot.difficulty], border: `1px solid ${DIFF_COLOR[spot.difficulty]}28`, whiteSpace: "nowrap" }}>{spot.difficulty}</span>
-          </div>
+          <button onClick={e => { e.stopPropagation(); onFav(spot.id); }}
+            style={{ fontSize: "1.2rem", background: "none", border: "none", color: isFav ? "#ef4444" : "#3a5a50", padding: "4px", transition: "transform 0.2s", flexShrink: 0 }}
+            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.2)"}
+            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
+            {isFav ? "❤️" : "🤍"}
+          </button>
         </div>
         <div style={{ display: "flex", gap: "14px", marginBottom: "8px" }}>
           <span style={{ fontSize: "0.7rem", color: "#4a7a6a" }}>📏 {spot.distance}</span>
@@ -830,26 +847,41 @@ export default function FleuVibe() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
-        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:rgba(255,255,255,0.03)}::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#1a9e6e,#0891b2);border-radius:10px}
+        ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:rgba(255,255,255,0.05);border-radius:10px}::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#1a9e6e,#0891b2);border-radius:10px}
         button{cursor:pointer;transition:all 0.2s ease}button:active{transform:scale(0.97)}
-        .fade-in{opacity:0;transform:translateY(12px);transition:opacity 0.4s ease,transform 0.4s ease}
+        .fade-in{opacity:0;transform:translateY(16px);transition:opacity 0.5s ease,transform 0.5s ease}
         .fade-in.loaded{opacity:1;transform:translateY(0)}
-        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
         @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+        @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+        @keyframes glow{0%,100%{box-shadow:0 0 5px rgba(26,158,110,0.2)}50%{box-shadow:0 0 20px rgba(26,158,110,0.4)}}
         @keyframes pop{0%{transform:scale(0.9);opacity:0}100%{transform:scale(1);opacity:1}}
-        .shimmer-text{background:linear-gradient(90deg,#a8edcf 0%,#1a9e6e 30%,#38bdf8 60%,#a8edcf 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite}
-        .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;z-index:2000;padding:16px}
+        .shimmer-text{background:linear-gradient(90deg,#a8edcf 0%,#1a9e6e 30%,#38bdf8 60%,#a8edcf 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 4s linear infinite}
+        .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:2000;padding:16px}
+        .glass-card{background:linear-gradient(135deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.01) 100%);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.06);transition:all 0.4s cubic-bezier(0.2,0.9,0.4,1.1)}.glass-card:hover{border-color:rgba(26,158,110,0.3);transform:translateY(-4px);box-shadow:0 20px 40px -12px rgba(0,0,0,0.3)}
         input::placeholder,textarea::placeholder{color:#4a7a6a}
         input:focus,textarea:focus,select:focus{outline:none;border-color:rgba(26,158,110,0.5)!important}
         select option{background:#0d2240}
       `}</style>
 
+      {/* ── PARTICULES FOND ── */}
+      <div style={{ position: "fixed", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}>
+        <div style={{ position: "absolute", top: "5%", right: "-10%", width: "400px", height: "400px", background: "radial-gradient(circle,rgba(26,158,110,0.08) 0%,transparent 70%)", borderRadius: "50%", filter: "blur(40px)", animation: "float 8s ease-in-out infinite" }} />
+        <div style={{ position: "absolute", bottom: "15%", left: "-10%", width: "300px", height: "300px", background: "radial-gradient(circle,rgba(8,145,178,0.06) 0%,transparent 70%)", borderRadius: "50%", filter: "blur(40px)", animation: "float 10s ease-in-out infinite", animationDelay: "2s" }} />
+        {[...Array(12)].map((_, i) => (
+          <div key={i} style={{ position: "absolute", left: `${(i * 8.5) % 100}%`, top: `${(i * 14.3) % 100}%`, width: `${(i % 3) + 1}px`, height: `${(i % 3) + 1}px`, background: "rgba(26,158,110,0.2)", borderRadius: "50%", animation: `float ${6 + (i % 5)}s ease-in-out infinite`, animationDelay: `${i * 0.5}s` }} />
+        ))}
+      </div>
+
       {/* ── HEADER ── */}
-      <div style={{ position: "sticky", top: 0, background: darkMode ? "rgba(10,22,40,0.92)" : "rgba(240,249,244,0.92)", backdropFilter: "blur(20px)", borderBottom: "1px solid rgba(255,255,255,0.06)", zIndex: 100, padding: "10px 20px" }}>
+      <div style={{ position: "sticky", top: 0, background: darkMode ? "rgba(10,22,40,0.88)" : "rgba(240,249,244,0.88)", backdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.06)", zIndex: 100, padding: "10px 20px" }}>
         <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <span style={{ fontSize: "1.8rem", animation: "float 4s ease-in-out infinite" }}>🌊</span>
-            <h1 className="shimmer-text" style={{ fontSize: "1.4rem", fontWeight: 800 }}>FleuVibe</h1>
+            <div>
+              <h1 className="shimmer-text" style={{ fontSize: "1.4rem", fontWeight: 800, letterSpacing: "-0.5px" }}>FleuVibe</h1>
+              <p style={{ fontSize: "0.55rem", color: "#5a8a78", letterSpacing: "1.5px", marginTop: "1px" }}>EXPLOREZ LES EAUX DU MONDE</p>
+            </div>
             <span style={{ background: "rgba(26,158,110,0.2)", border: "1px solid rgba(26,158,110,0.4)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#7ecfb0", fontWeight: 700 }}>WORLD</span>
             <span style={{ background: "linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2))", border: "1px solid rgba(99,102,241,0.4)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#a5b4fc", fontWeight: 700 }}>🤖 IA</span>
             <button onClick={() => setDarkMode(d => !d)} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: "0.9rem" }}>{darkMode ? "☀️" : "🌙"}</button>
@@ -859,7 +891,7 @@ export default function FleuVibe() {
             <button onClick={() => setShowSubmit(true)} style={{ padding: "7px 14px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", color: "#a8edcf", fontWeight: 600, fontSize: "0.72rem" }}>
               ➕ Ajouter{communityCount > 0 ? ` · ${communityCount}🌟` : ""}
             </button>
-            <button onClick={() => setShowPremium(true)} style={{ padding: "7px 16px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.72rem", boxShadow: "0 2px 10px rgba(245,158,11,0.3)" }}>⭐ Premium</button>
+            <button onClick={() => setShowPremium(true)} style={{ padding: "7px 16px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.72rem", boxShadow: "0 2px 10px rgba(245,158,11,0.3)", animation: "glow 3s ease-in-out infinite" }}>⭐ Premium</button>
             {session ? (
               <button onClick={() => setShowProfile(true)} style={{ display: "flex", alignItems: "center", gap: "7px", padding: "6px 14px", background: "rgba(26,158,110,0.15)", border: "1px solid rgba(26,158,110,0.3)", borderRadius: "20px", color: "#a8edcf", fontSize: "0.72rem", fontWeight: 600 }}>
                 <div style={{ width: 22, height: 22, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700, color: "#fff" }}>{userName[0].toUpperCase()}</div>
@@ -872,12 +904,14 @@ export default function FleuVibe() {
         </div>
       </div>
 
-      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "20px 16px" }}>
+      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "20px 16px", position: "relative", zIndex: 1 }}>
 
         {/* STATS */}
         <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(75px,1fr))", gap: "8px", marginBottom: "16px" }}>
           {[["🌊", spots.length, "Spots"], ["🌍", Object.keys(COUNTRIES).length, "Pays"], ["🏞️", spots.filter(s => s.type === "RIVER").length, "Rivières"], ["🏔️", spots.filter(s => s.type === "LAKE").length, "Lacs"], ["🌊", spots.filter(s => s.type === "SEA").length, "Mers"], ["🤖", "GPT", "IA"], ["💎", HIDDEN_GEMS.length, "Pépites"], ...(session ? [["❤️", favorites.length, "Favoris"]] : [])].map(([ic, val, label]) => (
-            <div key={label} style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "10px", textAlign: "center" }}>
+            <div key={label} className="glass-card" style={{ borderRadius: "16px", padding: "10px", textAlign: "center" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(26,158,110,0.35)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}>
               <div style={{ fontSize: "1rem", marginBottom: "2px" }}>{ic}</div>
               <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "#a8edcf" }}>{val}</div>
               <div style={{ fontSize: "0.56rem", color: "#4a7a6a" }}>{label}</div>
@@ -1062,7 +1096,7 @@ export default function FleuVibe() {
         )}
 
         <div style={{ marginTop: "40px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.05)", textAlign: "center", fontSize: "0.65rem", color: "#2a5a4a" }}>
-          <p>🌊 FleuVibe World · v15.0 FINAL · {spots.length} spots · {Object.keys(COUNTRIES).length} pays · 🤖 OpenAI GPT-4o mini · 💎 {HIDDEN_GEMS.length} pépites</p>
+          <p>🌊 FleuVibe World · v16.0 PREMIUM · {spots.length} spots · {Object.keys(COUNTRIES).length} pays · 🤖 OpenAI GPT-4o mini · 💎 {HIDDEN_GEMS.length} pépites</p>
         </div>
       </div>
 
