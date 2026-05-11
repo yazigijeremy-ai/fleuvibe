@@ -778,9 +778,12 @@ export default function FleuVibe() {
   const [selContinent, setSelContinent] = useState("ALL");
   const [darkMode, setDarkMode] = useState(true);
   const [loaded, setLoaded] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [pageTransition, setPageTransition] = useState(false);
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100);
+    setTimeout(() => setInitialLoading(false), 1400);
     const xp = parseInt(localStorage.getItem("fv_xp") || "0");
     const stats = JSON.parse(localStorage.getItem("fv_stats") || "{}");
     setUserXP(xp);
@@ -796,6 +799,11 @@ export default function FleuVibe() {
     const newXP = userXP + amount;
     setUserXP(newXP);
     localStorage.setItem("fv_xp", String(newXP));
+  };
+
+  const handlePageChange = (newPage) => {
+    setPageTransition(true);
+    setTimeout(() => { setPage(newPage); setSearch(""); clearAISearch(); setPageTransition(false); }, 280);
   };
 
   const earnedBadges = Object.values(BADGES_DEF).filter(b => b.condition(userStats));
@@ -842,23 +850,54 @@ export default function FleuVibe() {
     return true;
   });
 
+  if (initialLoading) {
+    return (
+      <div style={{ position: "fixed", inset: 0, background: "radial-gradient(ellipse at 50% 50%,#0a1628 0%,#0d2240 100%)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 9999, gap: "24px", fontFamily: "'Inter',sans-serif" }}>
+        <style>{`@keyframes rotate-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}@keyframes loading-wave-anim{0%,100%{transform:scaleY(0.5)}50%{transform:scaleY(1)}}@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}.ls-spinner{width:52px;height:52px;border-radius:50%;background:conic-gradient(from 0deg,#1a9e6e,#0891b2,#38bdf8,#1a9e6e);animation:rotate-slow 1s linear infinite;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 8px),#000 calc(100% - 6px))}.ls-wave{display:flex;gap:6px;align-items:center}.ls-wave span{width:4px;height:22px;background:linear-gradient(135deg,#1a9e6e,#0891b2);border-radius:4px;animation:loading-wave-anim 1s ease-in-out infinite}.ls-wave span:nth-child(1){animation-delay:0s}.ls-wave span:nth-child(2){animation-delay:.1s}.ls-wave span:nth-child(3){animation-delay:.2s}.ls-wave span:nth-child(4){animation-delay:.3s}.ls-wave span:nth-child(5){animation-delay:.4s}.ls-title{background:linear-gradient(90deg,#a8edcf 0%,#1a9e6e 30%,#38bdf8 60%,#a8edcf 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 3s linear infinite}`}</style>
+        <svg style={{ position: "absolute", bottom: 0, width: "100%", opacity: 0.08 }} viewBox="0 0 1440 200" preserveAspectRatio="none">
+          <path fill="#1a9e6e" d="M0,100 C360,160 720,40 1080,100 C1260,130 1380,90 1440,100 L1440,200 L0,200Z">
+            <animate attributeName="d" dur="8s" repeatCount="indefinite" values="M0,100 C360,160 720,40 1080,100 C1260,130 1380,90 1440,100 L1440,200 L0,200Z;M0,80 C360,40 720,160 1080,80 C1260,50 1380,120 1440,80 L1440,200 L0,200Z;M0,100 C360,160 720,40 1080,100 C1260,130 1380,90 1440,100 L1440,200 L0,200Z"/>
+          </path>
+        </svg>
+        <div style={{ fontSize: "3.5rem", filter: "drop-shadow(0 0 20px rgba(26,158,110,0.5))" }}>🌊</div>
+        <h1 className="ls-title" style={{ fontSize: "2.5rem", fontWeight: 800, letterSpacing: "-1px" }}>FleuVibe</h1>
+        <div className="ls-spinner" />
+        <div className="ls-wave"><span /><span /><span /><span /><span /></div>
+        <p style={{ color: "#5a8a78", fontSize: "0.8rem", letterSpacing: "2px", fontWeight: 500 }}>CHARGEMENT EN COURS...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: darkMode ? "radial-gradient(ellipse at 20% 0%,#0a1628 0%,#0d2240 50%,#0a3d2e 100%)" : "linear-gradient(160deg,#f0f9f4,#e8f4f0)", fontFamily: "'Inter',sans-serif", color: darkMode ? "#e8f4f0" : "#1a2e28", transition: "background 0.3s" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
-        ::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:rgba(255,255,255,0.05);border-radius:10px}::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#1a9e6e,#0891b2);border-radius:10px}
+        ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:rgba(255,255,255,0.03);border-radius:10px}::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#1a9e6e,#0891b2);border-radius:10px}
         button{cursor:pointer;transition:all 0.2s ease}button:active{transform:scale(0.97)}
         .fade-in{opacity:0;transform:translateY(16px);transition:opacity 0.5s ease,transform 0.5s ease}
         .fade-in.loaded{opacity:1;transform:translateY(0)}
-        @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+        @keyframes float{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-10px) rotate(2deg)}}
+        @keyframes float-delayed{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
         @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
-        @keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes glow{0%,100%{box-shadow:0 0 5px rgba(26,158,110,0.2)}50%{box-shadow:0 0 20px rgba(26,158,110,0.4)}}
+        @keyframes slideUp{from{opacity:0;transform:translateY(30px);filter:blur(4px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
+        @keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+        @keyframes glow{0%,100%{box-shadow:0 0 5px rgba(26,158,110,0.2),0 0 10px rgba(26,158,110,0.1)}50%{box-shadow:0 0 20px rgba(26,158,110,0.5),0 0 30px rgba(8,145,178,0.3)}}
+        @keyframes rotate-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+        @keyframes loading-wave-anim{0%,100%{transform:scaleY(0.5)}50%{transform:scaleY(1)}}
+        @keyframes pageTransition{0%{opacity:0;transform:scale(0.98);filter:blur(6px)}100%{opacity:1;transform:scale(1);filter:blur(0)}}
         @keyframes pop{0%{transform:scale(0.9);opacity:0}100%{transform:scale(1);opacity:1}}
+        @keyframes ripple-anim{0%{transform:scale(0);opacity:0.5}100%{transform:scale(4);opacity:0}}
         .shimmer-text{background:linear-gradient(90deg,#a8edcf 0%,#1a9e6e 30%,#38bdf8 60%,#a8edcf 100%);background-size:200% auto;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:shimmer 4s linear infinite}
         .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;z-index:2000;padding:16px}
-        .glass-card{background:linear-gradient(135deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.01) 100%);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.06);transition:all 0.4s cubic-bezier(0.2,0.9,0.4,1.1)}.glass-card:hover{border-color:rgba(26,158,110,0.3);transform:translateY(-4px);box-shadow:0 20px 40px -12px rgba(0,0,0,0.3)}
+        .glass-card{background:linear-gradient(135deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.01) 100%);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.06);transition:all 0.5s cubic-bezier(0.2,0.9,0.4,1.1)}.glass-card:hover{border-color:rgba(26,158,110,0.3);transform:translateY(-6px) scale(1.005);box-shadow:0 25px 40px -12px rgba(0,0,0,0.35)}
+        .page-enter{animation:pageTransition 0.5s cubic-bezier(0.2,0.9,0.4,1.1) forwards}
+        .loading-wave{display:flex;gap:5px;align-items:center;justify-content:center}
+        .loading-wave span{width:4px;height:20px;background:linear-gradient(135deg,#1a9e6e,#0891b2);border-radius:4px;animation:loading-wave-anim 1s ease-in-out infinite}
+        .loading-wave span:nth-child(1){animation-delay:0s}.loading-wave span:nth-child(2){animation-delay:.1s}.loading-wave span:nth-child(3){animation-delay:.2s}.loading-wave span:nth-child(4){animation-delay:.3s}.loading-wave span:nth-child(5){animation-delay:.4s}
+        .loading-spinner{width:44px;height:44px;border-radius:50%;background:conic-gradient(from 0deg,#1a9e6e,#0891b2,#38bdf8,#1a9e6e);animation:rotate-slow 1s linear infinite;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 5px));mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 5px))}
+        .ripple-btn{position:relative;overflow:hidden}.ripple-btn::after{content:'';position:absolute;top:50%;left:50%;width:0;height:0;border-radius:50%;background:rgba(255,255,255,0.25);transform:translate(-50%,-50%);transition:width 0.4s,height 0.4s,opacity 0.4s}.ripple-btn:active::after{width:200px;height:200px;opacity:0}
+        .card-3d{transition:all 0.5s cubic-bezier(0.2,0.9,0.4,1.1);transform-style:preserve-3d;perspective:1000px}
         input::placeholder,textarea::placeholder{color:#4a7a6a}
         input:focus,textarea:focus,select:focus{outline:none;border-color:rgba(26,158,110,0.5)!important}
         select option{background:#0d2240}
@@ -929,11 +968,25 @@ export default function FleuVibe() {
         )}
 
         {/* NAV */}
-        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.06s", display: "flex", gap: "4px", marginBottom: "16px", background: "rgba(255,255,255,0.03)", padding: "4px", borderRadius: "50px", flexWrap: "wrap" }}>
-          {[["explore", "🗺️ Explorer"], ["expeditions", "⛺ Expéditions"], ["hidden", "💎 Pépites"], ["weather", "🌤️ Météo"], ["tourism", "⭐ Destinations"], ["favorites", `❤️ Favoris${favorites.length > 0 ? ` (${favorites.length})` : ""}`]].map(([id, label]) => (
-            <button key={id} onClick={() => { setPage(id); setSearch(""); clearAISearch(); }} style={{ flex: 1, minWidth: "70px", padding: "7px 10px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: page === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: page === id ? "#fff" : "#6a9a8c" }}>{label}</button>
+        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.06s", display: "flex", gap: "4px", marginBottom: "16px", background: "rgba(255,255,255,0.03)", padding: "5px", borderRadius: "50px", flexWrap: "wrap", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.05)" }}>
+          {[["explore", "🗺️", "Explorer"], ["expeditions", "⛺", "Expéd."], ["hidden", "💎", "Pépites"], ["weather", "🌤️", "Météo"], ["tourism", "⭐", "Destinations"], ["favorites", "❤️", `Favoris${favorites.length > 0 ? ` (${favorites.length})` : ""}`]].map(([id, icon, label]) => (
+            <button key={id} onClick={() => handlePageChange(id)} className="ripple-btn" style={{ flex: 1, minWidth: "70px", padding: "8px 10px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: page === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: page === id ? "#fff" : "#6a9a8c", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
+              <span>{icon}</span><span>{label}</span>
+              {page === id && <span style={{ width: 5, height: 5, background: "rgba(255,255,255,0.8)", borderRadius: "50%", animation: "glow 1.5s ease-in-out infinite", flexShrink: 0 }} />}
+            </button>
           ))}
         </div>
+
+        {/* CONTENU PRINCIPAL avec transition */}
+        {pageTransition ? (
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "300px" }}>
+            <div style={{ textAlign: "center" }}>
+              <div className="loading-spinner" style={{ margin: "0 auto 16px" }} />
+              <div className="loading-wave"><span /><span /><span /><span /><span /></div>
+            </div>
+          </div>
+        ) : (
+          <div className="page-enter">
 
         {/* EXPLORE */}
         {(page === "explore" || page === "expeditions") && (
@@ -1096,8 +1149,10 @@ export default function FleuVibe() {
         )}
 
         <div style={{ marginTop: "40px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.05)", textAlign: "center", fontSize: "0.65rem", color: "#2a5a4a" }}>
-          <p>🌊 FleuVibe World · v16.0 PREMIUM · {spots.length} spots · {Object.keys(COUNTRIES).length} pays · 🤖 OpenAI GPT-4o mini · 💎 {HIDDEN_GEMS.length} pépites</p>
+          <p>🌊 FleuVibe World · v17.0 PREMIUM · {spots.length} spots · {Object.keys(COUNTRIES).length} pays · 🤖 OpenAI GPT-4o mini · 💎 {HIDDEN_GEMS.length} pépites</p>
         </div>
+          </div> {/* /page-enter */}
+        )} {/* /pageTransition */}
       </div>
 
       {/* MODALS */}
