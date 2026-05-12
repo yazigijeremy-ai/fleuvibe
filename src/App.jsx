@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
+import { ALL_COUNTRIES as COUNTRIES_EXT, GLOBAL_PARTNERS, WORLD_ROUTES, GlobalStats } from "./data";
 
 const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
@@ -252,29 +253,7 @@ const CONTINENTS = {
   AS: { name: "Asie", flag: "🌏" }, AF: { name: "Afrique", flag: "🌍" }, OC: { name: "Océanie", flag: "🌊" }
 };
 
-const COUNTRIES = {
-  BE: { name: "Belgique", flag: "🇧🇪", continent: "EU" }, FR: { name: "France", flag: "🇫🇷", continent: "EU" },
-  DE: { name: "Allemagne", flag: "🇩🇪", continent: "EU" }, CH: { name: "Suisse", flag: "🇨🇭", continent: "EU" },
-  AT: { name: "Autriche", flag: "🇦🇹", continent: "EU" }, NO: { name: "Norvège", flag: "🇳🇴", continent: "EU" },
-  SI: { name: "Slovénie", flag: "🇸🇮", continent: "EU" }, IT: { name: "Italie", flag: "🇮🇹", continent: "EU" },
-  HR: { name: "Croatie", flag: "🇭🇷", continent: "EU" }, PT: { name: "Portugal", flag: "🇵🇹", continent: "EU" },
-  ES: { name: "Espagne", flag: "🇪🇸", continent: "EU" }, IS: { name: "Islande", flag: "🇮🇸", continent: "EU" },
-  GR: { name: "Grèce", flag: "🇬🇷", continent: "EU" }, SE: { name: "Suède", flag: "🇸🇪", continent: "EU" },
-  FI: { name: "Finlande", flag: "🇫🇮", continent: "EU" }, TR: { name: "Turquie", flag: "🇹🇷", continent: "EU" },
-  US: { name: "États-Unis", flag: "🇺🇸", continent: "AM" }, CA: { name: "Canada", flag: "🇨🇦", continent: "AM" },
-  BR: { name: "Brésil", flag: "🇧🇷", continent: "AM" }, CL: { name: "Chili", flag: "🇨🇱", continent: "AM" },
-  MX: { name: "Mexique", flag: "🇲🇽", continent: "AM" }, CO: { name: "Colombie", flag: "🇨🇴", continent: "AM" },
-  PE: { name: "Pérou", flag: "🇵🇪", continent: "AM" }, CR: { name: "Costa Rica", flag: "🇨🇷", continent: "AM" },
-  AR: { name: "Argentine", flag: "🇦🇷", continent: "AM" },
-  NZ: { name: "Nouvelle-Zélande", flag: "🇳🇿", continent: "OC" }, AU: { name: "Australie", flag: "🇦🇺", continent: "OC" },
-  FJ: { name: "Fidji", flag: "🇫🇯", continent: "OC" }, PF: { name: "Polynésie", flag: "🇵🇫", continent: "OC" },
-  NP: { name: "Népal", flag: "🇳🇵", continent: "AS" }, TH: { name: "Thaïlande", flag: "🇹🇭", continent: "AS" },
-  VN: { name: "Vietnam", flag: "🇻🇳", continent: "AS" }, ID: { name: "Indonésie", flag: "🇮🇩", continent: "AS" },
-  JP: { name: "Japon", flag: "🇯🇵", continent: "AS" }, IN: { name: "Inde", flag: "🇮🇳", continent: "AS" },
-  PH: { name: "Philippines", flag: "🇵🇭", continent: "AS" },
-  ZM: { name: "Zambie", flag: "🇿🇲", continent: "AF" }, MA: { name: "Maroc", flag: "🇲🇦", continent: "AF" },
-  ZA: { name: "Afrique du Sud", flag: "🇿🇦", continent: "AF" }, KE: { name: "Kenya", flag: "🇰🇪", continent: "AF" },
-};
+const COUNTRIES = COUNTRIES_EXT;
 
 const DIFF_COLOR = { Facile: "#1a9e6e", Intermédiaire: "#f59e0b", Sportif: "#dc2626" };
 
@@ -358,6 +337,9 @@ const SPOTS = [
   { id: 39, type: "SEA", country: "FJ", name: "Fidji · Kayak Îles", river: "Pacifique", region: "Viti Levu", distance: "15 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Plongée", "SUP"], description: "Pagayer entre les îles paradisiaques des Fidji.", color: "#06b6d4", emoji: "🌴", open: true, coords: [-17.713, 178.065], camping: true, waterPoints: true },
   { id: 40, type: "LAKE", country: "PE", name: "Lac Titicaca · Uros", river: "Lac Titicaca", region: "Puno", distance: "20 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Bateau traditionnel"], description: "Le plus haut lac navigable du monde à 3800m.", color: "#0891b2", emoji: "🌄", open: true, coords: [-15.840, -69.330], camping: false, waterPoints: true },
 ];
+
+const SPOTS_WORLD = [...SPOTS, ...WORLD_ROUTES];
+const ALL_PROVIDERS = [...PROVIDERS, ...GLOBAL_PARTNERS];
 
 // ─── ACCESSIBILITÉ ────────────────────────────────────────────────────────────
 function AccessibleButton({ children, onClick, ariaLabel, disabled, style, className }) {
@@ -567,7 +549,7 @@ function ExpeditionPlanner({ spot }) {
 }
 
 function ProviderComparator({ routeId }) {
-  const routeProviders = PROVIDERS.filter(p => p.routeIds?.includes(routeId));
+  const routeProviders = ALL_PROVIDERS.filter(p => p.routeIds?.includes(routeId));
   if (routeProviders.length < 1) return null;
   return (
     <div style={{ marginTop: "10px" }}>
@@ -1075,7 +1057,7 @@ function GroupCreator({ spots, onCreate }) {
 
 // ─── APP ──────────────────────────────────────────────────────────────────────
 export default function FleuVibe() {
-  const [spots, setSpots] = useState(SPOTS);
+  const [spots, setSpots] = useState(SPOTS_WORLD);
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [favorites, setFavorites] = useState([]);
@@ -1126,9 +1108,9 @@ export default function FleuVibe() {
     // Schema.org site-level
     const schema = document.createElement('script');
     schema.type = 'application/ld+json';
-    schema.text = JSON.stringify({ "@context": "https://schema.org", "@type": "WebSite", "name": "FleuVibe", "url": "https://fleuvibe-8am5.vercel.app", "description": "Explorez les eaux du monde — 40 spots nautiques, météo IA", "potentialAction": { "@type": "SearchAction", "target": "https://fleuvibe-8am5.vercel.app/?q={search_term_string}", "query-input": "required name=search_term_string" } });
+    schema.text = JSON.stringify({ "@context": "https://schema.org", "@type": "WebSite", "name": "FleuVibe", "url": "https://fleuvibe-8am5.vercel.app", "description": `Explorez les eaux du monde — ${GlobalStats.totalSpots}+ spots nautiques dans ${GlobalStats.totalCountries} pays, météo IA`, "potentialAction": { "@type": "SearchAction", "target": "https://fleuvibe-8am5.vercel.app/?q={search_term_string}", "query-input": "required name=search_term_string" } });
     document.head.appendChild(schema);
-    logger.info('FleuVibe v19 started', { online: navigator.onLine });
+    logger.info('FleuVibe v6 started', { online: navigator.onLine, spots: GlobalStats.totalSpots, countries: GlobalStats.totalCountries });
     window._gtag?.('event', 'app_open');
     return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); };
   }, []);
@@ -1553,7 +1535,7 @@ export default function FleuVibe() {
         )}
 
         <div style={{ marginTop: "40px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.05)", textAlign: "center", fontSize: "0.65rem", color: "#2a5a4a" }}>
-          <p>🌊 FleuVibe World · v19.0 · {spots.length} spots · {Object.keys(COUNTRIES).length} pays · 🤖 IA · 🗺️ Carte · 📡 PWA · 💳 Stripe · 🔒 Zod · 📊 Analytics</p>
+          <p>🌊 FleuVibe World · v6.0 · {spots.length} spots · {GlobalStats.totalCountries} pays · {GlobalStats.totalPartners}+ partenaires · 🤖 IA · 🗺️ Carte · 📡 PWA · 💳 Stripe · 🔒 Zod · 📊 Analytics</p>
         </div>
           </div>
         )}
