@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { z } from "zod";
 
 const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
@@ -8,10 +9,13 @@ const STRIPE_MONTHLY_URL = import.meta.env.VITE_STRIPE_MONTHLY_URL || null;
 const STRIPE_ANNUAL_URL = import.meta.env.VITE_STRIPE_ANNUAL_URL || null;
 
 // ─── OPENAI ───────────────────────────────────────────────────────────────────
-const aiCache = new Map();
+const aiCache = new DistributedCache();
 const callAI = async (messages, maxTokens = 200) => {
   const key = JSON.stringify(messages);
-  if (aiCache.has(key)) return aiCache.get(key);
+  const cached = aiCache.get(key);
+  if (cached) return cached;
+  const rl = rateLimiters.ai.check('global');
+  if (!rl.allowed) { logger.warn('AI rate limit', { reason: rl.reason }); return null; }
   try {
     const r = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -21,9 +25,10 @@ const callAI = async (messages, maxTokens = 200) => {
     const d = await r.json();
     if (d.error) throw new Error(d.error.message);
     const content = d.choices[0].message.content.trim();
-    aiCache.set(key, content);
+    aiCache.set(key, content, 3600000);
+    logger.metric('ai_call', 1, { tokens: maxTokens });
     return content;
-  } catch (e) { console.error("AI:", e); return null; }
+  } catch (e) { logger.error("AI call failed", e); return null; }
 };
 
 const generateDescription = (spot) => callAI([{ role: "user", content: `Génère une description courte et inspirante (2-3 phrases) pour ce spot nautique:\nNom: ${spot.name}, Plan d'eau: ${spot.river}, Pays: ${COUNTRIES[spot.country]?.name}, Région: ${spot.region}\nDifficulté: ${spot.difficulty}, Activités: ${spot.activities.join(", ")}\nStyle: évocateur, aventurier. En français.` }], 150);
@@ -66,6 +71,111 @@ const sb = (() => {
     },
   };
 })();
+
+// ─── SÉCURITÉ & VALIDATION ────────────────────────────────────────────────────
+const sanitizeHTML = (input) => {
+  if (!input) return '';
+  return String(input)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+};
+
+const sanitizeInput = (input) => {
+  if (typeof input !== 'string') return input;
+  return input.replace(/['";\\<>]/g, '').trim().slice(0, 2000);
+};
+
+const getContrastColor = (bgColor) => {
+  const hex = bgColor.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16) / 255;
+  const g = parseInt(hex.substr(2, 2), 16) / 255;
+  const b = parseInt(hex.substr(4, 2), 16) / 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 0.5 ? '#000000' : '#FFFFFF';
+};
+
+// Schémas Zod
+const SpotSubmitSchema = z.object({
+  name: z.string().min(3, 'Nom trop court (min 3 caractères)').max(100),
+  river: z.string().min(1, 'Plan d\'eau requis'),
+  type: z.enum(['RIVER', 'LAKE', 'SEA']),
+  difficulty: z.enum(['Facile', 'Intermédiaire', 'Sportif']),
+  description: z.string().max(1000).optional(),
+  coords: z.string().regex(/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/, 'Format: lat, lon (ex: 50.185, 5.002)').or(z.literal('')),
+  activities: z.array(z.string()).min(1, 'Sélectionne au moins une activité'),
+});
+
+const validateSpot = (data) => {
+  const result = SpotSubmitSchema.safeParse(data);
+  if (result.success) return { valid: true, errors: {} };
+  const errors = {};
+  result.error.errors.forEach(e => { errors[e.path[0]] = e.message; });
+  return { valid: false, errors };
+};
+
+// Rate Limiter
+class RateLimiter {
+  constructor(maxRequests = 60, timeWindow = 60000) {
+    this.maxRequests = maxRequests;
+    this.timeWindow = timeWindow;
+    this.requests = new Map();
+    this.blocked = new Map();
+  }
+  check(userId = 'anon') {
+    if (this.blocked.has(userId) && Date.now() < this.blocked.get(userId)) {
+      return { allowed: false, reason: 'Trop de requêtes. Réessaie dans quelques secondes.', retryAfter: this.blocked.get(userId) - Date.now() };
+    }
+    const now = Date.now();
+    const recent = (this.requests.get(userId) || []).filter(t => now - t < this.timeWindow);
+    if (recent.length >= this.maxRequests) {
+      this.blocked.set(userId, now + 30000);
+      return { allowed: false, reason: 'Limite atteinte. Réessaie dans 30 secondes.', retryAfter: 30000 };
+    }
+    recent.push(now);
+    this.requests.set(userId, recent);
+    return { allowed: true, remaining: this.maxRequests - recent.length };
+  }
+}
+
+const rateLimiters = {
+  ai: new RateLimiter(20, 60000),      // 20 appels IA/minute
+  auth: new RateLimiter(10, 60000),    // 10 tentatives auth/minute
+  review: new RateLimiter(10, 60000),  // 10 avis/minute
+};
+
+// Logger unifié (console + analytics)
+const logger = {
+  info: (msg, ctx = {}) => { console.info(`[FleuVibe] ${msg}`, ctx); trackEvent('log_info', { msg, ...ctx }); },
+  error: (msg, err, ctx = {}) => { console.error(`[FleuVibe] ${msg}`, err, ctx); trackEvent('log_error', { msg, error: err?.message }); },
+  warn: (msg, ctx = {}) => { console.warn(`[FleuVibe] ${msg}`, ctx); },
+  metric: (name, value, tags = {}) => { trackEvent(`metric_${name}`, { value, ...tags }); window._gtag?.('event', name, { value, ...tags }); },
+};
+
+// Cache distribué (remplace aiCache)
+class DistributedCache {
+  constructor() { this.mem = new Map(); }
+  get(key) {
+    const item = this.mem.get(key);
+    if (!item) return null;
+    if (Date.now() > item.expiry) { this.mem.delete(key); return null; }
+    return item.data;
+  }
+  set(key, data, ttl = 3600000) {
+    this.mem.set(key, { data, expiry: Date.now() + ttl });
+    setTimeout(() => this.mem.delete(key), ttl);
+  }
+  clear() { this.mem.clear(); }
+}
+
+// Schema.org pour SEO
+const generateSchemaOrg = (spot) => ({
+  "@context": "https://schema.org",
+  "@type": "TouristAttraction",
+  "name": spot.name,
+  "description": sanitizeHTML(spot.description),
+  "address": { "@type": "PostalAddress", "addressCountry": spot.country },
+  "geo": { "@type": "GeoCoordinates", "latitude": spot.coords[0], "longitude": spot.coords[1] },
+  "potentialAction": { "@type": "ExploreAction", "name": "Découvrir le spot" }
+});
 
 // ─── INDEXEDDB OFFLINE ────────────────────────────────────────────────────────
 const idb = {
@@ -248,6 +358,22 @@ const SPOTS = [
   { id: 39, type: "SEA", country: "FJ", name: "Fidji · Kayak Îles", river: "Pacifique", region: "Viti Levu", distance: "15 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Plongée", "SUP"], description: "Pagayer entre les îles paradisiaques des Fidji.", color: "#06b6d4", emoji: "🌴", open: true, coords: [-17.713, 178.065], camping: true, waterPoints: true },
   { id: 40, type: "LAKE", country: "PE", name: "Lac Titicaca · Uros", river: "Lac Titicaca", region: "Puno", distance: "20 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Bateau traditionnel"], description: "Le plus haut lac navigable du monde à 3800m.", color: "#0891b2", emoji: "🌄", open: true, coords: [-15.840, -69.330], camping: false, waterPoints: true },
 ];
+
+// ─── ACCESSIBILITÉ ────────────────────────────────────────────────────────────
+function AccessibleButton({ children, onClick, ariaLabel, disabled, style, className }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      style={{ cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1, ...style }}
+      className={className}
+      onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !disabled) { e.preventDefault(); onClick?.(); } }}
+    >
+      {children}
+    </button>
+  );
+}
 
 // ─── MAP VIEW ─────────────────────────────────────────────────────────────────
 function MapView({ spots, favorites, onFav, session, onShowAuth, onBook, isPremium, onShowPremium, userName }) {
@@ -846,13 +972,17 @@ function BookingModal({ spot, onClose }) {
 function SubmitSpotModal({ onClose, onAdd, session, showAuth }) {
   const [form, setForm] = useState({ name: "", river: "", country: "BE", region: "", distance: "", duration: "", difficulty: "Facile", activities: [], description: "", coords: "", emoji: "🛶", type: "RIVER" });
   const [done, setDone] = useState(false);
-  const f = (k, v) => setForm(x => ({ ...x, [k]: v }));
-  const inp = { width: "100%", padding: "9px 13px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "12px", color: "#e8f4f0", fontSize: "0.82rem", outline: "none" };
+  const [validationErrors, setValidationErrors] = useState({});
+  const f = (k, v) => { setForm(x => ({ ...x, [k]: v })); setValidationErrors(e => ({ ...e, [k]: undefined })); };
+  const inp = (field) => ({ width: "100%", padding: "9px 13px", background: "rgba(255,255,255,0.05)", border: `1px solid ${validationErrors[field] ? "rgba(220,38,38,0.5)" : "rgba(26,158,110,0.2)"}`, borderRadius: "12px", color: "#e8f4f0", fontSize: "0.82rem", outline: "none" });
   const submit = () => {
-    if (!form.name || !form.river) return;
     if (!session) { showAuth(); return; }
-    const c = form.coords.split(",").map(s => parseFloat(s.trim()));
-    onAdd({ ...form, id: Date.now(), open: true, color: "#1a9e6e", community: true, coords: c.length === 2 && !isNaN(c[0]) ? c : [0, 0], activities: form.activities.length ? form.activities : ["Kayak"] });
+    const sanitized = { ...form, name: sanitizeInput(form.name), river: sanitizeInput(form.river), description: sanitizeInput(form.description) };
+    const { valid, errors } = validateSpot(sanitized);
+    if (!valid) { setValidationErrors(errors); return; }
+    const c = sanitized.coords.split(",").map(s => parseFloat(s.trim()));
+    onAdd({ ...sanitized, id: Date.now(), open: true, color: "#1a9e6e", community: true, coords: c.length === 2 && !isNaN(c[0]) ? c : [0, 0], activities: sanitized.activities.length ? sanitized.activities : ["Kayak"] });
+    trackEvent('spot_submitted', { name: sanitized.name, type: sanitized.type });
     setDone(true);
     setTimeout(() => { setDone(false); onClose(); }, 2500);
   };
@@ -879,12 +1009,13 @@ function SubmitSpotModal({ onClose, onAdd, session, showAuth }) {
               {[["Nom *", "name", "text", "Ex: Lesse · Houyet"], ["Rivière / Lac *", "river", "text", "Ex: Lesse"], ["Région", "region", "text", "Ex: Wallonie"], ["Distance", "distance", "text", "Ex: 21 km"], ["Durée", "duration", "text", "Ex: 4–5h"], ["Coordonnées GPS", "coords", "text", "Ex: 50.185, 5.002"], ["Description", "description", "textarea", "Décris ce spot..."]].map(([label, key, type, ph]) => (
                 <div key={key}>
                   <label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "4px", fontWeight: 500 }}>{label}</label>
-                  {type === "textarea" ? <textarea value={form[key]} onChange={e => f(key, e.target.value)} placeholder={ph} rows={2} style={{ ...inp, resize: "vertical" }} /> : <input value={form[key]} onChange={e => f(key, e.target.value)} placeholder={ph} style={inp} />}
+                  {type === "textarea" ? <textarea value={form[key]} onChange={e => f(key, e.target.value)} placeholder={ph} rows={2} style={{ ...inp(key), resize: "vertical" }} /> : <input value={form[key]} onChange={e => f(key, e.target.value)} placeholder={ph} style={inp(key)} />}
+                  {validationErrors[key] && <p style={{ color: "#f87171", fontSize: "0.65rem", marginTop: "3px" }}>⚠️ {validationErrors[key]}</p>}
                 </div>
               ))}
               <div>
                 <label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "4px", fontWeight: 500 }}>Pays</label>
-                <select value={form.country} onChange={e => f("country", e.target.value)} style={{ ...inp, background: "#0d2240" }}>
+                <select value={form.country} onChange={e => f("country", e.target.value)} style={{ ...inp("country"), background: "#0d2240" }}>
                   {Object.entries(COUNTRIES).sort((a, b) => a[1].name.localeCompare(b[1].name)).map(([code, c]) => <option key={code} value={code}>{c.flag} {c.name}</option>)}
                 </select>
               </div>
@@ -988,10 +1119,17 @@ export default function FleuVibe() {
     const stats = JSON.parse(localStorage.getItem("fv_stats") || "{}");
     setUserXP(xp);
     if (stats.totalSpotsVisited) setUserStats(stats);
-    const goOnline = () => setIsOnline(true);
-    const goOffline = () => setIsOnline(false);
+    const goOnline = () => { setIsOnline(true); logger.info('Back online'); };
+    const goOffline = () => { setIsOnline(false); logger.warn('Gone offline'); };
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
+    // Schema.org site-level
+    const schema = document.createElement('script');
+    schema.type = 'application/ld+json';
+    schema.text = JSON.stringify({ "@context": "https://schema.org", "@type": "WebSite", "name": "FleuVibe", "url": "https://fleuvibe-8am5.vercel.app", "description": "Explorez les eaux du monde — 40 spots nautiques, météo IA", "potentialAction": { "@type": "SearchAction", "target": "https://fleuvibe-8am5.vercel.app/?q={search_term_string}", "query-input": "required name=search_term_string" } });
+    document.head.appendChild(schema);
+    logger.info('FleuVibe v19 started', { online: navigator.onLine });
+    window._gtag?.('event', 'app_open');
     return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); };
   }, []);
 
@@ -1039,7 +1177,20 @@ export default function FleuVibe() {
 
   const loadProfile = async (id, t) => { const p = await sb.profiles.get(id, t); if (p) { setProfile(p); try { setFavorites(JSON.parse(p.favorites || "[]")); } catch { setFavorites([]); } } };
   const handleSignUp = async () => { setAuthLoading(true); setAuthError(""); const d = await sb.auth.signUp(authForm.email, authForm.password, authForm.fullName); if (d.error) { setAuthError(d.error.message); setAuthLoading(false); return; } if (d.access_token) { const s = { user: d.user, token: d.access_token }; setSession(s); localStorage.setItem("fv_session", JSON.stringify(s)); await sb.profiles.upsert({ id: d.user.id, full_name: authForm.fullName, username: authForm.email.split("@")[0], favorites: "[]" }, d.access_token); await loadProfile(d.user.id, d.access_token); setShowAuth(false); setAuthForm({ email: "", password: "", fullName: "" }); addXP(50); } else { setAuthError("Vérifie ton email !"); } setAuthLoading(false); };
-  const handleSignIn = async () => { setAuthLoading(true); setAuthError(""); const d = await sb.auth.signIn(authForm.email, authForm.password); if (d.error) { setAuthError(d.error.message); setAuthLoading(false); return; } const s = { user: d.user, token: d.access_token }; setSession(s); localStorage.setItem("fv_session", JSON.stringify(s)); await loadProfile(d.user.id, d.access_token); setShowAuth(false); setAuthForm({ email: "", password: "", fullName: "" }); setAuthLoading(false); };
+  const handleSignIn = async () => {
+    const rl = rateLimiters.auth.check(authForm.email || 'anon');
+    if (!rl.allowed) { setAuthError(rl.reason); return; }
+    setAuthLoading(true); setAuthError("");
+    const d = await sb.auth.signIn(authForm.email, authForm.password);
+    if (d.error) { setAuthError(d.error.message); setAuthLoading(false); logger.warn('Sign-in failed', { email: authForm.email }); return; }
+    const s = { user: d.user, token: d.access_token };
+    setSession(s); localStorage.setItem("fv_session", JSON.stringify(s));
+    await loadProfile(d.user.id, d.access_token);
+    setShowAuth(false); setAuthForm({ email: "", password: "", fullName: "" });
+    setAuthLoading(false);
+    logger.metric('user_signin', 1);
+    window._gtag?.('event', 'login', { method: 'email' });
+  };
   const handleSignOut = async () => { if (session) await sb.auth.signOut(session.token); setSession(null); setProfile(null); setFavorites([]); setIsPremium(false); localStorage.removeItem("fv_session"); setShowProfile(false); };
   const toggleFav = async (id) => {
     if (!session) { setShowAuth(true); return; }
@@ -1402,7 +1553,7 @@ export default function FleuVibe() {
         )}
 
         <div style={{ marginTop: "40px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.05)", textAlign: "center", fontSize: "0.65rem", color: "#2a5a4a" }}>
-          <p>🌊 FleuVibe World · v18.0 · {spots.length} spots · {Object.keys(COUNTRIES).length} pays · 🤖 OpenAI GPT-4o mini · 💎 {HIDDEN_GEMS.length} pépites · 🗺️ Carte Leaflet · 📡 Offline · 💳 Stripe</p>
+          <p>🌊 FleuVibe World · v19.0 · {spots.length} spots · {Object.keys(COUNTRIES).length} pays · 🤖 IA · 🗺️ Carte · 📡 PWA · 💳 Stripe · 🔒 Zod · 📊 Analytics</p>
         </div>
           </div>
         )}
