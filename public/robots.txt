@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://fleuvibe-8am5.vercel.app/sitemap.xml
+
+# Bloquer les crawlers sur les endpoints privés
+Disallow: /api/
+Disallow: /.env

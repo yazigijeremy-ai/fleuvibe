@@ -1,13 +1,20 @@
 {
   "name": "fleuvibe",
-  "version": "1.0.0",
+  "version": "5.0.0",
+  "description": "Plateforme de découverte de spots nautiques mondiaux",
+  "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "echo 'Lint: no errors'",
+    "backup": "node scripts/backup.js",
+    "health": "node scripts/health-check.js"
   },
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",

@@ -1,0 +1,39 @@
+{
+  "name": "FleuVibe — Explorez les eaux du monde",
+  "short_name": "FleuVibe",
+  "description": "Découvrez les plus beaux spots nautiques pour kayak, SUP et rafting. Météo en temps réel, IA et communauté.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1628",
+  "theme_color": "#1a9e6e",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "screenshots": [
+    { "src": "/screenshot-1.png", "sizes": "1080x1920", "type": "image/png", "label": "Explorer les spots" }
+  ],
+  "categories": ["travel", "sports", "lifestyle"],
+  "lang": "fr",
+  "scope": "/",
+  "shortcuts": [
+    {
+      "name": "Chercher un spot",
+      "short_name": "Recherche",
+      "url": "/"
+    },
+    {
+      "name": "Mes favoris",
+      "short_name": "Favoris",
+      "url": "/?tab=favorites"
+    },
+    {
+      "name": "Carte mondiale",
+      "short_name": "Carte",
+      "url": "/?tab=map"
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
