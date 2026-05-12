@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ALL_COUNTRIES as COUNTRIES_EXT, GLOBAL_PARTNERS, WORLD_ROUTES, GlobalStats } from "./data";
 import { GLOBAL_SPOTS_FLAT } from "./spots";
 import { stripeManager, calcBookingPrice } from "./stripe";
+import { partnershipManager, PARTNERSHIP_TIERS } from "./partnership";
 
 const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
@@ -343,6 +344,101 @@ const SPOTS = [
 const SPOTS_WORLD = [...SPOTS, ...WORLD_ROUTES, ...GLOBAL_SPOTS_FLAT];
 const ALL_PROVIDERS = [...PROVIDERS, ...GLOBAL_PARTNERS];
 
+// ─── PARTNER PORTAL ──────────────────────────────────────────────────────────
+function PartnerPortal({ partner, onClose }) {
+  const portal = partnershipManager.getPortal(partner);
+  const { tier, tierData, nextTier, progress, stats, contract } = portal;
+  return (
+    <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: `1px solid ${tierData.color}40`, borderRadius: "28px", padding: "26px", maxWidth: "500px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.3s ease", boxShadow: "0 30px 80px rgba(0,0,0,0.6)" }}>
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "20px" }}>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
+              <span style={{ fontSize: "1.8rem" }}>{partner.emoji || "🏢"}</span>
+              <div>
+                <h2 style={{ fontSize: "1.05rem", fontWeight: 800, color: "#daf0e8" }}>{partner.name}</h2>
+                <p style={{ fontSize: "0.7rem", color: "#4a7a6a" }}>{partner.country} · {partner.type}</p>
+              </div>
+            </div>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", padding: "3px 12px", background: tierData.bg, border: `1px solid ${tierData.color}50`, borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700, color: tierData.color }}>
+              {tierData.badge} Partenaire {tierData.label} · {tierData.commission}% commission
+            </span>
+          </div>
+          <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#5a8a78", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
+        </div>
+
+        {/* Stats */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "8px", marginBottom: "18px" }}>
+          {[["📅", stats.bookings, "Réservations"], ["💰", `${stats.revenue}€`, "Revenus"], ["👁️", stats.views, "Vues"], ["⭐", stats.rating || partner.rating || "—", "Note"]].map(([ic, val, lbl]) => (
+            <div key={lbl} style={{ padding: "10px 6px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", textAlign: "center" }}>
+              <div style={{ fontSize: "0.9rem" }}>{ic}</div>
+              <div style={{ fontSize: "0.9rem", fontWeight: 800, color: "#a8edcf" }}>{val}</div>
+              <div style={{ fontSize: "0.55rem", color: "#4a7a6a", marginTop: "1px" }}>{lbl}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Progression vers tier suivant */}
+        {nextTier && (
+          <div style={{ marginBottom: "18px", padding: "12px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+              <span style={{ fontSize: "0.72rem", color: "#6a9a8c", fontWeight: 600 }}>Prochain niveau : {nextTier.badge} {nextTier.label}</span>
+              <span style={{ fontSize: "0.7rem", color: "#f59e0b", fontWeight: 700 }}>{progress}%</span>
+            </div>
+            <div style={{ height: "6px", background: "rgba(255,255,255,0.08)", borderRadius: "3px", overflow: "hidden", marginBottom: "5px" }}>
+              <div style={{ width: `${progress}%`, height: "100%", background: `linear-gradient(90deg,${tierData.color},${nextTier.color})`, borderRadius: "3px", transition: "width 0.8s" }} />
+            </div>
+            <p style={{ fontSize: "0.62rem", color: "#4a7a6a" }}>Objectif : {nextTier.threshold.toLocaleString()}€ de revenus cumulés</p>
+          </div>
+        )}
+
+        {/* Avantages */}
+        <div style={{ marginBottom: "18px" }}>
+          <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#a8edcf", marginBottom: "8px" }}>Avantages inclus</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+            {tierData.benefits.map(b => (
+              <span key={b} style={{ padding: "3px 10px", background: `${tierData.color}18`, border: `1px solid ${tierData.color}40`, borderRadius: "20px", fontSize: "0.66rem", color: tierData.color }}>✓ {b}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Contrat */}
+        <div style={{ padding: "12px 14px", background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "12px", marginBottom: "16px" }}>
+          <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#6a9a8c", marginBottom: "8px" }}>Conditions du contrat</p>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px" }}>
+            {[["Paiement", contract.terms.paymentTerms], ["Annulation", contract.terms.cancellationPolicy], ["Exclusivité", contract.terms.exclusivity ? "Oui" : "Non"], ["Réservation min.", contract.terms.minimumBookings || "Aucune"]].map(([k, v]) => (
+              <div key={k} style={{ fontSize: "0.65rem" }}>
+                <span style={{ color: "#4a7a6a" }}>{k} : </span>
+                <span style={{ color: "#a8edcf", fontWeight: 600 }}>{v}</span>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: "0.62rem", color: "#4a7a6a", marginTop: "8px" }}>
+            Contrat valide jusqu'au {new Date(contract.endDate).toLocaleDateString("fr-FR")}
+          </p>
+        </div>
+
+        {/* Tiers disponibles */}
+        <div>
+          <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#6a9a8c", marginBottom: "8px" }}>Tous les niveaux</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+            {Object.entries(PARTNERSHIP_TIERS).map(([key, t]) => (
+              <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "6px 10px", background: tier === key ? t.bg : "rgba(255,255,255,0.02)", border: `1px solid ${tier === key ? t.color + "50" : "rgba(255,255,255,0.05)"}`, borderRadius: "10px" }}>
+                <span style={{ fontSize: "0.7rem", color: tier === key ? t.color : "#5a8a78", fontWeight: tier === key ? 700 : 400 }}>{t.badge} {t.label} {tier === key ? "← actuel" : ""}</span>
+                <div style={{ textAlign: "right" }}>
+                  <span style={{ fontSize: "0.65rem", color: "#4a7a6a" }}>{t.commission}% comm. · </span>
+                  <span style={{ fontSize: "0.62rem", color: "#4a7a6a" }}>{t.threshold > 0 ? `dès ${t.threshold.toLocaleString()}€` : "Gratuit"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── ACCESSIBILITÉ ────────────────────────────────────────────────────────────
 function AccessibleButton({ children, onClick, ariaLabel, disabled, style, className }) {
   return (
@@ -550,25 +646,33 @@ function ExpeditionPlanner({ spot }) {
   );
 }
 
-function ProviderComparator({ routeId }) {
+function ProviderComparator({ routeId, onShowPortal }) {
   const routeProviders = ALL_PROVIDERS.filter(p => p.routeIds?.includes(routeId));
   if (routeProviders.length < 1) return null;
   return (
     <div style={{ marginTop: "10px" }}>
       <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf", marginBottom: "7px" }}>📊 Prestataires disponibles</p>
       <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-        {routeProviders.map(p => (
-          <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px" }}>
-            <div>
-              <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "#c8e8d8" }}>{p.emoji} {p.name}</div>
-              <div style={{ fontSize: "0.62rem", color: "#4a7a6a" }}>{p.inclut?.slice(0, 3).join(" · ")} {p.eco ? "· 🌿 Éco" : ""}</div>
+        {routeProviders.map(p => {
+          const tier = partnershipManager.getTier(p.revenue || 0);
+          const tierData = PARTNERSHIP_TIERS[tier];
+          return (
+            <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px" }}>
+              <div>
+                <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+                  <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#c8e8d8" }}>{p.emoji} {p.name}</span>
+                  <span style={{ fontSize: "0.6rem", padding: "1px 6px", background: tierData.bg, border: `1px solid ${tierData.color}40`, borderRadius: "20px", color: tierData.color }}>{tierData.badge} {tierData.label}</span>
+                </div>
+                <div style={{ fontSize: "0.62rem", color: "#4a7a6a" }}>{p.inclut?.slice(0, 3).join(" · ")} {p.eco ? "· 🌿 Éco" : ""}</div>
+              </div>
+              <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "3px" }}>
+                <div style={{ fontSize: "0.9rem", fontWeight: 800, color: "#a8edcf" }}>{p.price}{p.currency}</div>
+                <div style={{ fontSize: "0.62rem", color: "#f59e0b" }}>⭐ {p.rating} ({p.reviews})</div>
+                {onShowPortal && <button onClick={e => { e.stopPropagation(); onShowPortal(p); }} style={{ fontSize: "0.58rem", padding: "2px 7px", background: tierData.bg, border: `1px solid ${tierData.color}40`, borderRadius: "20px", color: tierData.color, cursor: "pointer" }}>🏢 Portail</button>}
+              </div>
             </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: "0.9rem", fontWeight: 800, color: "#a8edcf" }}>{p.price}{p.currency}</div>
-              <div style={{ fontSize: "0.62rem", color: "#f59e0b" }}>⭐ {p.rating} ({p.reviews})</div>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -849,7 +953,7 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
             <SeasonalCalendar />
             <LiveConditions spotId={spot.id} />
             <ExpeditionPlanner spot={spot} />
-            <ProviderComparator routeId={spot.id} />
+            <ProviderComparator routeId={spot.id} onShowPortal={p => window._setPartnerPortal?.(p)} />
             <LegalWarning country={spot.country} />
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
               <button onClick={e => { e.stopPropagation(); onBook(spot); }} style={{ padding: "8px 18px", background: `linear-gradient(135deg,${spot.color},${spot.color}bb)`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.78rem" }}>🛶 Réserver ce spot</button>
@@ -1117,6 +1221,7 @@ export default function FleuVibe() {
   const [showChallenges, setShowChallenges] = useState(false);
   const [showGroups, setShowGroups] = useState(false);
   const [showAffiliate, setShowAffiliate] = useState(false);
+  const [partnerPortal, setPartnerPortal] = useState(null);
   const [authForm, setAuthForm] = useState({ email: "", password: "", fullName: "" });
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
@@ -1157,7 +1262,8 @@ export default function FleuVibe() {
     document.head.appendChild(schema);
     logger.info('FleuVibe v6 started', { online: navigator.onLine, spots: GlobalStats.totalSpots, countries: GlobalStats.totalCountries });
     window._gtag?.('event', 'app_open');
-    return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); };
+    window._setPartnerPortal = setPartnerPortal;
+    return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); window._setPartnerPortal = null; };
   }, []);
 
   useEffect(() => {
@@ -1588,6 +1694,7 @@ export default function FleuVibe() {
 
       {/* MODALS */}
       {bookingSpot && <BookingModal spot={bookingSpot} provider={ALL_PROVIDERS.find(p => p.routeIds?.includes(bookingSpot.id))} onClose={() => setBookingSpot(null)} />}
+      {partnerPortal && <PartnerPortal partner={partnerPortal} onClose={() => setPartnerPortal(null)} />}
       {showPremium && <PremiumModal onClose={() => setShowPremium(false)} onActivate={() => { setIsPremium(true); addXP(200); }} />}
       {showSubmit && <SubmitSpotModal onClose={() => setShowSubmit(false)} onAdd={s => { setSpots(x => [...x, s]); addXP(100); }} session={session} showAuth={() => { setShowSubmit(false); setShowAuth(true); }} />}
 
