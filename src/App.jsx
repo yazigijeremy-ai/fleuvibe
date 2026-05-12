@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { ALL_COUNTRIES as COUNTRIES_EXT, GLOBAL_PARTNERS, WORLD_ROUTES, GlobalStats } from "./data";
+import { GLOBAL_SPOTS_FLAT } from "./spots";
 
 const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
@@ -338,7 +339,7 @@ const SPOTS = [
   { id: 40, type: "LAKE", country: "PE", name: "Lac Titicaca · Uros", river: "Lac Titicaca", region: "Puno", distance: "20 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Bateau traditionnel"], description: "Le plus haut lac navigable du monde à 3800m.", color: "#0891b2", emoji: "🌄", open: true, coords: [-15.840, -69.330], camping: false, waterPoints: true },
 ];
 
-const SPOTS_WORLD = [...SPOTS, ...WORLD_ROUTES];
+const SPOTS_WORLD = [...SPOTS, ...WORLD_ROUTES, ...GLOBAL_SPOTS_FLAT];
 const ALL_PROVIDERS = [...PROVIDERS, ...GLOBAL_PARTNERS];
 
 // ─── ACCESSIBILITÉ ────────────────────────────────────────────────────────────
