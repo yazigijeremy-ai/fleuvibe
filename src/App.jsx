@@ -4,6 +4,8 @@ const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
 const WEATHER_KEY = "3a42db1ac015f3b988b8051c5f469bd7";
 const OPENAI_KEY = import.meta.env.VITE_OPENAI_KEY;
+const STRIPE_MONTHLY_URL = import.meta.env.VITE_STRIPE_MONTHLY_URL || null;
+const STRIPE_ANNUAL_URL = import.meta.env.VITE_STRIPE_ANNUAL_URL || null;
 
 // ─── OPENAI ───────────────────────────────────────────────────────────────────
 const aiCache = new Map();
@@ -64,6 +66,32 @@ const sb = (() => {
     },
   };
 })();
+
+// ─── INDEXEDDB OFFLINE ────────────────────────────────────────────────────────
+const idb = {
+  _open: () => new Promise((res, rej) => {
+    const req = indexedDB.open('fleuvibe_v1', 1);
+    req.onupgradeneeded = e => { try { e.target.result.createObjectStore('kv'); } catch {} };
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = () => rej();
+  }),
+  async get(key) {
+    try { const db = await this._open(); return new Promise(res => { const r = db.transaction('kv','readonly').objectStore('kv').get(key); r.onsuccess = () => res(r.result ?? null); r.onerror = () => res(null); }); } catch { return null; }
+  },
+  async set(key, val) {
+    try { const db = await this._open(); return new Promise(res => { const tx = db.transaction('kv','readwrite'); tx.objectStore('kv').put(val, key); tx.oncomplete = res; tx.onerror = res; }); } catch {}
+  },
+};
+
+// ─── ANALYTICS ────────────────────────────────────────────────────────────────
+const trackEvent = (event, data = {}) => {
+  try {
+    const events = JSON.parse(localStorage.getItem('fv_analytics') || '[]');
+    events.push({ event, ...data, t: Date.now() });
+    if (events.length > 500) events.splice(0, events.length - 500);
+    localStorage.setItem('fv_analytics', JSON.stringify(events));
+  } catch {}
+};
 
 // ─── WEATHER ──────────────────────────────────────────────────────────────────
 const getWeather = async (lat, lon) => {
@@ -220,6 +248,98 @@ const SPOTS = [
   { id: 39, type: "SEA", country: "FJ", name: "Fidji · Kayak Îles", river: "Pacifique", region: "Viti Levu", distance: "15 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Plongée", "SUP"], description: "Pagayer entre les îles paradisiaques des Fidji.", color: "#06b6d4", emoji: "🌴", open: true, coords: [-17.713, 178.065], camping: true, waterPoints: true },
   { id: 40, type: "LAKE", country: "PE", name: "Lac Titicaca · Uros", river: "Lac Titicaca", region: "Puno", distance: "20 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Bateau traditionnel"], description: "Le plus haut lac navigable du monde à 3800m.", color: "#0891b2", emoji: "🌄", open: true, coords: [-15.840, -69.330], camping: false, waterPoints: true },
 ];
+
+// ─── MAP VIEW ─────────────────────────────────────────────────────────────────
+function MapView({ spots, favorites, onFav, session, onShowAuth, onBook, isPremium, onShowPremium, userName }) {
+  const mapRef = useRef(null);
+  const instanceRef = useRef(null);
+  const markersRef = useRef([]);
+  const [selectedSpot, setSelectedSpot] = useState(null);
+  const [mapType, setMapType] = useState("ALL");
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    if (!mapRef.current || instanceRef.current || typeof window.L === 'undefined') return;
+    const L = window.L;
+    const map = L.map(mapRef.current, { center: [20, 10], zoom: 2, zoomControl: true });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+      maxZoom: 18,
+    }).addTo(map);
+    instanceRef.current = map;
+    setReady(true);
+    return () => { if (instanceRef.current) { instanceRef.current.remove(); instanceRef.current = null; } };
+  }, []);
+
+  useEffect(() => {
+    if (!instanceRef.current || !ready) return;
+    const L = window.L;
+    const map = instanceRef.current;
+    markersRef.current.forEach(m => map.removeLayer(m));
+    markersRef.current = [];
+    const filtered = mapType === "ALL" ? spots : spots.filter(s => s.type === mapType);
+    filtered.forEach(spot => {
+      const col = { RIVER: '#2563eb', LAKE: '#0891b2', SEA: '#7c3aed' }[spot.type] || '#1a9e6e';
+      const isFav = favorites.includes(spot.id);
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="width:38px;height:38px;background:${col}22;border:2px solid ${col};border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:19px;box-shadow:0 2px 10px ${col}55;cursor:pointer;transition:transform 0.2s;${isFav ? `outline:3px solid #ef444488;` : ''}">${spot.emoji}</div>`,
+        iconSize: [38, 38], iconAnchor: [19, 19],
+      });
+      const marker = L.marker(spot.coords, { icon }).addTo(map);
+      marker.bindTooltip(`<strong>${spot.name}</strong><br/><small>${spot.difficulty} · ${spot.distance}</small>`, { direction: 'top', offset: [0, -20] });
+      marker.on('click', () => { setSelectedSpot(spot); trackEvent('map_spot_click', { spotId: spot.id, spotName: spot.name }); });
+      markersRef.current.push(marker);
+    });
+  }, [spots, favorites, mapType, ready]);
+
+  const diffColor = { Facile: '#10b981', Intermédiaire: '#f59e0b', Sportif: '#ef4444' };
+
+  return (
+    <div>
+      <div style={{ textAlign: "center", marginBottom: "16px" }}>
+        <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a8edcf", marginBottom: "5px" }}>🗺️ Carte mondiale</h2>
+        <p style={{ color: "#4a7a6a", fontSize: "0.8rem" }}>{spots.length} spots nautiques · {Object.keys(COUNTRIES).length} pays</p>
+      </div>
+      <div style={{ display: "flex", gap: "4px", marginBottom: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+        {[["ALL", "🌍 Tous"], ["RIVER", "🏞️ Rivières"], ["LAKE", "🏔️ Lacs"], ["SEA", "🌊 Mers"]].map(([id, label]) => (
+          <button key={id} onClick={() => setMapType(id)} style={{ padding: "6px 14px", borderRadius: "20px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: mapType === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.06)", color: mapType === id ? "#fff" : "#6a9a8c", cursor: "pointer" }}>{label}</button>
+        ))}
+      </div>
+      <div ref={mapRef} style={{ height: "460px", borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", marginBottom: "14px" }} />
+      {!ready && typeof window.L === 'undefined' && (
+        <div style={{ padding: "20px", textAlign: "center", color: "#5a8a78", fontSize: "0.8rem" }}>⏳ Chargement de la carte...</div>
+      )}
+      {selectedSpot && (
+        <div style={{ padding: "16px", background: `linear-gradient(135deg,${selectedSpot.color}08,rgba(255,255,255,0.02))`, border: `1px solid ${selectedSpot.color}30`, borderRadius: "18px", animation: "slideUp 0.3s ease" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+            <span style={{ fontSize: "2rem" }}>{selectedSpot.emoji}</span>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#daf0e8" }}>{selectedSpot.name} {COUNTRIES[selectedSpot.country]?.flag}</h3>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "3px" }}>
+                <span style={{ fontSize: "0.65rem", color: "#5a8a78" }}>{selectedSpot.region}</span>
+                <span style={{ padding: "1px 7px", background: `${diffColor[selectedSpot.difficulty]}18`, border: `1px solid ${diffColor[selectedSpot.difficulty]}30`, borderRadius: "20px", fontSize: "0.62rem", fontWeight: 600, color: diffColor[selectedSpot.difficulty] }}>{selectedSpot.difficulty}</span>
+              </div>
+            </div>
+            <button onClick={() => onFav(selectedSpot.id)} style={{ fontSize: "1.4rem", background: "none", border: "none", cursor: "pointer" }}>{favorites.includes(selectedSpot.id) ? "❤️" : "🤍"}</button>
+          </div>
+          <p style={{ fontSize: "0.8rem", color: "#8ab8b0", lineHeight: 1.6, marginBottom: "10px" }}>{selectedSpot.description}</p>
+          <div style={{ display: "flex", gap: "12px", fontSize: "0.72rem", color: "#5a8a78", marginBottom: "10px" }}>
+            <span>📏 {selectedSpot.distance}</span>
+            <span>⏱️ {selectedSpot.duration}</span>
+          </div>
+          <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "10px" }}>
+            {selectedSpot.activities.map(a => <span key={a} style={{ padding: "2px 8px", background: `${selectedSpot.color}12`, border: `1px solid ${selectedSpot.color}24`, borderRadius: "20px", fontSize: "0.65rem", color: "#8ae8cc" }}>{a}</span>)}
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={() => onBook(selectedSpot)} style={{ padding: "7px 16px", background: `linear-gradient(135deg,${selectedSpot.color},#0891b2)`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.75rem" }}>🛶 Réserver</button>
+            <button onClick={() => setSelectedSpot(null)} style={{ padding: "7px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", color: "#5a8a78", fontSize: "0.75rem" }}>✕ Fermer</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── COMPONENTS ───────────────────────────────────────────────────────────────
 
@@ -634,9 +754,21 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
 
 function PremiumModal({ onClose, onActivate }) {
   const plans = [
-    { name: "Mensuel", price: "4,99€", period: "/mois", features: ["Météo avancée 7j", "Favoris illimités", "Sans pub"] },
-    { name: "Annuel", price: "39,99€", period: "/an", popular: true, features: ["Tout du mensuel", "🤖 Descriptions IA", "🧠 Conseils météo IA", "🪄 Suggestions d'avis", "📋 Résumés d'avis", "🧭 Recommandations", "🌐 Traduction IA", "Économisez 33%"] },
+    { id: "monthly", name: "Mensuel", price: "4,99€", period: "/mois", url: STRIPE_MONTHLY_URL, features: ["Météo avancée 7j", "Favoris illimités", "Sans pub"] },
+    { id: "annual", name: "Annuel", price: "39,99€", period: "/an", popular: true, url: STRIPE_ANNUAL_URL, features: ["Tout du mensuel", "🤖 Descriptions IA", "🧠 Conseils météo IA", "🪄 Suggestions d'avis", "📋 Résumés d'avis", "🧭 Recommandations", "🌐 Traduction IA", "Économisez 33%"] },
   ];
+  const [selectedPlan, setSelectedPlan] = useState("annual");
+  const plan = plans.find(p => p.id === selectedPlan);
+
+  const handlePay = () => {
+    trackEvent('premium_checkout_click', { plan: selectedPlan });
+    if (plan.url) {
+      window.open(plan.url, '_blank');
+    } else {
+      onActivate(); onClose();
+    }
+  };
+
   return (
     <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "24px", padding: "28px", maxWidth: "480px", width: "100%", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
@@ -649,19 +781,28 @@ function PremiumModal({ onClose, onActivate }) {
           <p style={{ fontSize: "0.75rem", color: "#a5b4fc" }}>🤖 Propulsé par <strong>OpenAI GPT-4o mini</strong></p>
         </div>
         <div style={{ display: "flex", gap: "12px", marginBottom: "18px", flexWrap: "wrap" }}>
-          {plans.map(plan => (
-            <div key={plan.name} style={{ flex: 1, minWidth: "160px", padding: "16px", background: plan.popular ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.04)", border: `1px solid ${plan.popular ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.08)"}`, borderRadius: "16px", position: "relative" }}>
-              {plan.popular && <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#f59e0b,#ef4444)", padding: "2px 12px", borderRadius: "20px", fontSize: "0.6rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>⭐ POPULAIRE</div>}
-              <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#a8edcf", marginBottom: "4px" }}>{plan.name}</div>
-              <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#f59e0b" }}>{plan.price}</div>
-              <div style={{ fontSize: "0.65rem", color: "#4a7a6a", marginBottom: "10px" }}>{plan.period}</div>
-              {plan.features.map(f => <div key={f} style={{ fontSize: "0.7rem", color: "#8ab8b0", marginBottom: "3px" }}>✓ {f}</div>)}
+          {plans.map(p => (
+            <div key={p.name} onClick={() => setSelectedPlan(p.id)} style={{ flex: 1, minWidth: "160px", padding: "16px", background: p.popular ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.04)", border: `2px solid ${selectedPlan === p.id ? (p.popular ? "rgba(245,158,11,0.7)" : "rgba(26,158,110,0.6)") : (p.popular ? "rgba(245,158,11,0.3)" : "rgba(255,255,255,0.08)")}`, borderRadius: "16px", position: "relative", cursor: "pointer", transition: "all 0.2s" }}>
+              {p.popular && <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#f59e0b,#ef4444)", padding: "2px 12px", borderRadius: "20px", fontSize: "0.6rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>⭐ POPULAIRE</div>}
+              <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#a8edcf", marginBottom: "4px" }}>{p.name}</div>
+              <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#f59e0b" }}>{p.price}</div>
+              <div style={{ fontSize: "0.65rem", color: "#4a7a6a", marginBottom: "10px" }}>{p.period}</div>
+              {p.features.map(f => <div key={f} style={{ fontSize: "0.7rem", color: "#8ab8b0", marginBottom: "3px" }}>✓ {f}</div>)}
             </div>
           ))}
         </div>
-        <button onClick={() => { onActivate(); onClose(); }} style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)" }}>
-          ⭐ Commencer l'essai gratuit 7 jours
-        </button>
+        {STRIPE_MONTHLY_URL || STRIPE_ANNUAL_URL ? (
+          <button onClick={handlePay} style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+            💳 Payer avec Stripe · {plan.price}
+          </button>
+        ) : (
+          <button onClick={handlePay} style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)" }}>
+            ⭐ Commencer l'essai gratuit 7 jours
+          </button>
+        )}
+        {!STRIPE_MONTHLY_URL && !STRIPE_ANNUAL_URL && (
+          <p style={{ textAlign: "center", fontSize: "0.6rem", color: "#3a6a5a", marginTop: "6px" }}>Ajoutez VITE_STRIPE_MONTHLY_URL / VITE_STRIPE_ANNUAL_URL dans Vercel pour activer Stripe</p>
+        )}
         <p style={{ textAlign: "center", fontSize: "0.62rem", color: "#3a6a5a", marginTop: "8px" }}>Sans engagement · Annulable à tout moment</p>
       </div>
     </div>
@@ -838,6 +979,7 @@ export default function FleuVibe() {
   const [loaded, setLoaded] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [pageTransition, setPageTransition] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   useEffect(() => {
     setTimeout(() => setLoaded(true), 100);
@@ -846,11 +988,26 @@ export default function FleuVibe() {
     const stats = JSON.parse(localStorage.getItem("fv_stats") || "{}");
     setUserXP(xp);
     if (stats.totalSpotsVisited) setUserStats(stats);
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => { window.removeEventListener('online', goOnline); window.removeEventListener('offline', goOffline); };
   }, []);
 
   useEffect(() => {
     const s = localStorage.getItem("fv_session");
-    if (s) { try { const p = JSON.parse(s); setSession(p); loadProfile(p.user.id, p.token); } catch {} }
+    if (s) {
+      try {
+        const p = JSON.parse(s);
+        setSession(p);
+        if (navigator.onLine) {
+          loadProfile(p.user.id, p.token);
+        } else {
+          idb.get('fv_favorites').then(cached => { if (Array.isArray(cached)) setFavorites(cached); });
+        }
+      } catch {}
+    }
   }, []);
 
   const addXP = (amount) => {
@@ -873,6 +1030,7 @@ export default function FleuVibe() {
   const currentTheme = THEMES[theme] || THEMES.ocean;
 
   const handlePageChange = (newPage) => {
+    trackEvent('page_view', { page: newPage });
     setPageTransition(true);
     setTimeout(() => { setPage(newPage); setSearch(""); clearAISearch(); setPageTransition(false); }, 280);
   };
@@ -888,7 +1046,9 @@ export default function FleuVibe() {
     const n = favorites.includes(id) ? favorites.filter(f => f !== id) : [...favorites, id];
     setFavorites(n);
     if (!favorites.includes(id)) addXP(10);
-    await sb.profiles.updateFavs(session.user.id, n, session.token);
+    trackEvent(favorites.includes(id) ? 'unfav' : 'fav', { spotId: id });
+    idb.set('fv_favorites', n);
+    if (isOnline) await sb.profiles.updateFavs(session.user.id, n, session.token);
   };
 
   const handleAISearch = async () => {
@@ -994,6 +1154,7 @@ export default function FleuVibe() {
             </div>
             <span style={{ background: "rgba(26,158,110,0.2)", border: "1px solid rgba(26,158,110,0.4)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#7ecfb0", fontWeight: 700 }}>WORLD</span>
             <span style={{ background: "linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2))", border: "1px solid rgba(99,102,241,0.4)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#a5b4fc", fontWeight: 700 }}>🤖 IA</span>
+            {!isOnline && <span style={{ background: "rgba(220,38,38,0.2)", border: "1px solid rgba(220,38,38,0.4)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#f87171", fontWeight: 700 }}>📡 Hors-ligne</span>}
             <button onClick={() => setDarkMode(d => !d)} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: "0.9rem" }}>{darkMode ? "☀️" : "🌙"}</button>
           </div>
           <div style={{ display: "flex", gap: "7px", alignItems: "center", flexWrap: "wrap" }}>
@@ -1054,7 +1215,7 @@ export default function FleuVibe() {
 
         {/* NAV */}
         <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.06s", display: "flex", gap: "4px", marginBottom: "16px", background: "rgba(255,255,255,0.03)", padding: "5px", borderRadius: "50px", flexWrap: "wrap", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.05)" }}>
-          {[["explore", "🗺️", "Explorer"], ["expeditions", "⛺", "Expéd."], ["hidden", "💎", "Pépites"], ["weather", "🌤️", "Météo"], ["tourism", "⭐", "Destinations"], ["favorites", "❤️", `Favoris${favorites.length > 0 ? ` (${favorites.length})` : ""}`]].map(([id, icon, label]) => (
+          {[["explore", "🗺️", "Explorer"], ["expeditions", "⛺", "Expéd."], ["map", "🌍", "Carte"], ["hidden", "💎", "Pépites"], ["weather", "🌤️", "Météo"], ["tourism", "⭐", "Destinations"], ["favorites", "❤️", `Favoris${favorites.length > 0 ? ` (${favorites.length})` : ""}`]].map(([id, icon, label]) => (
             <button key={id} onClick={() => handlePageChange(id)} className="ripple-btn" style={{ flex: 1, minWidth: "70px", padding: "8px 10px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: page === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: page === id ? "#fff" : "#6a9a8c", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
               <span>{icon}</span><span>{label}</span>
               {page === id && <span style={{ width: 5, height: 5, background: "rgba(255,255,255,0.8)", borderRadius: "50%", animation: "glow 1.5s ease-in-out infinite", flexShrink: 0 }} />}
@@ -1125,6 +1286,13 @@ export default function FleuVibe() {
             ) : filtered.map(s => (
               <SpotCard key={s.id} spot={s} isFav={favorites.includes(s.id)} onFav={toggleFav} onBook={setBookingSpot} session={session} userName={userName} isPremium={isPremium} onShowPremium={() => setShowPremium(true)} allSpots={spots} />
             ))}
+          </div>
+        )}
+
+        {/* CARTE INTERACTIVE */}
+        {page === "map" && (
+          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.1s" }}>
+            <MapView spots={spots} favorites={favorites} onFav={toggleFav} session={session} onShowAuth={() => setShowAuth(true)} onBook={setBookingSpot} isPremium={isPremium} onShowPremium={() => setShowPremium(true)} userName={userName} />
           </div>
         )}
 
@@ -1234,10 +1402,10 @@ export default function FleuVibe() {
         )}
 
         <div style={{ marginTop: "40px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.05)", textAlign: "center", fontSize: "0.65rem", color: "#2a5a4a" }}>
-          <p>🌊 FleuVibe World · v17.0 PREMIUM · {spots.length} spots · {Object.keys(COUNTRIES).length} pays · 🤖 OpenAI GPT-4o mini · 💎 {HIDDEN_GEMS.length} pépites</p>
+          <p>🌊 FleuVibe World · v18.0 · {spots.length} spots · {Object.keys(COUNTRIES).length} pays · 🤖 OpenAI GPT-4o mini · 💎 {HIDDEN_GEMS.length} pépites · 🗺️ Carte Leaflet · 📡 Offline · 💳 Stripe</p>
         </div>
-          </div> {/* /page-enter */}
-        )} {/* /pageTransition */}
+          </div>
+        )}
       </div>
 
       {/* MODALS */}
