@@ -368,7 +368,7 @@ export class CommissionManager {
 export const GlobalStats = {
   totalCountries: Object.keys(ALL_COUNTRIES).length,
   totalPartners:  GLOBAL_PARTNERS.length,
-  totalSpots:     WORLD_ROUTES.length + 40,
+  totalSpots:     WORLD_ROUTES.length + 40 + 130,
   avgCommission:  +(Object.values(ALL_COUNTRIES).reduce((s, c) => s + c.commission, 0) / Object.keys(ALL_COUNTRIES).length).toFixed(1),
   continents: {
     AF: { name: "Afrique",    emoji: "🌍", count: Object.values(ALL_COUNTRIES).filter(c => c.continent === "AF").length },
