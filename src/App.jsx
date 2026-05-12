@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { z } from "zod";
 import { ALL_COUNTRIES as COUNTRIES_EXT, GLOBAL_PARTNERS, WORLD_ROUTES, GlobalStats } from "./data";
 import { GLOBAL_SPOTS_FLAT } from "./spots";
+import { stripeManager, calcBookingPrice } from "./stripe";
 
 const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
@@ -918,16 +919,47 @@ function PremiumModal({ onClose, onActivate }) {
   );
 }
 
-function BookingModal({ spot, onClose }) {
+function BookingModal({ spot, provider, onClose }) {
   const [date, setDate] = useState("");
   const [pax, setPax] = useState(1);
-  const [done, setDone] = useState(false);
-  const confirm = () => { if (!date) return; setDone(true); setTimeout(() => onClose(), 3500); };
+  const [status, setStatus] = useState("idle"); // idle | loading | success | error
+  const [errMsg, setErrMsg] = useState("");
+  const price = calcBookingPrice(provider, pax);
+  const hasStripe = !!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+
+  const confirm = async () => {
+    if (!date) return;
+    setStatus("loading");
+    setErrMsg("");
+    try {
+      if (hasStripe && price) {
+        await stripeManager.processPayment({
+          id: Date.now(),
+          totalPrice: price.total,
+          currency: price.currency === "€" ? "eur" : (price.currency || "eur").toLowerCase(),
+          partnerId: provider?.id || "",
+          routeId: String(spot.id),
+          spotName: spot.name,
+        });
+      }
+      setStatus("success");
+      setTimeout(() => onClose(), 3500);
+    } catch (e) {
+      if (e.message?.includes('redirect')) { setStatus("success"); return; }
+      setErrMsg(e.message || "Erreur de paiement");
+      setStatus("error");
+    }
+  };
+
   return (
     <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: `1px solid ${spot.color}40`, borderRadius: "24px", padding: "24px", maxWidth: "400px", width: "100%", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
-        {done ? (
-          <div style={{ textAlign: "center", padding: "20px 0" }}><div style={{ fontSize: "3rem", marginBottom: "12px" }}>🎉</div><h3 style={{ color: "#a8edcf", fontSize: "1.1rem", marginBottom: "6px" }}>Demande envoyée !</h3><p style={{ color: "#5a8a78", fontSize: "0.82rem" }}>Un prestataire local vous contactera sous 24h.</p></div>
+        {status === "success" ? (
+          <div style={{ textAlign: "center", padding: "20px 0" }}>
+            <div style={{ fontSize: "3rem", marginBottom: "12px" }}>🎉</div>
+            <h3 style={{ color: "#a8edcf", fontSize: "1.1rem", marginBottom: "6px" }}>{hasStripe && price ? "Paiement confirmé !" : "Demande envoyée !"}</h3>
+            <p style={{ color: "#5a8a78", fontSize: "0.82rem" }}>{hasStripe && price ? "Votre réservation est confirmée. Bonne aventure !" : "Un prestataire local vous contactera sous 24h."}</p>
+          </div>
         ) : (
           <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
@@ -943,7 +975,19 @@ function BookingModal({ spot, onClose }) {
                   <button onClick={() => setPax(p => p + 1)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "#a8edcf", fontSize: "1.1rem" }}>+</button>
                 </div>
               </div>
-              <button onClick={confirm} style={{ padding: "12px", background: `linear-gradient(135deg,${spot.color},#0891b2)`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem" }}>✅ Envoyer ma demande</button>
+              {price && (
+                <div style={{ padding: "10px 14px", background: "rgba(26,158,110,0.08)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "12px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#6a9a8c", marginBottom: "4px" }}>
+                    <span>{price.unit}{price.currency} × {pax} pers.</span>
+                    <span style={{ fontWeight: 700, color: "#a8edcf", fontSize: "0.9rem" }}>{price.total}{price.currency}</span>
+                  </div>
+                  <div style={{ fontSize: "0.62rem", color: "#4a7a6a" }}>Commission FleuVibe 18% incluse · Paiement sécurisé</div>
+                </div>
+              )}
+              {status === "error" && <div style={{ padding: "8px 12px", background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.3)", borderRadius: "10px", color: "#f87171", fontSize: "0.72rem" }}>⚠️ {errMsg}</div>}
+              <button onClick={confirm} disabled={status === "loading"} style={{ padding: "12px", background: `linear-gradient(135deg,${spot.color},#0891b2)`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", opacity: status === "loading" ? 0.7 : 1 }}>
+                {status === "loading" ? "⏳ Traitement..." : hasStripe && price ? `💳 Payer ${price.total}${price.currency}` : "✅ Envoyer ma demande"}
+              </button>
             </div>
           </>
         )}
@@ -1543,7 +1587,7 @@ export default function FleuVibe() {
       </div>
 
       {/* MODALS */}
-      {bookingSpot && <BookingModal spot={bookingSpot} onClose={() => setBookingSpot(null)} />}
+      {bookingSpot && <BookingModal spot={bookingSpot} provider={ALL_PROVIDERS.find(p => p.routeIds?.includes(bookingSpot.id))} onClose={() => setBookingSpot(null)} />}
       {showPremium && <PremiumModal onClose={() => setShowPremium(false)} onActivate={() => { setIsPremium(true); addXP(200); }} />}
       {showSubmit && <SubmitSpotModal onClose={() => setShowSubmit(false)} onAdd={s => { setSpots(x => [...x, s]); addXP(100); }} session={session} showAuth={() => { setShowSubmit(false); setShowAuth(true); }} />}
 
