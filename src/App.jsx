@@ -140,6 +140,24 @@ const COUNTRIES = {
 
 const DIFF_COLOR = { Facile: "#1a9e6e", Intermédiaire: "#f59e0b", Sportif: "#dc2626" };
 
+// ─── CHALLENGES ───────────────────────────────────────────────────────────────
+const CHALLENGES = [
+  { id: 1, name: "Légende des rivières", desc: "Explorez 10 rivières différentes", goal: 10, unit: "rivières", icon: "🏞️", reward: { badge: "🏆 Légende", xp: 1000 }, progress: (stats) => stats.totalSpotsVisited || 0 },
+  { id: 2, name: "Globe-trotter aquatique", desc: "Visitez 5 pays différents", goal: 5, unit: "pays", icon: "🌍", reward: { badge: "🌍 Globe-trotter", xp: 1500 }, progress: (stats) => stats.countriesVisited || 0 },
+  { id: 3, name: "Critique chevronné", desc: "Postez 10 avis", goal: 10, unit: "avis", icon: "✍️", reward: { badge: "✍️ Critique Pro", xp: 500 }, progress: (stats) => stats.totalReviews || 0 },
+  { id: 4, name: "Ambassadeur FleuVibe", desc: "Ajoutez 3 spots communautaires", goal: 3, unit: "spots", icon: "🤝", reward: { badge: "🤝 Ambassadeur", xp: 800 }, progress: (stats) => stats.spotsAdded || 0 },
+  { id: 5, name: "Grand Explorateur", desc: "Accumulez 2000 XP", goal: 2000, unit: "XP", icon: "⭐", reward: { badge: "⭐ Explorateur Légendaire", xp: 2000 }, progress: (_, xp) => xp || 0 },
+];
+
+// ─── THEMES ───────────────────────────────────────────────────────────────────
+const THEMES = {
+  ocean:    { name: "Océan",    primary: "#1a9e6e", secondary: "#0891b2", bg: "radial-gradient(ellipse at 20% 0%,#0a1628 0%,#0d2240 50%,#0a3d2e 100%)" },
+  sunset:   { name: "Coucher", primary: "#f59e0b", secondary: "#ef4444", bg: "radial-gradient(ellipse at 20% 0%,#1a0a05 0%,#2d1608 50%,#1a0a0a 100%)" },
+  forest:   { name: "Forêt",   primary: "#10b981", secondary: "#059669", bg: "radial-gradient(ellipse at 20% 0%,#051a0a 0%,#0a2d1a 50%,#051a0f 100%)" },
+  aurora:   { name: "Aurore",  primary: "#8b5cf6", secondary: "#ec4899", bg: "radial-gradient(ellipse at 20% 0%,#0f0a1a 0%,#1a0a2d 50%,#1a0a15 100%)" },
+  midnight: { name: "Nuit",    primary: "#6366f1", secondary: "#4f46e5", bg: "radial-gradient(ellipse at 20% 0%,#06060f 0%,#0a0a1e 50%,#06060f 100%)" },
+};
+
 const SPONSORED = [
   { id: "s1", name: "Ardennes Belges", flag: "🇧🇪", color: "#1a9e6e", badge: "Partenaire Officiel", desc: "450 km de rivières navigables en Wallonie." },
   { id: "s2", name: "Ardèche Tourisme", flag: "🇫🇷", color: "#dc2626", badge: "Région Spotlight", desc: "Les gorges de l'Ardèche, joyau naturel classé." },
@@ -750,6 +768,39 @@ function SubmitSpotModal({ onClose, onAdd, session, showAuth }) {
   );
 }
 
+
+function GroupCreator({ spots, onCreate }) {
+  const [name, setName] = useState("");
+  const [spotId, setSpotId] = useState("");
+  const [date, setDate] = useState("");
+  const [meeting, setMeeting] = useState("");
+  const [done, setDone] = useState(false);
+  const inp = { width: "100%", padding: "9px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(8,145,178,0.2)", borderRadius: "12px", color: "#e8f4f0", fontSize: "0.8rem", outline: "none" };
+  const submit = () => {
+    if (!name || !spotId) return;
+    onCreate(name, spotId, date, meeting);
+    setName(""); setSpotId(""); setDate(""); setMeeting("");
+    setDone(true); setTimeout(() => setDone(false), 2000);
+  };
+  return (
+    <div style={{ padding: "14px", background: "rgba(8,145,178,0.06)", border: "1px solid rgba(8,145,178,0.15)", borderRadius: "16px" }}>
+      <p style={{ fontSize: "0.74rem", fontWeight: 600, color: "#67e8f9", marginBottom: "10px" }}>➕ Nouvelle expédition</p>
+      {done ? <p style={{ textAlign: "center", color: "#a8edcf", fontSize: "0.8rem", padding: "10px 0" }}>🎉 Groupe créé ! +50 XP</p> : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <input placeholder="Nom du groupe *" value={name} onChange={e => setName(e.target.value)} style={inp} />
+          <select value={spotId} onChange={e => setSpotId(e.target.value)} style={{ ...inp, background: "#0d2240" }}>
+            <option value="">Choisir un spot *</option>
+            {spots.slice(0, 20).map(s => <option key={s.id} value={s.id}>{s.emoji} {s.name}</option>)}
+          </select>
+          <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inp} />
+          <input placeholder="Point de rendez-vous (optionnel)" value={meeting} onChange={e => setMeeting(e.target.value)} style={inp} />
+          <button onClick={submit} style={{ padding: "9px", background: "linear-gradient(135deg,#0891b2,#1a9e6e)", border: "none", borderRadius: "12px", color: "#fff", fontWeight: 600, fontSize: "0.78rem", cursor: "pointer" }}>🚀 Créer l'expédition</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── APP ──────────────────────────────────────────────────────────────────────
 export default function FleuVibe() {
   const [spots, setSpots] = useState(SPOTS);
@@ -764,6 +815,9 @@ export default function FleuVibe() {
   const [showPremium, setShowPremium] = useState(false);
   const [showSubmit, setShowSubmit] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showChallenges, setShowChallenges] = useState(false);
+  const [showGroups, setShowGroups] = useState(false);
+  const [showAffiliate, setShowAffiliate] = useState(false);
   const [authForm, setAuthForm] = useState({ email: "", password: "", fullName: "" });
   const [authError, setAuthError] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
@@ -777,6 +831,10 @@ export default function FleuVibe() {
   const [selDiff, setSelDiff] = useState("ALL");
   const [selContinent, setSelContinent] = useState("ALL");
   const [darkMode, setDarkMode] = useState(true);
+  const [theme, setTheme] = useState("ocean");
+  const [viewMode, setViewMode] = useState("comfort");
+  const [groups, setGroups] = useState([]);
+  const [affiliateCopied, setAffiliateCopied] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [pageTransition, setPageTransition] = useState(false);
@@ -800,6 +858,19 @@ export default function FleuVibe() {
     setUserXP(newXP);
     localStorage.setItem("fv_xp", String(newXP));
   };
+
+  const createGroup = (name, spotId, date, meeting) => {
+    const spot = spots.find(s => s.id === parseInt(spotId));
+    setGroups(prev => [...prev, { id: Date.now(), name, spot, date, meeting, members: [userName], createdAt: new Date().toISOString() }]);
+    addXP(50);
+  };
+
+  const copyAffiliateLink = () => {
+    const link = `https://fleuvibe-8am5.vercel.app/?ref=${userName.replace(/\s/g,"_")}`;
+    navigator.clipboard.writeText(link).then(() => { setAffiliateCopied(true); setTimeout(() => setAffiliateCopied(false), 2500); });
+  };
+
+  const currentTheme = THEMES[theme] || THEMES.ocean;
 
   const handlePageChange = (newPage) => {
     setPageTransition(true);
@@ -869,7 +940,7 @@ export default function FleuVibe() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: darkMode ? "radial-gradient(ellipse at 20% 0%,#0a1628 0%,#0d2240 50%,#0a3d2e 100%)" : "linear-gradient(160deg,#f0f9f4,#e8f4f0)", fontFamily: "'Inter',sans-serif", color: darkMode ? "#e8f4f0" : "#1a2e28", transition: "background 0.3s" }}>
+    <div style={{ minHeight: "100vh", background: darkMode ? currentTheme.bg : "linear-gradient(160deg,#f0f9f4,#e8f4f0)", fontFamily: "'Inter',sans-serif", color: darkMode ? "#e8f4f0" : "#1a2e28", transition: "background 0.5s" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
@@ -927,17 +998,31 @@ export default function FleuVibe() {
           </div>
           <div style={{ display: "flex", gap: "7px", alignItems: "center", flexWrap: "wrap" }}>
             {session && <LevelBadge xp={userXP} />}
+            {/* Sélecteur de thème */}
+            <div style={{ display: "flex", gap: "3px", background: "rgba(255,255,255,0.06)", padding: "3px", borderRadius: "20px" }}>
+              {Object.entries(THEMES).map(([key, t]) => (
+                <button key={key} onClick={() => setTheme(key)} title={t.name} style={{ width: 18, height: 18, borderRadius: "50%", background: `linear-gradient(135deg,${t.primary},${t.secondary})`, border: theme === key ? "2px solid #fff" : "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }} />
+              ))}
+            </div>
+            {/* Mode d'affichage */}
+            <select value={viewMode} onChange={e => setViewMode(e.target.value)} style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", padding: "5px 10px", color: "#a8edcf", fontSize: "0.65rem", outline: "none" }}>
+              <option value="comfort">🎨 Confort</option>
+              <option value="focus">🎯 Focus</option>
+              <option value="zen">🧘 Zen</option>
+            </select>
+            <button onClick={() => setShowChallenges(true)} style={{ padding: "7px 12px", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "20px", color: "#fbbf24", fontWeight: 600, fontSize: "0.68rem" }}>🏆 Challenges</button>
+            <button onClick={() => setShowGroups(true)} style={{ padding: "7px 12px", background: "rgba(8,145,178,0.15)", border: "1px solid rgba(8,145,178,0.3)", borderRadius: "20px", color: "#67e8f9", fontWeight: 600, fontSize: "0.68rem" }}>👥 Groupes</button>
             <button onClick={() => setShowSubmit(true)} style={{ padding: "7px 14px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", color: "#a8edcf", fontWeight: 600, fontSize: "0.72rem" }}>
               ➕ Ajouter{communityCount > 0 ? ` · ${communityCount}🌟` : ""}
             </button>
             <button onClick={() => setShowPremium(true)} style={{ padding: "7px 16px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.72rem", boxShadow: "0 2px 10px rgba(245,158,11,0.3)", animation: "glow 3s ease-in-out infinite" }}>⭐ Premium</button>
             {session ? (
               <button onClick={() => setShowProfile(true)} style={{ display: "flex", alignItems: "center", gap: "7px", padding: "6px 14px", background: "rgba(26,158,110,0.15)", border: "1px solid rgba(26,158,110,0.3)", borderRadius: "20px", color: "#a8edcf", fontSize: "0.72rem", fontWeight: 600 }}>
-                <div style={{ width: 22, height: 22, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700, color: "#fff" }}>{userName[0].toUpperCase()}</div>
+                <div style={{ width: 22, height: 22, borderRadius: "50%", background: `linear-gradient(135deg,${currentTheme.primary},${currentTheme.secondary})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700, color: "#fff" }}>{userName[0].toUpperCase()}</div>
                 {userName}{isPremium && <span style={{ fontSize: "0.6rem", color: "#f59e0b" }}>⭐</span>}
               </button>
             ) : (
-              <button onClick={() => setShowAuth(true)} style={{ padding: "7px 18px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.72rem", boxShadow: "0 2px 10px rgba(26,158,110,0.3)" }}>🌊 Connexion</button>
+              <button onClick={() => setShowAuth(true)} style={{ padding: "7px 18px", background: `linear-gradient(135deg,${currentTheme.primary},${currentTheme.secondary})`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.72rem", boxShadow: `0 2px 10px ${currentTheme.primary}40` }}>🌊 Connexion</button>
             )}
           </div>
         </div>
@@ -1159,6 +1244,112 @@ export default function FleuVibe() {
       {bookingSpot && <BookingModal spot={bookingSpot} onClose={() => setBookingSpot(null)} />}
       {showPremium && <PremiumModal onClose={() => setShowPremium(false)} onActivate={() => { setIsPremium(true); addXP(200); }} />}
       {showSubmit && <SubmitSpotModal onClose={() => setShowSubmit(false)} onAdd={s => { setSpots(x => [...x, s]); addXP(100); }} session={session} showAuth={() => { setShowSubmit(false); setShowAuth(true); }} />}
+
+      {/* CHALLENGES MODAL */}
+      {showChallenges && (
+        <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowChallenges(false); }}>
+          <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "28px", padding: "28px", maxWidth: "560px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.3s ease", boxShadow: "0 30px 80px rgba(0,0,0,0.6)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <div><h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#fbbf24" }}>🏆 Challenges</h2><p style={{ fontSize: "0.72rem", color: "#5a8a78" }}>Complète des défis pour gagner des badges et de l'XP</p></div>
+              <button onClick={() => setShowChallenges(false)} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#5a8a78", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {CHALLENGES.map(ch => {
+                const current = Math.min(ch.progress(userStats, userXP), ch.goal);
+                const pct = Math.round((current / ch.goal) * 100);
+                const done = current >= ch.goal;
+                return (
+                  <div key={ch.id} style={{ padding: "14px 16px", background: done ? "rgba(26,158,110,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${done ? "rgba(26,158,110,0.3)" : "rgba(255,255,255,0.06)"}`, borderRadius: "16px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+                        <span style={{ fontSize: "1.4rem" }}>{ch.icon}</span>
+                        <div>
+                          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: done ? "#a8edcf" : "#daf0e8" }}>{ch.name}</div>
+                          <div style={{ fontSize: "0.65rem", color: "#5a8a78" }}>{ch.desc}</div>
+                        </div>
+                      </div>
+                      {done ? <span style={{ fontSize: "1.2rem" }}>✅</span> : <span style={{ fontSize: "0.7rem", color: "#f59e0b", fontWeight: 700 }}>{current}/{ch.goal}</span>}
+                    </div>
+                    <div style={{ height: "5px", background: "rgba(255,255,255,0.08)", borderRadius: "3px", overflow: "hidden", marginBottom: "6px" }}>
+                      <div style={{ width: `${pct}%`, height: "100%", background: done ? "linear-gradient(90deg,#1a9e6e,#0891b2)" : "linear-gradient(90deg,#f59e0b,#ef4444)", borderRadius: "3px", transition: "width 0.5s" }} />
+                    </div>
+                    <div style={{ fontSize: "0.62rem", color: "#fbbf24" }}>🎁 {ch.reward.badge} · +{ch.reward.xp} XP</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* GROUPES MODAL */}
+      {showGroups && (
+        <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowGroups(false); }}>
+          <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(8,145,178,0.3)", borderRadius: "28px", padding: "28px", maxWidth: "540px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.3s ease", boxShadow: "0 30px 80px rgba(0,0,0,0.6)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <div><h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#67e8f9" }}>👥 Groupes d'expédition</h2><p style={{ fontSize: "0.72rem", color: "#5a8a78" }}>Planifiez et coordonnez vos sorties entre passionnés</p></div>
+              <button onClick={() => setShowGroups(false)} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#5a8a78", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
+            </div>
+            {/* Créer un groupe */}
+            <GroupCreator spots={spots} onCreate={(name, spotId, date, meeting) => { createGroup(name, spotId, date, meeting); }} />
+            {/* Groupes existants */}
+            {groups.length > 0 && (
+              <div style={{ marginTop: "16px" }}>
+                <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "#a8edcf", marginBottom: "10px" }}>Mes expéditions ({groups.length})</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {groups.map(g => (
+                    <div key={g.id} style={{ padding: "12px 14px", background: "rgba(8,145,178,0.08)", border: "1px solid rgba(8,145,178,0.2)", borderRadius: "14px" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div><div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#67e8f9" }}>{g.name}</div><div style={{ fontSize: "0.65rem", color: "#5a8a78" }}>{g.spot?.name} · 📅 {g.date || "Date à définir"}</div></div>
+                        <span style={{ fontSize: "0.68rem", color: "#8ab8b0" }}>👥 {g.members.length}</span>
+                      </div>
+                      {g.meeting && <div style={{ fontSize: "0.62rem", color: "#5a8a78", marginTop: "4px" }}>📍 {g.meeting}</div>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {groups.length === 0 && !session && <p style={{ fontSize: "0.72rem", color: "#3a6a5a", textAlign: "center", marginTop: "10px" }}>Connecte-toi pour créer un groupe !</p>}
+            {/* Affiliation en bas */}
+            <div style={{ marginTop: "18px", padding: "14px", background: "rgba(26,158,110,0.06)", border: "1px solid rgba(26,158,110,0.15)", borderRadius: "14px" }}>
+              <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "#a8edcf", marginBottom: "8px" }}>🤝 Programme d'affiliation</p>
+              <p style={{ fontSize: "0.65rem", color: "#5a8a78", marginBottom: "10px" }}>Parraine des amis et gagne des récompenses !</p>
+              <button onClick={() => { setShowGroups(false); setShowAffiliate(true); }} style={{ padding: "7px 16px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 600, fontSize: "0.72rem", cursor: "pointer" }}>🔗 Mon lien de parrainage</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AFFILIATE MODAL */}
+      {showAffiliate && (
+        <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowAffiliate(false); }}>
+          <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(26,158,110,0.3)", borderRadius: "28px", padding: "28px", maxWidth: "440px", width: "100%", animation: "slideUp 0.3s ease", boxShadow: "0 30px 80px rgba(0,0,0,0.6)" }}>
+            <div style={{ textAlign: "center", marginBottom: "20px" }}>
+              <div style={{ fontSize: "3rem", marginBottom: "10px" }}>🤝</div>
+              <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#a8edcf", marginBottom: "6px" }}>Programme d'affiliation</h2>
+              <p style={{ fontSize: "0.78rem", color: "#5a8a78" }}>Parraine tes amis · Gagne des récompenses</p>
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "18px" }}>
+              {[["1 parrainage", "🤝 Badge Parrain", "#10b981"], ["5 parrainages", "👑 Badge Ambassadeur", "#f59e0b"], ["10 parrainages", "⭐ 3 mois Premium offerts", "#ef4444"], ["20 parrainages", "⭐ 6 mois Premium offerts", "#8b5cf6"]].map(([label, reward, col]) => (
+                <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: `${col}10`, border: `1px solid ${col}25`, borderRadius: "12px" }}>
+                  <span style={{ fontSize: "0.72rem", color: "#8ab8b0" }}>{label}</span>
+                  <span style={{ fontSize: "0.72rem", color: col, fontWeight: 600 }}>{reward}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{ marginBottom: "14px" }}>
+              <label style={{ display: "block", fontSize: "0.7rem", color: "#6a9a8c", marginBottom: "6px", fontWeight: 500 }}>Ton lien unique</label>
+              <div style={{ display: "flex", gap: "6px" }}>
+                <input readOnly value={`https://fleuvibe-8am5.vercel.app/?ref=${userName.replace(/\s/g,"_")}`} style={{ flex: 1, padding: "10px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "12px", color: "#8ab8b0", fontSize: "0.72rem", outline: "none" }} />
+                <button onClick={copyAffiliateLink} style={{ padding: "10px 14px", background: affiliateCopied ? "rgba(26,158,110,0.3)" : "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "12px", color: "#fff", fontWeight: 600, fontSize: "0.72rem", cursor: "pointer", whiteSpace: "nowrap" }}>
+                  {affiliateCopied ? "✅ Copié !" : "📋 Copier"}
+                </button>
+              </div>
+            </div>
+            <button onClick={() => setShowAffiliate(false)} style={{ width: "100%", padding: "10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", color: "#5a8a78", fontSize: "0.78rem", cursor: "pointer" }}>Fermer</button>
+          </div>
+        </div>
+      )}
 
       {/* AUTH */}
       {showAuth && (
