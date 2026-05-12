@@ -3,7 +3,8 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/stripe/:path*", "destination": "/api/stripe/:path*" },
+    { "source": "/((?!api).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
