@@ -13,7 +13,6 @@ const STRIPE_MONTHLY_URL = import.meta.env.VITE_STRIPE_MONTHLY_URL || null;
 const STRIPE_ANNUAL_URL = import.meta.env.VITE_STRIPE_ANNUAL_URL || null;
 
 // ─── OPENAI ───────────────────────────────────────────────────────────────────
-const aiCache = new DistributedCache();
 const callAI = async (messages, maxTokens = 200) => {
   const key = JSON.stringify(messages);
   const cached = aiCache.get(key);
@@ -169,6 +168,7 @@ class DistributedCache {
   }
   clear() { this.mem.clear(); }
 }
+const aiCache = new DistributedCache();
 
 // Schema.org pour SEO
 const generateSchemaOrg = (spot) => ({
