@@ -1061,18 +1061,29 @@ function getSpotPhoto(spot, w = 800, h = 320) {
   return `https://images.unsplash.com/${id}?w=${w}&h=${h}&fit=crop&auto=format&q=80`;
 }
 
+function getGalleryPhotos(spot) {
+  const pool = WATER_PHOTOS[spot.type] || WATER_PHOTOS.RIVER;
+  return [0, 1, 2].map(offset => {
+    const id = pool[(spot.id + offset) % pool.length];
+    return `https://images.unsplash.com/${id}?w=700&h=480&fit=crop&auto=format&q=80`;
+  });
+}
+
 function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, onShowPremium, allSpots }) {
   const [open, setOpen] = useState(false);
   const [desc, setDesc] = useState(spot.description);
   const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const [lightboxIdx, setLightboxIdx] = useState(null);
   const typeColor = { RIVER: "#2563eb", LAKE: "#0891b2", SEA: "#7c3aed" }[spot.type] || "#1a9e6e";
   const typeIcon = { RIVER: "🏞️", LAKE: "🏔️", SEA: "🌊" }[spot.type] || "🌊";
   const typeName = { RIVER: "Rivière", LAKE: "Lac", SEA: "Mer" }[spot.type] || "";
   const provider = ALL_PROVIDERS.find(p => p.routeIds?.includes(spot.id));
   const imgUrl = getSpotPhoto(spot, 800, 320);
+  const gallery = getGalleryPhotos(spot);
 
   return (
-    <div style={{ marginBottom: "20px", overflow: "hidden", cursor: "pointer", borderRadius: "24px",
+    <div style={{ marginBottom: "20px", overflow: "hidden", cursor: "pointer", borderRadius: "24px", position: "relative",
       border: `1px solid ${open ? spot.color + "55" : "rgba(255,255,255,0.08)"}`,
       background: "#0b1a2e",
       transition: "all 0.4s cubic-bezier(0.2,0.9,0.4,1.1)",
@@ -1084,10 +1095,14 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
 
       {/* ── PHOTO HEADER ── */}
       <div style={{ position: "relative", height: "200px", overflow: "hidden", borderRadius: "24px 24px 0 0" }}>
+        {!imgLoaded && !imgError && (
+          <div className="img-skeleton" style={{ position: "absolute", inset: 0 }} />
+        )}
         {!imgError ? (
           <img src={imgUrl} alt={spot.name} loading="lazy"
-            onError={() => setImgError(true)}
-            style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.6s ease", display: "block" }}
+            onLoad={() => setImgLoaded(true)}
+            onError={() => { setImgError(true); setImgLoaded(true); }}
+            style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.6s ease, opacity 0.4s ease", display: "block", opacity: imgLoaded ? 1 : 0 }}
             onMouseEnter={e => e.currentTarget.style.transform = "scale(1.06)"}
             onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"} />
         ) : (
@@ -1148,6 +1163,22 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
         {/* ── EXPANDED ── */}
         {open && (
           <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.07)", animation: "slideUp 0.3s ease" }}>
+            {/* Galerie photos */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "8px", marginBottom: "16px" }}>
+              {gallery.map((src, idx) => (
+                <div key={idx} onClick={e => { e.stopPropagation(); setLightboxIdx(idx); }}
+                  style={{ borderRadius: "12px", overflow: "hidden", aspectRatio: "4/3", cursor: "zoom-in", transition: "transform 0.25s ease", position: "relative" }}
+                  onMouseEnter={e => e.currentTarget.style.transform = "scale(1.04)"}
+                  onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
+                  <img src={src} alt={`${spot.name} ${idx + 1}`} loading="lazy"
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                  <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0)", transition: "background 0.2s" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(0,0,0,0.15)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "rgba(0,0,0,0)"} />
+                  {idx === 2 && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", color: "#fff", fontWeight: 600 }}>🔍 Agrandir</div>}
+                </div>
+              ))}
+            </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", gap: "10px" }}>
               <p style={{ color: "#8ab8b0", fontSize: "0.84rem", lineHeight: 1.75, flex: 1 }}>{desc}</p>
               <TranslateButton text={spot.description} onTranslated={setDesc} />
@@ -1671,6 +1702,9 @@ export default function FleuVibe() {
         select option{background:#0d2240}
         .spot-img{width:100%;height:100%;object-fit:cover;transition:transform 0.6s ease;display:block}
         @media(max-width:600px){.featured-grid{grid-template-columns:1fr!important}}
+        @keyframes slowZoom{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+        @keyframes skeletonPulse{0%,100%{opacity:0.4}50%{opacity:0.8}}
+        .img-skeleton{background:linear-gradient(90deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.1) 50%,rgba(255,255,255,0.04) 100%);background-size:200% 100%;animation:shimmer 1.5s ease-in-out infinite}
       `}</style>
 
       {/* ── PARTICULES FOND ── */}
@@ -1714,7 +1748,7 @@ export default function FleuVibe() {
         {!session ? (
           <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ position: "relative", borderRadius: "28px", overflow: "hidden", marginBottom: "24px", minHeight: "320px" }}>
             <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1400&h=560&fit=crop&auto=format&q=85" alt="hero" loading="eager"
-              style={{ width: "100%", height: "320px", objectFit: "cover", display: "block" }} />
+              style={{ width: "100%", height: "320px", objectFit: "cover", display: "block", animation: "slowZoom 20s ease-in-out infinite", transformOrigin: "center center" }} />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(5,15,30,0.65) 0%, rgba(8,40,30,0.75) 100%)" }} />
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", textAlign: "center" }}>
               <p style={{ fontSize: "0.72rem", color: "rgba(168,237,207,0.9)", fontWeight: 700, letterSpacing: "2px", marginBottom: "12px" }}>🌊 LA PLATEFORME NAUTIQUE MONDIALE</p>
