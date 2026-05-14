@@ -1031,6 +1031,7 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
   const typeColor = { RIVER: "#2563eb", LAKE: "#0891b2", SEA: "#7c3aed" }[spot.type] || "#1a9e6e";
   const typeIcon = { RIVER: "🏞️", LAKE: "🏔️", SEA: "🌊" }[spot.type] || "🌊";
   const typeName = { RIVER: "Rivière", LAKE: "Lac", SEA: "Mer" }[spot.type] || "";
+  const provider = ALL_PROVIDERS.find(p => p.routeIds?.includes(spot.id));
   return (
     <div style={{ marginBottom: "14px", overflow: "hidden", cursor: "pointer",
       background: open ? `linear-gradient(135deg,${spot.color}08,rgba(255,255,255,0.02))` : "linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))",
@@ -1065,23 +1066,35 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
               <div style={{ color: "#4a7a6a", fontSize: "0.68rem", marginTop: "3px" }}>📍 {spot.river} · {spot.region}</div>
             </div>
           </div>
-          <button onClick={e => { e.stopPropagation(); onFav(spot.id); }}
-            style={{ fontSize: "1.2rem", background: "none", border: "none", color: isFav ? "#ef4444" : "#3a5a50", padding: "4px", transition: "transform 0.2s", flexShrink: 0 }}
-            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.2)"}
-            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
-            {isFav ? "❤️" : "🤍"}
-          </button>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px", flexShrink: 0 }}>
+            <button onClick={e => { e.stopPropagation(); onFav(spot.id); }}
+              style={{ fontSize: "1.2rem", background: "none", border: "none", color: isFav ? "#ef4444" : "#3a5a50", padding: "4px", transition: "transform 0.2s" }}
+              onMouseEnter={e => e.currentTarget.style.transform = "scale(1.2)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
+              {isFav ? "❤️" : "🤍"}
+            </button>
+            {provider && (
+              <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "#a8edcf", background: "rgba(26,158,110,0.12)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "12px", padding: "2px 8px", whiteSpace: "nowrap" }}>
+                {provider.price}{provider.currency}<span style={{ fontWeight: 400, fontSize: "0.6rem", color: "#5a8a78" }}>/pers.</span>
+              </span>
+            )}
+          </div>
         </div>
-        <div style={{ display: "flex", gap: "14px", marginBottom: "8px" }}>
+        <div style={{ display: "flex", gap: "14px", marginBottom: "8px", flexWrap: "wrap", alignItems: "center" }}>
           <span style={{ fontSize: "0.7rem", color: "#4a7a6a" }}>📏 {spot.distance}</span>
           <span style={{ fontSize: "0.7rem", color: "#4a7a6a" }}>⏱️ {spot.duration}</span>
-          {spot.emergencyContact && <span style={{ fontSize: "0.7rem", color: "#4a7a6a" }}>🆘 {spot.emergencyContact}</span>}
+          {spot.rating && (
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <StarRating value={Math.round(spot.rating)} readonly />
+              <span style={{ fontSize: "0.62rem", color: "#6a9a8c" }}>{spot.rating.toFixed(1)}{spot.reviews ? ` (${spot.reviews})` : ""}</span>
+            </div>
+          )}
         </div>
         <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
           {spot.activities.map(a => <span key={a} style={{ padding: "2px 8px", background: `${spot.color}12`, border: `1px solid ${spot.color}24`, borderRadius: "20px", fontSize: "0.65rem", color: "#8ae8cc", fontWeight: 500 }}>{a}</span>)}
         </div>
         {open && (
-          <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)", animation: "slideUp 0.3s ease" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
               <p style={{ color: "#8ab8b0", fontSize: "0.82rem", lineHeight: 1.65, flex: 1 }}>{desc}</p>
               <TranslateButton text={spot.description} onTranslated={setDesc} />
@@ -1093,12 +1106,18 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
             <ExpeditionPlanner spot={spot} />
             <ProviderComparator routeId={spot.id} onShowPortal={p => window._setPartnerPortal?.(p)} />
             <LegalWarning country={spot.country} />
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "12px" }}>
-              <button onClick={e => { e.stopPropagation(); onBook(spot); }} style={{ padding: "8px 18px", background: `linear-gradient(135deg,${spot.color},${spot.color}bb)`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.78rem" }}>🛶 Réserver ce spot</button>
+            <div style={{ marginTop: "14px" }}>
+              <button onClick={e => { e.stopPropagation(); onBook(spot); }} style={{ width: "100%", padding: "12px 18px", background: `linear-gradient(135deg,${spot.color},#0891b2)`, border: "none", borderRadius: "16px", color: "#fff", fontWeight: 700, fontSize: "0.85rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: `0 4px 15px ${spot.color}40` }}>
+                <span>🛶 Réserver ce spot</span>
+                {provider && <span style={{ background: "rgba(255,255,255,0.2)", borderRadius: "20px", padding: "2px 10px", fontSize: "0.75rem", fontWeight: 800 }}>{provider.price}{provider.currency}/pers.</span>}
+              </button>
             </div>
             <ReviewsSection spot={spot} session={session} userName={userName} allSpots={allSpots} />
           </div>
         )}
+        <div style={{ textAlign: "center", marginTop: "8px", fontSize: "0.6rem", color: "#3a6a5a" }}>
+          {open ? "▲ Voir moins" : "▼ Voir plus"}
+        </div>
       </div>
     </div>
   );
@@ -1617,14 +1636,14 @@ export default function FleuVibe() {
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "20px 16px", position: "relative", zIndex: 1 }}>
 
         {/* STATS */}
-        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(75px,1fr))", gap: "8px", marginBottom: "16px" }}>
-          {[["🌊", spots.length, "Spots"], ["🌍", Object.keys(COUNTRIES).length, "Pays"], ["🏞️", spots.filter(s => s.type === "RIVER").length, "Rivières"], ["🏔️", spots.filter(s => s.type === "LAKE").length, "Lacs"], ["🌊", spots.filter(s => s.type === "SEA").length, "Mers"], ["🤖", "GPT", "IA"], ["💎", HIDDEN_GEMS.length, "Pépites"], ...(session ? [["❤️", favorites.length, "Favoris"]] : [])].map(([ic, val, label]) => (
-            <div key={label} className="glass-card" style={{ borderRadius: "16px", padding: "10px", textAlign: "center" }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(26,158,110,0.35)"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; }}>
-              <div style={{ fontSize: "1rem", marginBottom: "2px" }}>{ic}</div>
-              <div style={{ fontSize: "0.9rem", fontWeight: 700, color: "#a8edcf" }}>{val}</div>
-              <div style={{ fontSize: "0.56rem", color: "#4a7a6a" }}>{label}</div>
+        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(82px,1fr))", gap: "8px", marginBottom: "16px" }}>
+          {[["🗺️", spots.length, "Spots"], ["🌍", Object.keys(COUNTRIES).length, "Pays"], ["🏞️", spots.filter(s => s.type === "RIVER").length, "Rivières"], ["🏔️", spots.filter(s => s.type === "LAKE").length, "Lacs"], ["🌊", spots.filter(s => s.type === "SEA").length, "Côtes"], ["⭐", "4.8", "Note moy."], ...(session ? [["❤️", favorites.length, "Favoris"]] : [])].map(([ic, val, label]) => (
+            <div key={label} style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "18px", padding: "12px 8px", textAlign: "center", transition: "all 0.25s ease" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(26,158,110,0.35)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.transform = ""; }}>
+              <div style={{ fontSize: "1.1rem", marginBottom: "4px" }}>{ic}</div>
+              <div style={{ fontSize: "1rem", fontWeight: 800, color: "#a8edcf", letterSpacing: "-0.5px" }}>{val}</div>
+              <div style={{ fontSize: "0.57rem", color: "#4a7a6a", marginTop: "2px", fontWeight: 500 }}>{label}</div>
             </div>
           ))}
         </div>
@@ -1701,7 +1720,10 @@ export default function FleuVibe() {
                 </div>
               </div>
             )}
-            <div style={{ fontSize: "0.68rem", color: "#4a7a6a", marginBottom: "12px" }}>{filtered.length} spots · {[...new Set(filtered.map(s => s.country))].length} pays{page === "expeditions" ? " · ⛺ Expéditions longue durée" : ""}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
+              <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf", background: "rgba(26,158,110,0.12)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", padding: "3px 10px" }}>{filtered.length} spots</span>
+              <span style={{ fontSize: "0.68rem", color: "#4a7a6a" }}>{[...new Set(filtered.map(s => s.country))].length} pays{page === "expeditions" ? " · ⛺ Expéditions longue durée" : ""}</span>
+            </div>
             {filtered.length === 0 ? (
               <div style={{ padding: "50px", textAlign: "center", background: "rgba(255,255,255,0.03)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <span style={{ fontSize: "3rem" }}>🏄</span>
