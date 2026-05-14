@@ -1029,75 +1029,93 @@ function TranslateButton({ text, onTranslated }) {
 function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, onShowPremium, allSpots }) {
   const [open, setOpen] = useState(false);
   const [desc, setDesc] = useState(spot.description);
+  const [imgError, setImgError] = useState(false);
   const typeColor = { RIVER: "#2563eb", LAKE: "#0891b2", SEA: "#7c3aed" }[spot.type] || "#1a9e6e";
   const typeIcon = { RIVER: "🏞️", LAKE: "🏔️", SEA: "🌊" }[spot.type] || "🌊";
   const typeName = { RIVER: "Rivière", LAKE: "Lac", SEA: "Mer" }[spot.type] || "";
   const provider = ALL_PROVIDERS.find(p => p.routeIds?.includes(spot.id));
+  const imgSeed = `${spot.type || "WATER"}_${spot.id}`;
+  const imgUrl = `https://picsum.photos/seed/${imgSeed}/800/320`;
+
   return (
-    <div style={{ marginBottom: "14px", overflow: "hidden", cursor: "pointer",
-      background: open ? `linear-gradient(135deg,${spot.color}08,rgba(255,255,255,0.02))` : "linear-gradient(135deg,rgba(255,255,255,0.04),rgba(255,255,255,0.01))",
-      backdropFilter: "blur(12px)",
-      border: `1px solid ${open ? spot.color + "40" : "rgba(255,255,255,0.06)"}`,
-      borderRadius: "24px",
+    <div style={{ marginBottom: "20px", overflow: "hidden", cursor: "pointer", borderRadius: "24px",
+      border: `1px solid ${open ? spot.color + "55" : "rgba(255,255,255,0.08)"}`,
+      background: "#0b1a2e",
       transition: "all 0.4s cubic-bezier(0.2,0.9,0.4,1.1)",
-      boxShadow: open ? `0 20px 40px -12px ${spot.color}20` : "none",
+      boxShadow: open ? `0 24px 50px -12px ${spot.color}30` : "0 4px 20px rgba(0,0,0,0.25)",
     }}
-      onMouseEnter={e => { if (!open) { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.borderColor = `${spot.color}30`; e.currentTarget.style.boxShadow = `0 12px 30px -10px ${spot.color}15`; } }}
-      onMouseLeave={e => { if (!open) { e.currentTarget.style.transform = ""; e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.boxShadow = "none"; } }}
+      onMouseEnter={e => { if (!open) { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.boxShadow = `0 20px 40px -10px ${spot.color}35`; } }}
+      onMouseLeave={e => { if (!open) { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.25)"; } }}
       onClick={() => setOpen(o => !o)}>
-      <div style={{ height: "4px", background: `linear-gradient(90deg,${spot.color},${typeColor},transparent)` }} />
-      {spot.sponsored && <div style={{ padding: "4px 16px", background: "rgba(245,158,11,0.08)", borderBottom: "1px solid rgba(245,158,11,0.12)", fontSize: "0.6rem", color: "#fbbf24", fontWeight: 700, letterSpacing: "0.5px" }}>⭐ RÉGION PARTENAIRE · {spot.sponsored.toUpperCase()}</div>}
-      <div style={{ padding: "16px 18px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1 }}>
-            <div style={{ width: 48, height: 48, background: `linear-gradient(135deg,${spot.color}20,${spot.color}05)`, borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", flexShrink: 0 }}>{spot.emoji}</div>
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px", flexWrap: "wrap" }}>
-                <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#daf0e8" }}>{spot.name}</h3>
-                <span style={{ fontSize: "0.85rem" }}>{COUNTRIES[spot.country]?.flag}</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
-                <span style={{ fontSize: "0.68rem", color: "#5a8a78" }}>{COUNTRIES[spot.country]?.name}</span>
-                <span style={{ padding: "1px 7px", background: `${typeColor}18`, border: `1px solid ${typeColor}30`, borderRadius: "20px", fontSize: "0.58rem", color: typeColor, fontWeight: 600 }}>{typeIcon} {typeName}</span>
-                <span style={{ padding: "1px 7px", background: `${DIFF_COLOR[spot.difficulty]}15`, border: `1px solid ${DIFF_COLOR[spot.difficulty]}28`, borderRadius: "20px", fontSize: "0.58rem", fontWeight: 600, color: DIFF_COLOR[spot.difficulty] }}>{spot.difficulty}</span>
-                <WeatherWidget coords={spot.coords} spotName={spot.name} difficulty={spot.difficulty} small />
-                {spot.camping && <span style={{ fontSize: "0.58rem", background: "rgba(26,158,110,0.12)", color: "#7ecfb0", padding: "1px 5px", borderRadius: "10px" }}>⛺</span>}
-                {spot.community && <span style={{ fontSize: "0.58rem", background: "rgba(245,158,11,0.12)", color: "#fbbf24", padding: "1px 5px", borderRadius: "10px" }}>🌟</span>}
-              </div>
-              <div style={{ color: "#4a7a6a", fontSize: "0.68rem", marginTop: "3px" }}>📍 {spot.river} · {spot.region}</div>
-            </div>
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px", flexShrink: 0 }}>
-            <button onClick={e => { e.stopPropagation(); onFav(spot.id); }}
-              style={{ fontSize: "1.2rem", background: "none", border: "none", color: isFav ? "#ef4444" : "#3a5a50", padding: "4px", transition: "transform 0.2s" }}
-              onMouseEnter={e => e.currentTarget.style.transform = "scale(1.2)"}
-              onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
-              {isFav ? "❤️" : "🤍"}
-            </button>
-            {provider && (
-              <span style={{ fontSize: "0.72rem", fontWeight: 800, color: "#a8edcf", background: "rgba(26,158,110,0.12)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "12px", padding: "2px 8px", whiteSpace: "nowrap" }}>
-                {provider.price}{provider.currency}<span style={{ fontWeight: 400, fontSize: "0.6rem", color: "#5a8a78" }}>/pers.</span>
-              </span>
-            )}
-          </div>
+
+      {/* ── PHOTO HEADER ── */}
+      <div style={{ position: "relative", height: "200px", overflow: "hidden", borderRadius: "24px 24px 0 0" }}>
+        {!imgError ? (
+          <img src={imgUrl} alt={spot.name} loading="lazy"
+            onError={() => setImgError(true)}
+            style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.6s ease", display: "block" }}
+            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.06)"}
+            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"} />
+        ) : (
+          <div style={{ width: "100%", height: "100%", background: `linear-gradient(135deg,${spot.color}30,${typeColor}20)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "4rem" }}>{spot.emoji}</div>
+        )}
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.72) 100%)" }} />
+        {spot.sponsored && (
+          <div style={{ position: "absolute", top: 12, left: 12, padding: "4px 12px", background: "rgba(245,158,11,0.92)", borderRadius: "20px", fontSize: "0.62rem", color: "#fff", fontWeight: 700, backdropFilter: "blur(4px)" }}>⭐ PARTENAIRE</div>
+        )}
+        <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: "6px" }}>
+          <span style={{ padding: "4px 10px", background: `${typeColor}dd`, borderRadius: "20px", fontSize: "0.6rem", color: "#fff", fontWeight: 700, backdropFilter: "blur(4px)" }}>{typeIcon} {typeName}</span>
+          <span style={{ padding: "4px 10px", background: `${DIFF_COLOR[spot.difficulty] || "#1a9e6e"}dd`, borderRadius: "20px", fontSize: "0.6rem", color: "#fff", fontWeight: 700, backdropFilter: "blur(4px)" }}>{spot.difficulty}</span>
         </div>
-        <div style={{ display: "flex", gap: "14px", marginBottom: "8px", flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ fontSize: "0.7rem", color: "#4a7a6a" }}>📏 {spot.distance}</span>
-          <span style={{ fontSize: "0.7rem", color: "#4a7a6a" }}>⏱️ {spot.duration}</span>
-          {spot.rating && (
-            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <StarRating value={Math.round(spot.rating)} readonly />
-              <span style={{ fontSize: "0.62rem", color: "#6a9a8c" }}>{spot.rating.toFixed(1)}{spot.reviews ? ` (${spot.reviews})` : ""}</span>
-            </div>
+        <button onClick={e => { e.stopPropagation(); onFav(spot.id); }}
+          style={{ position: "absolute", bottom: 14, right: 14, background: "rgba(0,0,0,0.45)", border: "none", borderRadius: "50%", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", backdropFilter: "blur(6px)", transition: "transform 0.2s" }}
+          onMouseEnter={e => e.currentTarget.style.transform = "scale(1.18)"}
+          onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
+          {isFav ? "❤️" : "🤍"}
+        </button>
+        <div style={{ position: "absolute", bottom: 14, left: 16, right: 60 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "2px" }}>
+            <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.8)", lineHeight: 1.2 }}>{spot.name}</h3>
+            <span style={{ fontSize: "1.1rem" }}>{COUNTRIES[spot.country]?.flag}</span>
+          </div>
+          <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.72)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>📍 {COUNTRIES[spot.country]?.name} · {spot.region}</p>
+        </div>
+      </div>
+
+      {/* ── CARD BODY ── */}
+      <div style={{ padding: "14px 16px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+          <div style={{ display: "flex", gap: "14px", alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "0.75rem", color: "#6a9a8c" }}>📏 {spot.distance}</span>
+            <span style={{ fontSize: "0.75rem", color: "#6a9a8c" }}>⏱️ {spot.duration}</span>
+            {spot.rating && (
+              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ color: "#f59e0b", fontSize: "0.85rem" }}>★</span>
+                <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#f59e0b" }}>{spot.rating.toFixed(1)}</span>
+                {spot.reviews && <span style={{ fontSize: "0.62rem", color: "#4a7a6a" }}>({spot.reviews})</span>}
+              </div>
+            )}
+            <WeatherWidget coords={spot.coords} spotName={spot.name} difficulty={spot.difficulty} small />
+          </div>
+          {provider && (
+            <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#a8edcf", background: "rgba(26,158,110,0.15)", border: "1px solid rgba(26,158,110,0.28)", borderRadius: "12px", padding: "4px 10px", whiteSpace: "nowrap" }}>
+              {provider.price}{provider.currency}<span style={{ fontWeight: 400, fontSize: "0.62rem", color: "#5a8a78" }}>/pers.</span>
+            </span>
           )}
         </div>
-        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-          {spot.activities.map(a => <span key={a} style={{ padding: "2px 8px", background: `${spot.color}12`, border: `1px solid ${spot.color}24`, borderRadius: "20px", fontSize: "0.65rem", color: "#8ae8cc", fontWeight: 500 }}>{a}</span>)}
+        <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+          {spot.activities.slice(0, 5).map(a => (
+            <span key={a} style={{ padding: "3px 10px", background: `${spot.color}18`, border: `1px solid ${spot.color}30`, borderRadius: "20px", fontSize: "0.67rem", color: "#a8edcf", fontWeight: 500 }}>{a}</span>
+          ))}
+          {spot.camping && <span style={{ padding: "3px 8px", background: "rgba(26,158,110,0.12)", color: "#7ecfb0", borderRadius: "10px", fontSize: "0.65rem" }}>⛺ Camping</span>}
+          {spot.community && <span style={{ padding: "3px 8px", background: "rgba(245,158,11,0.12)", color: "#fbbf24", borderRadius: "10px", fontSize: "0.65rem" }}>🌟 Communauté</span>}
         </div>
+
+        {/* ── EXPANDED ── */}
         {open && (
-          <div style={{ marginTop: "12px", paddingTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)", animation: "slideUp 0.3s ease" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
-              <p style={{ color: "#8ab8b0", fontSize: "0.82rem", lineHeight: 1.65, flex: 1 }}>{desc}</p>
+          <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.07)", animation: "slideUp 0.3s ease" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", gap: "10px" }}>
+              <p style={{ color: "#8ab8b0", fontSize: "0.84rem", lineHeight: 1.75, flex: 1 }}>{desc}</p>
               <TranslateButton text={spot.description} onTranslated={setDesc} />
             </div>
             <AIDescriptionButton spot={spot} isPremium={isPremium} onShowPremium={onShowPremium} />
@@ -1107,17 +1125,18 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
             <ExpeditionPlanner spot={spot} />
             <ProviderComparator routeId={spot.id} onShowPortal={p => window._setPartnerPortal?.(p)} />
             <LegalWarning country={spot.country} />
-            <div style={{ marginTop: "14px" }}>
-              <button onClick={e => { e.stopPropagation(); onBook(spot); }} style={{ width: "100%", padding: "12px 18px", background: `linear-gradient(135deg,${spot.color},#0891b2)`, border: "none", borderRadius: "16px", color: "#fff", fontWeight: 700, fontSize: "0.85rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", boxShadow: `0 4px 15px ${spot.color}40` }}>
+            <div style={{ marginTop: "18px" }}>
+              <button onClick={e => { e.stopPropagation(); onBook(spot); }}
+                style={{ width: "100%", padding: "14px 18px", background: `linear-gradient(135deg,${spot.color},#0891b2)`, border: "none", borderRadius: "16px", color: "#fff", fontWeight: 700, fontSize: "0.92rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", boxShadow: `0 6px 24px ${spot.color}50` }}>
                 <span>🛶 Réserver ce spot</span>
-                {provider && <span style={{ background: "rgba(255,255,255,0.2)", borderRadius: "20px", padding: "2px 10px", fontSize: "0.75rem", fontWeight: 800 }}>{provider.price}{provider.currency}/pers.</span>}
+                {provider && <span style={{ background: "rgba(255,255,255,0.2)", borderRadius: "20px", padding: "3px 12px", fontSize: "0.78rem", fontWeight: 800 }}>{provider.price}{provider.currency}/pers.</span>}
               </button>
             </div>
             <ReviewsSection spot={spot} session={session} userName={userName} allSpots={allSpots} />
           </div>
         )}
-        <div style={{ textAlign: "center", marginTop: "8px", fontSize: "0.6rem", color: "#3a6a5a" }}>
-          {open ? "▲ Voir moins" : "▼ Voir plus"}
+        <div style={{ textAlign: "center", marginTop: "10px", fontSize: "0.65rem", color: "#3a5a50", letterSpacing: "0.3px" }}>
+          {open ? "▲ Réduire" : "▼ Voir les détails"}
         </div>
       </div>
     </div>
@@ -1616,6 +1635,8 @@ export default function FleuVibe() {
         input::placeholder,textarea::placeholder{color:#4a7a6a}
         input:focus,textarea:focus,select:focus{outline:none;border-color:rgba(26,158,110,0.5)!important}
         select option{background:#0d2240}
+        .spot-img{width:100%;height:100%;object-fit:cover;transition:transform 0.6s ease;display:block}
+        @media(max-width:600px){.featured-grid{grid-template-columns:1fr!important}}
       `}</style>
 
       {/* ── PARTICULES FOND ── */}
@@ -1657,10 +1678,29 @@ export default function FleuVibe() {
 
         {/* HERO / STATS */}
         {!session ? (
-          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ textAlign: "center", padding: "28px 16px 20px", marginBottom: "8px" }}>
-            <p style={{ fontSize: "1.5rem", fontWeight: 800, color: "#daf0e8", marginBottom: "6px", lineHeight: 1.3 }}>Découvrez les plus beaux spots<br/>nautiques du monde</p>
-            <p style={{ fontSize: "0.82rem", color: "#5a8a78", marginBottom: "18px" }}>🗺️ {spots.length}+ spots · 🌍 {Object.keys(COUNTRIES).length} pays · ⭐ 4.8/5</p>
-            <button onClick={() => setShowAuth(true)} style={{ padding: "10px 28px", background: `linear-gradient(135deg,${currentTheme.primary},${currentTheme.secondary})`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.84rem", boxShadow: `0 4px 16px ${currentTheme.primary}40` }}>Créer un compte gratuit</button>
+          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ position: "relative", borderRadius: "28px", overflow: "hidden", marginBottom: "24px", minHeight: "320px" }}>
+            <img src="https://picsum.photos/seed/fleuvibe-hero/1400/560" alt="hero" loading="eager"
+              style={{ width: "100%", height: "320px", objectFit: "cover", display: "block" }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(5,15,30,0.65) 0%, rgba(8,40,30,0.75) 100%)" }} />
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", textAlign: "center" }}>
+              <p style={{ fontSize: "0.72rem", color: "rgba(168,237,207,0.9)", fontWeight: 700, letterSpacing: "2px", marginBottom: "12px" }}>🌊 LA PLATEFORME NAUTIQUE MONDIALE</p>
+              <h2 style={{ fontSize: "2rem", fontWeight: 900, color: "#fff", lineHeight: 1.2, marginBottom: "10px", textShadow: "0 4px 24px rgba(0,0,0,0.6)", maxWidth: "560px" }}>
+                Découvrez les plus beaux<br/>spots nautiques du monde
+              </h2>
+              <p style={{ fontSize: "0.88rem", color: "rgba(255,255,255,0.72)", marginBottom: "24px" }}>
+                {spots.length}+ spots · {Object.keys(COUNTRIES).length} pays · ⭐ 4.8/5
+              </p>
+              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
+                <button onClick={() => setShowAuth(true)} style={{ padding: "13px 32px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "50px", color: "#fff", fontWeight: 700, fontSize: "0.92rem", boxShadow: "0 6px 28px rgba(26,158,110,0.55)", transition: "transform 0.2s" }}
+                  onMouseEnter={e => e.currentTarget.style.transform = "scale(1.04)"}
+                  onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
+                  🌊 Commencer gratuitement
+                </button>
+                <button onClick={() => handlePageChange("map")} style={{ padding: "13px 24px", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "50px", color: "#fff", fontWeight: 600, fontSize: "0.88rem", backdropFilter: "blur(8px)" }}>
+                  🗺️ Explorer la carte
+                </button>
+              </div>
+            </div>
           </div>
         ) : (
           <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "14px", flexWrap: "wrap" }}>
@@ -1672,6 +1712,35 @@ export default function FleuVibe() {
               <button onClick={() => setShowChallenges(true)} style={{ padding: "5px 10px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "20px", color: "#fbbf24", fontWeight: 600, fontSize: "0.65rem" }}>🏆 Défis</button>
               <button onClick={() => setShowGroups(true)} style={{ padding: "5px 10px", background: "rgba(8,145,178,0.12)", border: "1px solid rgba(8,145,178,0.25)", borderRadius: "20px", color: "#67e8f9", fontWeight: 600, fontSize: "0.65rem" }}>👥 Groupes</button>
               <button onClick={() => setDarkMode(d => !d)} style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "50%", width: 28, height: 28, fontSize: "0.8rem" }}>{darkMode ? "☀️" : "🌙"}</button>
+            </div>
+          </div>
+        )}
+
+        {/* SPOTS À LA UNE */}
+        {page === "explore" && !search && (
+          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ marginBottom: "20px", transitionDelay: "0.05s" }}>
+            <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#5a8a78", letterSpacing: "1.5px", marginBottom: "12px" }}>✨ SPOTS À LA UNE</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+              {spots.filter(s => s.rating >= 4.5 || s.sponsored).slice(0, 3).map(s => {
+                const imgS = `${s.type || "WATER"}_${s.id}`;
+                return (
+                  <div key={s.id} onClick={() => { handlePageChange("explore"); setTimeout(() => setSearch(s.name), 100); }}
+                    style={{ position: "relative", borderRadius: "18px", overflow: "hidden", height: "140px", cursor: "pointer", transition: "transform 0.3s ease, box-shadow 0.3s ease", boxShadow: "0 4px 20px rgba(0,0,0,0.3)" }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 32px rgba(0,0,0,0.4)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.3)"; }}>
+                    <img src={`https://picsum.photos/seed/${imgS}/400/280`} alt={s.name} loading="lazy"
+                      style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease" }}
+                      onMouseEnter={e => e.currentTarget.style.transform = "scale(1.08)"}
+                      onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"} />
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.8) 100%)" }} />
+                    <div style={{ position: "absolute", bottom: 10, left: 10, right: 10 }}>
+                      <p style={{ fontSize: "0.78rem", fontWeight: 700, color: "#fff", textShadow: "0 2px 6px rgba(0,0,0,0.8)", marginBottom: "2px" }}>{s.name}</p>
+                      <p style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.7)" }}>{COUNTRIES[s.country]?.flag} {COUNTRIES[s.country]?.name}</p>
+                    </div>
+                    {s.rating && <div style={{ position: "absolute", top: 8, right: 8, padding: "2px 8px", background: "rgba(0,0,0,0.55)", borderRadius: "20px", fontSize: "0.62rem", color: "#f59e0b", fontWeight: 700, backdropFilter: "blur(4px)" }}>★ {s.rating.toFixed(1)}</div>}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
