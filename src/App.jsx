@@ -1060,127 +1060,99 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
   const gallery = getGalleryPhotos(spot);
 
   return (
-    <div style={{ marginBottom: "20px", overflow: "hidden", cursor: "pointer", borderRadius: "24px", position: "relative",
+    <div style={{
+      marginBottom: "10px", borderRadius: "18px", overflow: "hidden", position: "relative",
       border: `1px solid ${open ? spot.color + "55" : "rgba(255,255,255,0.08)"}`,
-      background: "#0b1a2e",
-      transition: "all 0.4s cubic-bezier(0.2,0.9,0.4,1.1)",
-      boxShadow: open ? `0 24px 50px -12px ${spot.color}30` : "0 4px 20px rgba(0,0,0,0.25)",
-    }}
-      onMouseEnter={e => { if (!open) { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.boxShadow = `0 20px 40px -10px ${spot.color}35`; } }}
-      onMouseLeave={e => { if (!open) { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.25)"; } }}
-      onClick={() => setOpen(o => !o)}>
-
-      {/* ── PHOTO HEADER ── */}
-      <div style={{ position: "relative", height: "120px", overflow: "hidden", borderRadius: "24px 24px 0 0" }}>
-        {!imgLoaded && !imgError && (
-          <div className="img-skeleton" style={{ position: "absolute", inset: 0 }} />
-        )}
-        {!imgError ? (
-          <img src={imgUrl} alt={spot.name} loading="lazy"
-            onLoad={() => setImgLoaded(true)}
-            onError={() => { setImgError(true); setImgLoaded(true); }}
-            style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.6s ease, opacity 0.4s ease", display: "block", opacity: imgLoaded ? 1 : 0 }}
-            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.06)"}
-            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"} />
-        ) : (
-          <div style={{ width: "100%", height: "100%", background: `linear-gradient(135deg,${spot.color}30,${typeColor}20)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "4rem" }}>{spot.emoji}</div>
-        )}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.72) 100%)" }} />
-        {spot.sponsored && (
-          <div style={{ position: "absolute", top: 12, left: 12, padding: "4px 12px", background: "rgba(245,158,11,0.92)", borderRadius: "20px", fontSize: "0.62rem", color: "#fff", fontWeight: 700, backdropFilter: "blur(4px)" }}>⭐ PARTENAIRE</div>
-        )}
-        <div style={{ position: "absolute", top: 12, right: 12, display: "flex", gap: "6px" }}>
-          <span style={{ padding: "4px 10px", background: `${typeColor}dd`, borderRadius: "20px", fontSize: "0.6rem", color: "#fff", fontWeight: 700, backdropFilter: "blur(4px)" }}>{typeIcon} {typeName}</span>
-          <span style={{ padding: "4px 10px", background: `${DIFF_COLOR[spot.difficulty] || "#1a9e6e"}dd`, borderRadius: "20px", fontSize: "0.6rem", color: "#fff", fontWeight: 700, backdropFilter: "blur(4px)" }}>{spot.difficulty}</span>
+      background: open ? `linear-gradient(135deg,${spot.color}08,#0b1a2e)` : "#0b1a2e",
+      transition: "border-color 0.25s, background 0.25s",
+      boxShadow: open ? `0 12px 32px -8px ${spot.color}25` : "none",
+    }}>
+      {/* ── COLLAPSED ROW ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 14px", cursor: "pointer" }}
+        onClick={() => setOpen(o => !o)}>
+        {/* Thumbnail */}
+        <div style={{ width: "52px", height: "52px", borderRadius: "14px", background: `linear-gradient(135deg,${spot.color}50,${typeColor}30)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", flexShrink: 0 }}>
+          {spot.emoji}
         </div>
-        <button onClick={e => { e.stopPropagation(); onFav(spot.id); }}
-          style={{ position: "absolute", bottom: 14, right: 14, background: "rgba(0,0,0,0.45)", border: "none", borderRadius: "50%", width: 38, height: 38, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", backdropFilter: "blur(6px)", transition: "transform 0.2s" }}
-          onMouseEnter={e => e.currentTarget.style.transform = "scale(1.18)"}
-          onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
-          {isFav ? "❤️" : "🤍"}
-        </button>
-        <div style={{ position: "absolute", bottom: 14, left: 16, right: 60 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "2px" }}>
-            <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#fff", textShadow: "0 2px 10px rgba(0,0,0,0.8)", lineHeight: 1.2 }}>{spot.name}</h3>
-            <span style={{ fontSize: "1.1rem" }}>{COUNTRIES[spot.country]?.flag}</span>
+        {/* Info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "2px" }}>
+            <h3 style={{ fontSize: "0.88rem", fontWeight: 700, color: "#daf0e8", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", margin: 0 }}>{spot.name}</h3>
+            <span style={{ fontSize: "0.95rem", flexShrink: 0 }}>{COUNTRIES[spot.country]?.flag}</span>
+            {spot.sponsored && <span style={{ padding: "1px 6px", background: "rgba(245,158,11,0.18)", border: "1px solid rgba(245,158,11,0.35)", borderRadius: "8px", fontSize: "0.52rem", color: "#f59e0b", fontWeight: 700, flexShrink: 0 }}>PARTENAIRE</span>}
           </div>
-          <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.72)", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>📍 {COUNTRIES[spot.country]?.name} · {spot.region}</p>
+          <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "0.65rem", color: "#4a7a6a" }}>📍 {COUNTRIES[spot.country]?.name} · {spot.region}</span>
+          </div>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", marginTop: "4px", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "0.67rem", color: "#6a9a8c" }}>📏 {spot.distance}</span>
+            <span style={{ fontSize: "0.67rem", color: "#6a9a8c" }}>⏱️ {spot.duration}</span>
+            {spot.rating && <span style={{ fontSize: "0.67rem", color: "#f59e0b", fontWeight: 700 }}>★ {spot.rating.toFixed(1)}</span>}
+            <span style={{ padding: "1px 7px", background: `${typeColor}18`, border: `1px solid ${typeColor}30`, borderRadius: "8px", fontSize: "0.58rem", color: typeColor, fontWeight: 600 }}>{typeIcon} {typeName}</span>
+            <span style={{ padding: "1px 7px", background: `${DIFF_COLOR[spot.difficulty] || "#1a9e6e"}15`, borderRadius: "8px", fontSize: "0.58rem", color: DIFF_COLOR[spot.difficulty] || "#a8edcf", fontWeight: 600 }}>{spot.difficulty}</span>
+          </div>
+        </div>
+        {/* Right */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px", flexShrink: 0 }}>
+          <button onClick={e => { e.stopPropagation(); onFav(spot.id); }} style={{ background: "none", border: "none", fontSize: "1rem", cursor: "pointer", padding: 0, lineHeight: 1 }}>{isFav ? "❤️" : "🤍"}</button>
+          {provider && <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "#a8edcf" }}>{provider.price}{provider.currency}<span style={{ fontWeight: 400, fontSize: "0.58rem", color: "#5a8a78" }}>/pers</span></span>}
+          <span style={{ fontSize: "0.6rem", color: open ? "#a8edcf" : "#3a5a50" }}>{open ? "▲" : "▼"}</span>
         </div>
       </div>
 
-      {/* ── CARD BODY ── */}
-      <div style={{ padding: "14px 16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-          <div style={{ display: "flex", gap: "14px", alignItems: "center", flexWrap: "wrap" }}>
-            <span style={{ fontSize: "0.75rem", color: "#6a9a8c" }}>📏 {spot.distance}</span>
-            <span style={{ fontSize: "0.75rem", color: "#6a9a8c" }}>⏱️ {spot.duration}</span>
-            {spot.rating && (
-              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                <span style={{ color: "#f59e0b", fontSize: "0.85rem" }}>★</span>
-                <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#f59e0b" }}>{spot.rating.toFixed(1)}</span>
-                {spot.reviews && <span style={{ fontSize: "0.62rem", color: "#4a7a6a" }}>({spot.reviews})</span>}
-              </div>
+      {/* Activities chips */}
+      <div style={{ paddingLeft: "78px", paddingRight: "14px", paddingBottom: "10px", display: "flex", gap: "5px", flexWrap: "wrap" }}>
+        {spot.activities.slice(0, 5).map(a => (
+          <span key={a} style={{ padding: "2px 8px", background: `${spot.color}15`, border: `1px solid ${spot.color}25`, borderRadius: "20px", fontSize: "0.62rem", color: "#a8edcf" }}>{a}</span>
+        ))}
+        {spot.camping && <span style={{ padding: "2px 7px", background: "rgba(26,158,110,0.1)", color: "#7ecfb0", borderRadius: "10px", fontSize: "0.62rem" }}>⛺</span>}
+      </div>
+
+      {/* ── EXPANDED ── */}
+      {open && (
+        <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", padding: "16px 14px", animation: "slideUp 0.3s ease" }}>
+          {/* Photo banner only when expanded */}
+          <div style={{ borderRadius: "14px", overflow: "hidden", height: "180px", marginBottom: "14px", position: "relative" }}>
+            {!imgLoaded && !imgError && <div className="img-skeleton" style={{ position: "absolute", inset: 0 }} />}
+            {!imgError ? (
+              <img src={imgUrl} alt={spot.name} loading="lazy"
+                onLoad={() => setImgLoaded(true)}
+                onError={() => { setImgError(true); setImgLoaded(true); }}
+                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.4s" }} />
+            ) : (
+              <div style={{ width: "100%", height: "100%", background: `linear-gradient(135deg,${spot.color}30,${typeColor}20)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "4rem" }}>{spot.emoji}</div>
             )}
-            <WeatherWidget coords={spot.coords} spotName={spot.name} difficulty={spot.difficulty} small />
           </div>
-          {provider && (
-            <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#a8edcf", background: "rgba(26,158,110,0.15)", border: "1px solid rgba(26,158,110,0.28)", borderRadius: "12px", padding: "4px 10px", whiteSpace: "nowrap" }}>
-              {provider.price}{provider.currency}<span style={{ fontWeight: 400, fontSize: "0.62rem", color: "#5a8a78" }}>/pers.</span>
-            </span>
-          )}
-        </div>
-        <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
-          {spot.activities.slice(0, 5).map(a => (
-            <span key={a} style={{ padding: "3px 10px", background: `${spot.color}18`, border: `1px solid ${spot.color}30`, borderRadius: "20px", fontSize: "0.67rem", color: "#a8edcf", fontWeight: 500 }}>{a}</span>
-          ))}
-          {spot.camping && <span style={{ padding: "3px 8px", background: "rgba(26,158,110,0.12)", color: "#7ecfb0", borderRadius: "10px", fontSize: "0.65rem" }}>⛺ Camping</span>}
-          {spot.community && <span style={{ padding: "3px 8px", background: "rgba(245,158,11,0.12)", color: "#fbbf24", borderRadius: "10px", fontSize: "0.65rem" }}>🌟 Communauté</span>}
-        </div>
-
-        {/* ── EXPANDED ── */}
-        {open && (
-          <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid rgba(255,255,255,0.07)", animation: "slideUp 0.3s ease" }}>
-            {/* Galerie photos */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "8px", marginBottom: "16px" }}>
-              {gallery.map((src, idx) => (
-                <div key={idx} onClick={e => { e.stopPropagation(); setLightboxIdx(idx); }}
-                  style={{ borderRadius: "12px", overflow: "hidden", aspectRatio: "4/3", cursor: "zoom-in", transition: "transform 0.25s ease", position: "relative" }}
-                  onMouseEnter={e => e.currentTarget.style.transform = "scale(1.04)"}
-                  onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
-                  <img src={src} alt={`${spot.name} ${idx + 1}`} loading="lazy"
-                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                  <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0)", transition: "background 0.2s" }}
-                    onMouseEnter={e => e.currentTarget.style.background = "rgba(0,0,0,0.15)"}
-                    onMouseLeave={e => e.currentTarget.style.background = "rgba(0,0,0,0)"} />
-                  {idx === 2 && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", color: "#fff", fontWeight: 600 }}>🔍 Agrandir</div>}
-                </div>
-              ))}
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", gap: "10px" }}>
-              <p style={{ color: "#8ab8b0", fontSize: "0.84rem", lineHeight: 1.75, flex: 1 }}>{desc}</p>
-              <TranslateButton text={spot.description} onTranslated={setDesc} />
-            </div>
-            <AIDescriptionButton spot={spot} isPremium={isPremium} onShowPremium={onShowPremium} />
-            <WeatherWidget coords={spot.coords} spotName={spot.name} difficulty={spot.difficulty} />
-            <SeasonalCalendar />
-            <LiveConditions spotId={spot.id} />
-            <ExpeditionPlanner spot={spot} />
-            <ProviderComparator routeId={spot.id} onShowPortal={p => window._setPartnerPortal?.(p)} />
-            <LegalWarning country={spot.country} />
-            <div style={{ marginTop: "18px" }}>
-              <button onClick={e => { e.stopPropagation(); onBook(spot); }}
-                style={{ width: "100%", padding: "14px 18px", background: `linear-gradient(135deg,${spot.color},#0891b2)`, border: "none", borderRadius: "16px", color: "#fff", fontWeight: 700, fontSize: "0.92rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", boxShadow: `0 6px 24px ${spot.color}50` }}>
-                <span>🛶 Réserver ce spot</span>
-                {provider && <span style={{ background: "rgba(255,255,255,0.2)", borderRadius: "20px", padding: "3px 12px", fontSize: "0.78rem", fontWeight: 800 }}>{provider.price}{provider.currency}/pers.</span>}
-              </button>
-            </div>
-            <ReviewsSection spot={spot} session={session} userName={userName} allSpots={allSpots} />
+          {/* Gallery */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "6px", marginBottom: "14px" }}>
+            {gallery.map((src, idx) => (
+              <div key={idx} onClick={e => { e.stopPropagation(); setLightboxIdx(idx); }}
+                style={{ borderRadius: "10px", overflow: "hidden", aspectRatio: "4/3", cursor: "zoom-in", position: "relative" }}>
+                <img src={src} alt={`${spot.name} ${idx + 1}`} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                {idx === 2 && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.68rem", color: "#fff", fontWeight: 600 }}>🔍</div>}
+              </div>
+            ))}
           </div>
-        )}
-        <div style={{ textAlign: "center", marginTop: "10px", fontSize: "0.65rem", color: "#3a5a50", letterSpacing: "0.3px" }}>
-          {open ? "▲ Réduire" : "▼ Voir les détails"}
+          <WeatherWidget coords={spot.coords} spotName={spot.name} difficulty={spot.difficulty} small />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", margin: "10px 0", gap: "10px" }}>
+            <p style={{ color: "#8ab8b0", fontSize: "0.82rem", lineHeight: 1.7, flex: 1 }}>{desc}</p>
+            <TranslateButton text={spot.description} onTranslated={setDesc} />
+          </div>
+          <AIDescriptionButton spot={spot} isPremium={isPremium} onShowPremium={onShowPremium} />
+          <WeatherWidget coords={spot.coords} spotName={spot.name} difficulty={spot.difficulty} />
+          <SeasonalCalendar />
+          <LiveConditions spotId={spot.id} />
+          <ExpeditionPlanner spot={spot} />
+          <ProviderComparator routeId={spot.id} onShowPortal={p => window._setPartnerPortal?.(p)} />
+          <LegalWarning country={spot.country} />
+          <button onClick={e => { e.stopPropagation(); onBook(spot); }}
+            style={{ width: "100%", marginTop: "14px", padding: "13px 18px", background: `linear-gradient(135deg,${spot.color},#0891b2)`, border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.9rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
+            🛶 Réserver ce spot
+            {provider && <span style={{ background: "rgba(255,255,255,0.2)", borderRadius: "20px", padding: "3px 12px", fontSize: "0.76rem" }}>{provider.price}{provider.currency}/pers.</span>}
+          </button>
+          <ReviewsSection spot={spot} session={session} userName={userName} allSpots={allSpots} />
         </div>
-      </div>
+      )}
     </div>
   );
 }
