@@ -1027,45 +1027,22 @@ function TranslateButton({ text, onTranslated }) {
 }
 
 const WATER_QUERIES = {
-  RIVER: [
-    'kayak+whitewater+rapids',
-    'white+water+rafting+river',
-    'canoe+river+paddle',
-    'kayak+river+action',
-    'rafting+adventure+water',
-    'kayaking+wild+river',
-    'canoe+paddle+river+sport',
-  ],
-  LAKE: [
-    'stand+up+paddle+lake',
-    'kayak+lake+mountain',
-    'sup+paddleboard+lake',
-    'canoe+lake+calm+water',
-    'kayak+paddle+lake+sport',
-    'paddleboard+lake+sunrise',
-  ],
-  SEA: [
-    'surfing+big+wave+ocean',
-    'sea+kayak+ocean+paddle',
-    'scuba+diving+coral+reef',
-    'stand+up+paddle+sea',
-    'surf+wave+surfboard',
-    'kitesurfing+ocean',
-    'windsurfing+sea+wave',
-  ],
+  RIVER: ['kayaking,rapids', 'rafting,river', 'canoe,river', 'kayak,whitewater', 'paddling,river', 'kayaking,river', 'canoeing'],
+  LAKE: ['kayaking,lake', 'paddleboard,lake', 'sup,lake', 'canoe,lake', 'kayak,water', 'paddleboarding'],
+  SEA: ['surfing,wave', 'kayak,ocean', 'scuba,diving', 'sup,ocean', 'surfing,sea', 'kitesurfing', 'windsurfing'],
 };
 
 function getSpotPhoto(spot, w = 800, h = 320) {
   const queries = WATER_QUERIES[spot.type] || WATER_QUERIES.RIVER;
   const query = queries[spot.id % queries.length];
-  return `https://source.unsplash.com/${w}x${h}/?${query}&sig=${spot.id}`;
+  return `https://loremflickr.com/${w}/${h}/${query}/all?lock=${spot.id}`;
 }
 
 function getGalleryPhotos(spot) {
   const queries = WATER_QUERIES[spot.type] || WATER_QUERIES.RIVER;
   return [0, 1, 2].map(offset => {
     const query = queries[(spot.id + offset) % queries.length];
-    return `https://source.unsplash.com/700x480/?${query}&sig=${spot.id + offset}`;
+    return `https://loremflickr.com/700/480/${query}/all?lock=${spot.id + offset}`;
   });
 }
 
@@ -1747,7 +1724,7 @@ export default function FleuVibe() {
         {/* HERO / STATS */}
         {!session ? (
           <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ position: "relative", borderRadius: "28px", overflow: "hidden", marginBottom: "24px", minHeight: "320px" }}>
-            <img src="https://source.unsplash.com/1400x560/?kayak+whitewater+rapids+river&sig=hero" alt="hero" loading="eager"
+            <img src="https://loremflickr.com/1400/560/kayaking,rapids/all?lock=99" alt="hero" loading="eager"
               style={{ width: "100%", height: "320px", objectFit: "cover", display: "block", animation: "slowZoom 20s ease-in-out infinite", transformOrigin: "center center" }} />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(5,15,30,0.65) 0%, rgba(8,40,30,0.75) 100%)" }} />
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", textAlign: "center" }}>
