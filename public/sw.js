@@ -1,7 +1,8 @@
-const STATIC_CACHE = 'fleuvibe-static-v4';
-const DYNAMIC_CACHE = 'fleuvibe-dynamic-v4';
+const STATIC_CACHE = 'fleuvibe-static-v6';
+const DYNAMIC_CACHE = 'fleuvibe-dynamic-v6';
 
-const STATIC_ASSETS = ['/', '/index.html', '/manifest.json'];
+// index.html intentionally NOT cached — always fetched fresh so asset hashes stay in sync
+const STATIC_ASSETS = ['/manifest.json'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -38,7 +39,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cache-first pour les assets statiques
+  // Never cache HTML — always network first so index.html always matches deployed JS hashes
+  if (url.pathname === '/' || url.pathname.endsWith('.html')) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Cache-first pour les assets statiques (JS/CSS/images — hash-versioned, safe to cache)
   if (STATIC_ASSETS.includes(url.pathname) || url.pathname.match(/\.(js|css|png|jpg|svg|woff2?)$/)) {
     event.respondWith(
       caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
