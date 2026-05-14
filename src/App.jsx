@@ -1417,6 +1417,7 @@ export default function FleuVibe() {
   const [showChallenges, setShowChallenges] = useState(false);
   const [showGroups, setShowGroups] = useState(false);
   const [showAffiliate, setShowAffiliate] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [partnerPortal, setPartnerPortal] = useState(null);
   const [showAdmin, setShowAdmin] = useState(false);
   const isAdmin = session?.user?.email === import.meta.env.VITE_ADMIN_EMAIL || false;
@@ -1627,47 +1628,26 @@ export default function FleuVibe() {
       </div>
 
       {/* ── HEADER ── */}
-      <div style={{ position: "sticky", top: 0, background: darkMode ? "rgba(10,22,40,0.88)" : "rgba(240,249,244,0.88)", backdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.06)", zIndex: 100, padding: "10px 20px" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <span style={{ fontSize: "1.8rem", animation: "float 4s ease-in-out infinite" }}>🌊</span>
-            <div>
-              <h1 className="shimmer-text" style={{ fontSize: "1.4rem", fontWeight: 800, letterSpacing: "-0.5px" }}>FleuVibe</h1>
-              <p style={{ fontSize: "0.55rem", color: "#5a8a78", letterSpacing: "1.5px", marginTop: "1px" }}>EXPLOREZ LES EAUX DU MONDE</p>
-            </div>
-            <span style={{ background: "rgba(26,158,110,0.2)", border: "1px solid rgba(26,158,110,0.4)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#7ecfb0", fontWeight: 700 }}>WORLD</span>
-            <span style={{ background: "linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2))", border: "1px solid rgba(99,102,241,0.4)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#a5b4fc", fontWeight: 700 }}>🤖 IA</span>
+      <div style={{ position: "sticky", top: 0, background: darkMode ? "rgba(10,22,40,0.95)" : "rgba(240,249,244,0.95)", backdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.06)", zIndex: 100, padding: "12px 20px" }}>
+        <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+            <span style={{ fontSize: "1.6rem", animation: "float 4s ease-in-out infinite" }}>🌊</span>
+            <h1 className="shimmer-text" style={{ fontSize: "1.25rem", fontWeight: 800, letterSpacing: "-0.5px" }}>FleuVibe</h1>
+            <span style={{ background: "linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2))", border: "1px solid rgba(99,102,241,0.35)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#a5b4fc", fontWeight: 700 }}>🤖 IA</span>
             {!isOnline && <span style={{ background: "rgba(220,38,38,0.2)", border: "1px solid rgba(220,38,38,0.4)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#f87171", fontWeight: 700 }}>📡 Hors-ligne</span>}
-            {isAdmin && <button onClick={() => setShowAdmin(true)} style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.35)", borderRadius: "20px", padding: "3px 10px", fontSize: "0.62rem", color: "#a5b4fc", fontWeight: 700, cursor: "pointer" }}>🛡️ Admin</button>}
-            <button onClick={() => setDarkMode(d => !d)} style={{ background: "rgba(255,255,255,0.08)", border: "none", borderRadius: "50%", width: 30, height: 30, fontSize: "0.9rem" }}>{darkMode ? "☀️" : "🌙"}</button>
           </div>
-          <div style={{ display: "flex", gap: "7px", alignItems: "center", flexWrap: "wrap" }}>
-            {session && <LevelBadge xp={userXP} />}
-            {/* Sélecteur de thème */}
-            <div style={{ display: "flex", gap: "3px", background: "rgba(255,255,255,0.06)", padding: "3px", borderRadius: "20px" }}>
-              {Object.entries(THEMES).map(([key, t]) => (
-                <button key={key} onClick={() => setTheme(key)} title={t.name} style={{ width: 18, height: 18, borderRadius: "50%", background: `linear-gradient(135deg,${t.primary},${t.secondary})`, border: theme === key ? "2px solid #fff" : "2px solid transparent", cursor: "pointer", transition: "all 0.2s" }} />
-              ))}
-            </div>
-            {/* Mode d'affichage */}
-            <select value={viewMode} onChange={e => setViewMode(e.target.value)} style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", padding: "5px 10px", color: "#a8edcf", fontSize: "0.65rem", outline: "none" }}>
-              <option value="comfort">🎨 Confort</option>
-              <option value="focus">🎯 Focus</option>
-              <option value="zen">🧘 Zen</option>
-            </select>
-            <button onClick={() => setShowChallenges(true)} style={{ padding: "7px 12px", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "20px", color: "#fbbf24", fontWeight: 600, fontSize: "0.68rem" }}>🏆 Challenges</button>
-            <button onClick={() => setShowGroups(true)} style={{ padding: "7px 12px", background: "rgba(8,145,178,0.15)", border: "1px solid rgba(8,145,178,0.3)", borderRadius: "20px", color: "#67e8f9", fontWeight: 600, fontSize: "0.68rem" }}>👥 Groupes</button>
-            <button onClick={() => setShowSubmit(true)} style={{ padding: "7px 14px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", color: "#a8edcf", fontWeight: 600, fontSize: "0.72rem" }}>
-              ➕ Ajouter{communityCount > 0 ? ` · ${communityCount}🌟` : ""}
-            </button>
-            <button onClick={() => setShowPremium(true)} style={{ padding: "7px 16px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.72rem", boxShadow: "0 2px 10px rgba(245,158,11,0.3)", animation: "glow 3s ease-in-out infinite" }}>⭐ Premium</button>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            {isAdmin && <button onClick={() => setShowAdmin(true)} style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.35)", borderRadius: "20px", padding: "6px 12px", fontSize: "0.62rem", color: "#a5b4fc", fontWeight: 700 }}>🛡️ Admin</button>}
+            <button onClick={() => setShowSubmit(true)} style={{ padding: "8px 14px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", color: "#a8edcf", fontWeight: 600, fontSize: "0.72rem" }}>➕ Ajouter</button>
+            {!isPremium && <button onClick={() => setShowPremium(true)} style={{ padding: "8px 14px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.72rem", boxShadow: "0 2px 10px rgba(245,158,11,0.3)" }}>⭐ Premium</button>}
             {session ? (
               <button onClick={() => setShowProfile(true)} style={{ display: "flex", alignItems: "center", gap: "7px", padding: "6px 14px", background: "rgba(26,158,110,0.15)", border: "1px solid rgba(26,158,110,0.3)", borderRadius: "20px", color: "#a8edcf", fontSize: "0.72rem", fontWeight: 600 }}>
-                <div style={{ width: 22, height: 22, borderRadius: "50%", background: `linear-gradient(135deg,${currentTheme.primary},${currentTheme.secondary})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700, color: "#fff" }}>{userName[0].toUpperCase()}</div>
-                {userName}{isPremium && <span style={{ fontSize: "0.6rem", color: "#f59e0b" }}>⭐</span>}
+                <div style={{ width: 24, height: 24, borderRadius: "50%", background: `linear-gradient(135deg,${currentTheme.primary},${currentTheme.secondary})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, color: "#fff" }}>{userName[0].toUpperCase()}</div>
+                <span style={{ display: "none" }} id="username-label">{userName}</span>
+                {isPremium && <span style={{ fontSize: "0.6rem", color: "#f59e0b" }}>⭐</span>}
               </button>
             ) : (
-              <button onClick={() => setShowAuth(true)} style={{ padding: "7px 18px", background: `linear-gradient(135deg,${currentTheme.primary},${currentTheme.secondary})`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.72rem", boxShadow: `0 2px 10px ${currentTheme.primary}40` }}>🌊 Connexion</button>
+              <button onClick={() => setShowAuth(true)} style={{ padding: "8px 18px", background: `linear-gradient(135deg,${currentTheme.primary},${currentTheme.secondary})`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.72rem", boxShadow: `0 2px 10px ${currentTheme.primary}40` }}>Connexion</button>
             )}
           </div>
         </div>
@@ -1675,34 +1655,33 @@ export default function FleuVibe() {
 
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "20px 16px", position: "relative", zIndex: 1 }}>
 
-        {/* STATS */}
-        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(82px,1fr))", gap: "8px", marginBottom: "16px" }}>
-          {[["🗺️", spots.length, "Spots"], ["🌍", Object.keys(COUNTRIES).length, "Pays"], ["🏞️", spots.filter(s => s.type === "RIVER").length, "Rivières"], ["🏔️", spots.filter(s => s.type === "LAKE").length, "Lacs"], ["🌊", spots.filter(s => s.type === "SEA").length, "Côtes"], ["⭐", "4.8", "Note moy."], ...(session ? [["❤️", favorites.length, "Favoris"]] : [])].map(([ic, val, label]) => (
-            <div key={label} style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "18px", padding: "12px 8px", textAlign: "center", transition: "all 0.25s ease" }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "rgba(26,158,110,0.35)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.06)"; e.currentTarget.style.transform = ""; }}>
-              <div style={{ fontSize: "1.1rem", marginBottom: "4px" }}>{ic}</div>
-              <div style={{ fontSize: "1rem", fontWeight: 800, color: "#a8edcf", letterSpacing: "-0.5px" }}>{val}</div>
-              <div style={{ fontSize: "0.57rem", color: "#4a7a6a", marginTop: "2px", fontWeight: 500 }}>{label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* BADGES */}
-        {earnedBadges.length > 0 && (
-          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.04s", display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "12px" }}>
-            {earnedBadges.map(b => (
+        {/* HERO / STATS */}
+        {!session ? (
+          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ textAlign: "center", padding: "28px 16px 20px", marginBottom: "8px" }}>
+            <p style={{ fontSize: "1.5rem", fontWeight: 800, color: "#daf0e8", marginBottom: "6px", lineHeight: 1.3 }}>Découvrez les plus beaux spots<br/>nautiques du monde</p>
+            <p style={{ fontSize: "0.82rem", color: "#5a8a78", marginBottom: "18px" }}>🗺️ {spots.length}+ spots · 🌍 {Object.keys(COUNTRIES).length} pays · ⭐ 4.8/5</p>
+            <button onClick={() => setShowAuth(true)} style={{ padding: "10px 28px", background: `linear-gradient(135deg,${currentTheme.primary},${currentTheme.secondary})`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.84rem", boxShadow: `0 4px 16px ${currentTheme.primary}40` }}>Créer un compte gratuit</button>
+          </div>
+        ) : (
+          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "14px", flexWrap: "wrap" }}>
+            <LevelBadge xp={userXP} />
+            {earnedBadges.slice(0, 4).map(b => (
               <span key={b.name} style={{ padding: "3px 9px", background: "rgba(26,158,110,0.1)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", fontSize: "0.65rem", color: "#a8edcf" }}>{b.icon} {b.name}</span>
             ))}
+            <div style={{ marginLeft: "auto", display: "flex", gap: "6px" }}>
+              <button onClick={() => setShowChallenges(true)} style={{ padding: "5px 10px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "20px", color: "#fbbf24", fontWeight: 600, fontSize: "0.65rem" }}>🏆 Défis</button>
+              <button onClick={() => setShowGroups(true)} style={{ padding: "5px 10px", background: "rgba(8,145,178,0.12)", border: "1px solid rgba(8,145,178,0.25)", borderRadius: "20px", color: "#67e8f9", fontWeight: 600, fontSize: "0.65rem" }}>👥 Groupes</button>
+              <button onClick={() => setDarkMode(d => !d)} style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "50%", width: 28, height: 28, fontSize: "0.8rem" }}>{darkMode ? "☀️" : "🌙"}</button>
+            </div>
           </div>
         )}
 
         {/* NAV */}
-        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.06s", display: "flex", gap: "4px", marginBottom: "16px", background: "rgba(255,255,255,0.03)", padding: "5px", borderRadius: "50px", flexWrap: "wrap", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.05)" }}>
-          {[["explore", "🗺️", "Explorer"], ["expeditions", "⛺", "Expéd."], ["map", "🌍", "Carte"], ["hidden", "💎", "Pépites"], ["weather", "🌤️", "Météo"], ["tourism", "⭐", "Destinations"], ["favorites", "❤️", `Favoris${favorites.length > 0 ? ` (${favorites.length})` : ""}`]].map(([id, icon, label]) => (
-            <button key={id} onClick={() => handlePageChange(id)} className="ripple-btn" style={{ flex: 1, minWidth: "70px", padding: "8px 10px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: page === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: page === id ? "#fff" : "#6a9a8c", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px" }}>
+        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.06s", display: "flex", gap: "4px", marginBottom: "16px", background: "rgba(255,255,255,0.03)", padding: "5px", borderRadius: "50px", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.05)" }}>
+          {[["explore", "🗺️", "Explorer"], ["map", "🌍", "Carte"], ["hidden", "💎", "Pépites"], ["weather", "🌤️", "Météo"], ["favorites", "❤️", favorites.length > 0 ? `Favoris (${favorites.length})` : "Favoris"]].map(([id, icon, label]) => (
+            <button key={id} onClick={() => handlePageChange(id)} className="ripple-btn" style={{ flex: 1, padding: "9px 10px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: page === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: page === id ? "#fff" : "#6a9a8c", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px", whiteSpace: "nowrap" }}>
               <span>{icon}</span><span>{label}</span>
-              {page === id && <span style={{ width: 5, height: 5, background: "rgba(255,255,255,0.8)", borderRadius: "50%", animation: "glow 1.5s ease-in-out infinite", flexShrink: 0 }} />}
+              {page === id && <span style={{ width: 5, height: 5, background: "rgba(255,255,255,0.8)", borderRadius: "50%", flexShrink: 0 }} />}
             </button>
           ))}
         </div>
@@ -1741,25 +1720,51 @@ export default function FleuVibe() {
                 {aiFilters?.countries?.map(c => <span key={c} style={{ padding: "1px 7px", background: "rgba(99,102,241,0.2)", borderRadius: "10px" }}>{COUNTRIES[c]?.flag} {c}</span>)}
               </div>
             )}
-            {page === "explore" && !aiSearchActive && (
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px", justifyContent: "center" }}>
-                <div style={{ display: "flex", gap: "3px", background: "rgba(255,255,255,0.03)", padding: "4px", borderRadius: "50px" }}>
-                  {[["ALL", "🌊 Tous"], ["RIVER", "🏞️ Rivières"], ["LAKE", "🏔️ Lacs"], ["SEA", "🌊 Mers"]].map(([id, label]) => (
-                    <button key={id} onClick={() => setSelType(id)} style={{ padding: "6px 12px", borderRadius: "50px", border: "none", fontSize: "0.68rem", fontWeight: 600, background: selType === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: selType === id ? "#fff" : "#6a9a8c" }}>{label}</button>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: "3px", background: "rgba(255,255,255,0.03)", padding: "4px", borderRadius: "50px" }}>
-                  {["ALL", "Facile", "Intermédiaire", "Sportif"].map(d => (
-                    <button key={d} onClick={() => setSelDiff(d)} style={{ padding: "6px 12px", borderRadius: "50px", border: "none", fontSize: "0.68rem", fontWeight: 600, background: selDiff === d ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: selDiff === d ? "#fff" : "#6a9a8c" }}>{d === "ALL" ? "Tous" : d}</button>
-                  ))}
-                </div>
-                <div style={{ display: "flex", gap: "3px", background: "rgba(255,255,255,0.03)", padding: "4px", borderRadius: "50px", flexWrap: "wrap" }}>
-                  {[["ALL", "🌍"], ["EU", "🇪🇺"], ["AM", "🌎"], ["AS", "🌏"], ["AF", "🌍"], ["OC", "🌊"]].map(([id, flag]) => (
-                    <button key={id} onClick={() => setSelContinent(id)} style={{ padding: "6px 10px", borderRadius: "50px", border: "none", fontSize: "0.68rem", fontWeight: 600, background: selContinent === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: selContinent === id ? "#fff" : "#6a9a8c" }}>{flag} {id === "ALL" ? "Monde" : id}</button>
-                  ))}
-                </div>
-              </div>
-            )}
+            {page === "explore" && !aiSearchActive && (() => {
+              const activeCount = [selType !== "ALL", selDiff !== "ALL", selContinent !== "ALL"].filter(Boolean).length;
+              return (
+                <>
+                  <div style={{ display: "flex", gap: "8px", marginBottom: "12px", alignItems: "center" }}>
+                    <button onClick={() => setShowFilters(f => !f)} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", background: activeCount > 0 ? "rgba(26,158,110,0.15)" : "rgba(255,255,255,0.05)", border: `1px solid ${activeCount > 0 ? "rgba(26,158,110,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius: "50px", color: activeCount > 0 ? "#a8edcf" : "#6a9a8c", fontSize: "0.72rem", fontWeight: 600 }}>
+                      🎛️ Filtres
+                      {activeCount > 0 && <span style={{ background: "#1a9e6e", borderRadius: "50%", width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: 700, color: "#fff" }}>{activeCount}</span>}
+                    </button>
+                    {activeCount > 0 && <button onClick={() => { setSelType("ALL"); setSelDiff("ALL"); setSelContinent("ALL"); }} style={{ padding: "6px 12px", background: "none", border: "1px solid rgba(220,38,38,0.3)", borderRadius: "50px", color: "#f87171", fontSize: "0.68rem", fontWeight: 600 }}>✕ Réinitialiser</button>}
+                    {selType !== "ALL" && <span style={{ padding: "4px 10px", background: "rgba(26,158,110,0.1)", border: "1px solid rgba(26,158,110,0.25)", borderRadius: "20px", fontSize: "0.65rem", color: "#a8edcf" }}>{selType}</span>}
+                    {selDiff !== "ALL" && <span style={{ padding: "4px 10px", background: "rgba(26,158,110,0.1)", border: "1px solid rgba(26,158,110,0.25)", borderRadius: "20px", fontSize: "0.65rem", color: "#a8edcf" }}>{selDiff}</span>}
+                    {selContinent !== "ALL" && <span style={{ padding: "4px 10px", background: "rgba(26,158,110,0.1)", border: "1px solid rgba(26,158,110,0.25)", borderRadius: "20px", fontSize: "0.65rem", color: "#a8edcf" }}>{selContinent}</span>}
+                  </div>
+                  {showFilters && (
+                    <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "16px", marginBottom: "14px", animation: "slideUp 0.2s ease" }}>
+                      <div style={{ marginBottom: "12px" }}>
+                        <p style={{ fontSize: "0.65rem", color: "#5a8a78", fontWeight: 600, marginBottom: "6px", letterSpacing: "0.5px" }}>TYPE D'EAU</p>
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                          {[["ALL", "🌊 Tous"], ["RIVER", "🏞️ Rivières"], ["LAKE", "🏔️ Lacs"], ["SEA", "🌊 Mer"]].map(([id, label]) => (
+                            <button key={id} onClick={() => setSelType(id)} style={{ padding: "7px 14px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: selType === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.05)", color: selType === id ? "#fff" : "#6a9a8c" }}>{label}</button>
+                          ))}
+                        </div>
+                      </div>
+                      <div style={{ marginBottom: "12px" }}>
+                        <p style={{ fontSize: "0.65rem", color: "#5a8a78", fontWeight: 600, marginBottom: "6px", letterSpacing: "0.5px" }}>NIVEAU</p>
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                          {["ALL", "Facile", "Intermédiaire", "Sportif"].map(d => (
+                            <button key={d} onClick={() => setSelDiff(d)} style={{ padding: "7px 14px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: selDiff === d ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.05)", color: selDiff === d ? "#fff" : "#6a9a8c" }}>{d === "ALL" ? "Tous niveaux" : d}</button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p style={{ fontSize: "0.65rem", color: "#5a8a78", fontWeight: 600, marginBottom: "6px", letterSpacing: "0.5px" }}>RÉGION</p>
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                          {[["ALL", "🌍 Monde"], ["EU", "🇪🇺 Europe"], ["AM", "🌎 Amériques"], ["AS", "🌏 Asie"], ["AF", "🌍 Afrique"], ["OC", "🌊 Océanie"]].map(([id, label]) => (
+                            <button key={id} onClick={() => setSelContinent(id)} style={{ padding: "7px 14px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: selContinent === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.05)", color: selContinent === id ? "#fff" : "#6a9a8c" }}>{label}</button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
               <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf", background: "rgba(26,158,110,0.12)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", padding: "3px 10px" }}>{filtered.length} spots</span>
               <span style={{ fontSize: "0.68rem", color: "#4a7a6a" }}>{[...new Set(filtered.map(s => s.country))].length} pays{page === "expeditions" ? " · ⛺ Expéditions longue durée" : ""}</span>
@@ -2039,12 +2044,12 @@ export default function FleuVibe() {
       {/* PROFILE */}
       {showProfile && session && (
         <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowProfile(false); }}>
-          <div style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "24px", maxWidth: "360px", width: "100%", padding: "26px", animation: "pop 0.3s ease" }}>
-            <div style={{ textAlign: "center", marginBottom: "16px" }}>
-              <div style={{ width: 60, height: 60, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", fontWeight: 700, color: "#fff", margin: "0 auto 10px" }}>{userName[0].toUpperCase()}</div>
-              <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#daf0e8" }}>{userName}</h2>
+          <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "24px", maxWidth: "380px", width: "100%", padding: "26px", animation: "pop 0.3s ease", maxHeight: "90vh", overflowY: "auto" }}>
+            <div style={{ textAlign: "center", marginBottom: "18px" }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: `linear-gradient(135deg,${currentTheme.primary},${currentTheme.secondary})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", fontWeight: 700, color: "#fff", margin: "0 auto 10px" }}>{userName[0].toUpperCase()}</div>
+              <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#daf0e8" }}>{userName}</h2>
               <p style={{ color: "#4a7a6a", fontSize: "0.73rem", marginTop: "2px" }}>{session.user.email}</p>
-              {isPremium && <span style={{ display: "inline-block", marginTop: "6px", padding: "2px 10px", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "20px", fontSize: "0.65rem", color: "#f59e0b", fontWeight: 700 }}>⭐ Membre Premium</span>}
+              {isPremium && <span style={{ display: "inline-block", marginTop: "6px", padding: "3px 12px", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "20px", fontSize: "0.65rem", color: "#f59e0b", fontWeight: 700 }}>⭐ Membre Premium</span>}
             </div>
             <div style={{ marginBottom: "14px" }}><LevelBadge xp={userXP} /></div>
             {earnedBadges.length > 0 && (
@@ -2052,19 +2057,39 @@ export default function FleuVibe() {
                 {earnedBadges.map(b => <span key={b.name} style={{ padding: "3px 8px", background: "rgba(26,158,110,0.1)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", fontSize: "0.62rem", color: "#a8edcf" }}>{b.icon} {b.name}</span>)}
               </div>
             )}
-            <div style={{ display: "flex", gap: "7px", marginBottom: "14px" }}>
-              {[["❤️", favorites.length, "Favoris"], ["🌊", spots.length, "Spots"], ["🤖", isPremium ? "ON" : "OFF", "IA"]].map(([ic, val, label]) => (
-                <div key={label} style={{ flex: 1, padding: "9px 6px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "12px", textAlign: "center" }}>
-                  <div style={{ fontSize: "0.95rem" }}>{ic}</div>
-                  <div style={{ fontSize: "0.85rem", fontWeight: 800, color: val === "OFF" ? "#dc2626" : "#a8edcf" }}>{val}</div>
-                  <div style={{ fontSize: "0.56rem", color: "#4a7a6a" }}>{label}</div>
+            <div style={{ display: "flex", gap: "7px", marginBottom: "16px" }}>
+              {[["❤️", favorites.length, "Favoris"], ["🌊", spots.length, "Spots"], ["🤖", isPremium ? "ON" : "OFF", "IA Premium"]].map(([ic, val, label]) => (
+                <div key={label} style={{ flex: 1, padding: "10px 6px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", textAlign: "center" }}>
+                  <div style={{ fontSize: "1rem" }}>{ic}</div>
+                  <div style={{ fontSize: "0.88rem", fontWeight: 800, color: val === "OFF" ? "#dc2626" : "#a8edcf" }}>{val}</div>
+                  <div style={{ fontSize: "0.56rem", color: "#4a7a6a", marginTop: "2px" }}>{label}</div>
                 </div>
               ))}
             </div>
+            {/* Raccourcis */}
+            <div style={{ display: "flex", gap: "6px", marginBottom: "16px" }}>
+              <button onClick={() => { setShowProfile(false); setShowChallenges(true); }} style={{ flex: 1, padding: "8px", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "14px", color: "#fbbf24", fontWeight: 600, fontSize: "0.7rem" }}>🏆 Défis</button>
+              <button onClick={() => { setShowProfile(false); setShowGroups(true); }} style={{ flex: 1, padding: "8px", background: "rgba(8,145,178,0.1)", border: "1px solid rgba(8,145,178,0.2)", borderRadius: "14px", color: "#67e8f9", fontWeight: 600, fontSize: "0.7rem" }}>👥 Groupes</button>
+              <button onClick={() => { setShowProfile(false); setShowAffiliate(true); }} style={{ flex: 1, padding: "8px", background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: "14px", color: "#c4b5fd", fontWeight: 600, fontSize: "0.7rem" }}>🤝 Parrainer</button>
+            </div>
+            {/* Apparence */}
+            <div style={{ marginBottom: "16px", padding: "12px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px" }}>
+              <p style={{ fontSize: "0.65rem", color: "#5a8a78", fontWeight: 600, marginBottom: "10px", letterSpacing: "0.5px" }}>APPARENCE</p>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                <span style={{ fontSize: "0.72rem", color: "#8ab8b0" }}>Mode</span>
+                <button onClick={() => setDarkMode(d => !d)} style={{ padding: "5px 12px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", color: "#a8edcf", fontSize: "0.68rem", fontWeight: 600 }}>{darkMode ? "☀️ Clair" : "🌙 Sombre"}</button>
+              </div>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                {Object.entries(THEMES).map(([key, t]) => (
+                  <button key={key} onClick={() => setTheme(key)} title={t.name} style={{ width: 24, height: 24, borderRadius: "50%", background: `linear-gradient(135deg,${t.primary},${t.secondary})`, border: theme === key ? "2px solid #fff" : "2px solid transparent", cursor: "pointer" }} />
+                ))}
+                <span style={{ fontSize: "0.65rem", color: "#5a8a78", alignSelf: "center", marginLeft: "4px" }}>Thème</span>
+              </div>
+            </div>
             {!isPremium && <button onClick={() => { setShowProfile(false); setShowPremium(true); }} style={{ width: "100%", padding: "10px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.82rem", marginBottom: "8px", boxShadow: "0 3px 10px rgba(245,158,11,0.25)" }}>⭐ Passer Premium</button>}
-            {!isPremium && <button onClick={() => { setIsPremium(true); addXP(200); setShowProfile(false); }} style={{ width: "100%", padding: "8px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "20px", color: "#a5b4fc", fontWeight: 500, fontSize: "0.72rem", marginBottom: "8px" }}>🧪 Tester Premium (dev)</button>}
-            {isPremium && <button onClick={() => setIsPremium(false)} style={{ width: "100%", padding: "9px", background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "20px", color: "#a5b4fc", fontWeight: 600, fontSize: "0.78rem", marginBottom: "8px" }}>🤖 IA Premium Active ✓</button>}
-            <button onClick={handleSignOut} style={{ width: "100%", padding: "9px", background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: "20px", color: "#f87171", fontWeight: 600, fontSize: "0.82rem" }}>🚪 Se déconnecter</button>
+            {!isPremium && <button onClick={() => { setIsPremium(true); addXP(200); setShowProfile(false); }} style={{ width: "100%", padding: "8px", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.18)", borderRadius: "20px", color: "#a5b4fc", fontWeight: 500, fontSize: "0.72rem", marginBottom: "8px" }}>🧪 Tester Premium (dev)</button>}
+            {isPremium && <button onClick={() => setIsPremium(false)} style={{ width: "100%", padding: "9px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.22)", borderRadius: "20px", color: "#a5b4fc", fontWeight: 600, fontSize: "0.78rem", marginBottom: "8px" }}>🤖 IA Premium Active ✓</button>}
+            <button onClick={handleSignOut} style={{ width: "100%", padding: "9px", background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.18)", borderRadius: "20px", color: "#f87171", fontWeight: 600, fontSize: "0.82rem" }}>🚪 Se déconnecter</button>
           </div>
         </div>
       )}
