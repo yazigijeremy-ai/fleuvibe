@@ -1026,46 +1026,46 @@ function TranslateButton({ text, onTranslated }) {
   );
 }
 
-const WATER_PHOTOS = {
+const WATER_QUERIES = {
   RIVER: [
-    'photo-1544551763-46a013bb70d5', // rafting eaux vives
-    'photo-1558618666-fcd25c85cd64', // kayak rapides
-    'photo-1571019613454-1cb2f99b2d8b', // canoë rivière forêt
-    'photo-1504280390367-361c6d9f38f4', // kayak sport action
-    'photo-1519904981063-b0cf448d479e', // pagaie rivière
-    'photo-1473773386757-42bbe9b4e670', // kayak canyon
-    'photo-1530053969600-caed2596d242', // pagayeurs lac/rivière
+    'kayak+whitewater+rapids',
+    'white+water+rafting+river',
+    'canoe+river+paddle',
+    'kayak+river+action',
+    'rafting+adventure+water',
+    'kayaking+wild+river',
+    'canoe+paddle+river+sport',
   ],
   LAKE: [
-    'photo-1530053969600-caed2596d242', // SUP lac calme
-    'photo-1504280390367-361c6d9f38f4', // kayak lac montagne
-    'photo-1464822759023-fed622ff2c3b', // lac lever soleil
-    'photo-1501854140801-50d01698950b', // lac montagne aérien
-    'photo-1571019613454-1cb2f99b2d8b', // canoë forêt lac
-    'photo-1544551763-46a013bb70d5', // pagayeurs lac
+    'stand+up+paddle+lake',
+    'kayak+lake+mountain',
+    'sup+paddleboard+lake',
+    'canoe+lake+calm+water',
+    'kayak+paddle+lake+sport',
+    'paddleboard+lake+sunrise',
   ],
   SEA: [
-    'photo-1505459668311-8dfac7952bf0', // surf vague océan
-    'photo-1484821582734-6c6a0a82e7e2', // kayak mer côte
-    'photo-1559827260-dc66d52bef19', // plongée récif corail
-    'photo-1566224595-d41e4a7fb6aa', // stand up paddle mer
-    'photo-1473773386757-42bbe9b4e670', // voile côte
-    'photo-1505118380757-91f5f5632de0', // surf vagues puissantes
-    'photo-1558618666-fcd25c85cd64', // kayak mer action
+    'surfing+big+wave+ocean',
+    'sea+kayak+ocean+paddle',
+    'scuba+diving+coral+reef',
+    'stand+up+paddle+sea',
+    'surf+wave+surfboard',
+    'kitesurfing+ocean',
+    'windsurfing+sea+wave',
   ],
 };
 
 function getSpotPhoto(spot, w = 800, h = 320) {
-  const pool = WATER_PHOTOS[spot.type] || WATER_PHOTOS.RIVER;
-  const id = pool[spot.id % pool.length];
-  return `https://images.unsplash.com/${id}?w=${w}&h=${h}&fit=crop&auto=format&q=80`;
+  const queries = WATER_QUERIES[spot.type] || WATER_QUERIES.RIVER;
+  const query = queries[spot.id % queries.length];
+  return `https://source.unsplash.com/${w}x${h}/?${query}&sig=${spot.id}`;
 }
 
 function getGalleryPhotos(spot) {
-  const pool = WATER_PHOTOS[spot.type] || WATER_PHOTOS.RIVER;
+  const queries = WATER_QUERIES[spot.type] || WATER_QUERIES.RIVER;
   return [0, 1, 2].map(offset => {
-    const id = pool[(spot.id + offset) % pool.length];
-    return `https://images.unsplash.com/${id}?w=700&h=480&fit=crop&auto=format&q=80`;
+    const query = queries[(spot.id + offset) % queries.length];
+    return `https://source.unsplash.com/700x480/?${query}&sig=${spot.id + offset}`;
   });
 }
 
@@ -1747,7 +1747,7 @@ export default function FleuVibe() {
         {/* HERO / STATS */}
         {!session ? (
           <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ position: "relative", borderRadius: "28px", overflow: "hidden", marginBottom: "24px", minHeight: "320px" }}>
-            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1400&h=560&fit=crop&auto=format&q=85" alt="hero" loading="eager"
+            <img src="https://source.unsplash.com/1400x560/?kayak+whitewater+rapids+river&sig=hero" alt="hero" loading="eager"
               style={{ width: "100%", height: "320px", objectFit: "cover", display: "block", animation: "slowZoom 20s ease-in-out infinite", transformOrigin: "center center" }} />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(5,15,30,0.65) 0%, rgba(8,40,30,0.75) 100%)" }} />
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", textAlign: "center" }}>
