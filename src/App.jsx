@@ -4,6 +4,7 @@ import { ALL_COUNTRIES as COUNTRIES_EXT, GLOBAL_PARTNERS, WORLD_ROUTES, GlobalSt
 import { GLOBAL_SPOTS_FLAT } from "./spots";
 import { stripeManager, calcBookingPrice } from "./stripe";
 import { partnershipManager, PARTNERSHIP_TIERS } from "./partnership";
+import { PREMIUM_PLANS as PLANS_V9, DynamicPricing, LoyaltyProgram, AffiliateProgram, getRelevantAd } from "./monetization";
 
 const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
@@ -1123,13 +1124,31 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
   );
 }
 
+function NativeAd({ activities, type }) {
+  const ad = getRelevantAd(activities, type);
+  return (
+    <div style={{ padding: "14px 16px", background: `linear-gradient(135deg,${ad.color}18,${ad.color}08)`, border: `1px solid ${ad.color}30`, borderRadius: "16px", display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }} onClick={() => trackEvent('ad_click', { adId: ad.id })}>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#daf0e8", marginBottom: "2px" }}>{ad.label}</div>
+        <div style={{ fontSize: "0.68rem", color: "#5a8a78" }}>{ad.sub}</div>
+      </div>
+      <div style={{ padding: "6px 12px", background: ad.color, borderRadius: "20px", fontSize: "0.68rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>{ad.cta}</div>
+      <div style={{ fontSize: "0.55rem", color: "#3a5a50", position: "absolute", bottom: "4px", right: "8px" }}>Sponsorisé</div>
+    </div>
+  );
+}
+
 function PremiumModal({ onClose, onActivate }) {
   const plans = [
-    { id: "monthly", name: "Mensuel", price: "4,99€", period: "/mois", url: STRIPE_MONTHLY_URL, features: ["Météo avancée 7j", "Favoris illimités", "Sans pub"] },
-    { id: "annual", name: "Annuel", price: "39,99€", period: "/an", popular: true, url: STRIPE_ANNUAL_URL, features: ["Tout du mensuel", "🤖 Descriptions IA", "🧠 Conseils météo IA", "🪄 Suggestions d'avis", "📋 Résumés d'avis", "🧭 Recommandations", "🌐 Traduction IA", "Économisez 33%"] },
-  ];
-  const [selectedPlan, setSelectedPlan] = useState("annual");
-  const plan = plans.find(p => p.id === selectedPlan);
+    { key: "monthly", url: STRIPE_MONTHLY_URL },
+    { key: "yearly",  url: STRIPE_ANNUAL_URL },
+    { key: "lifetime", url: null },
+  ].map(({ key, url }) => ({ ...PLANS_V9[key], key, url }));
+  const [selectedPlan, setSelectedPlan] = useState("yearly");
+  const plan = plans.find(p => p.key === selectedPlan);
+
+  const formatPrice = (p) => `${p.price}${p.currency}`;
+  const formatPeriod = (p) => `/ ${p.interval}`;
 
   const handlePay = () => {
     trackEvent('premium_checkout_click', { plan: selectedPlan });
@@ -1142,7 +1161,7 @@ function PremiumModal({ onClose, onActivate }) {
 
   return (
     <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "24px", padding: "28px", maxWidth: "480px", width: "100%", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
+      <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "24px", padding: "28px", maxWidth: "540px", width: "100%", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", maxHeight: "90vh", overflowY: "auto" }}>
         <div style={{ textAlign: "center", marginBottom: "18px" }}>
           <div style={{ fontSize: "2.5rem", marginBottom: "8px" }}>⭐</div>
           <h2 style={{ fontSize: "1.3rem", fontWeight: 800, background: "linear-gradient(135deg,#f59e0b,#ef4444)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: "6px" }}>FleuVibe Premium</h2>
@@ -1151,20 +1170,21 @@ function PremiumModal({ onClose, onActivate }) {
         <div style={{ padding: "9px 14px", background: "linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1))", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "12px", marginBottom: "16px", textAlign: "center" }}>
           <p style={{ fontSize: "0.75rem", color: "#a5b4fc" }}>🤖 Propulsé par <strong>OpenAI GPT-4o mini</strong></p>
         </div>
-        <div style={{ display: "flex", gap: "12px", marginBottom: "18px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "10px", marginBottom: "18px", flexWrap: "wrap" }}>
           {plans.map(p => (
-            <div key={p.name} onClick={() => setSelectedPlan(p.id)} style={{ flex: 1, minWidth: "160px", padding: "16px", background: p.popular ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.04)", border: `2px solid ${selectedPlan === p.id ? (p.popular ? "rgba(245,158,11,0.7)" : "rgba(26,158,110,0.6)") : (p.popular ? "rgba(245,158,11,0.3)" : "rgba(255,255,255,0.08)")}`, borderRadius: "16px", position: "relative", cursor: "pointer", transition: "all 0.2s" }}>
+            <div key={p.key} onClick={() => setSelectedPlan(p.key)} style={{ flex: 1, minWidth: "140px", padding: "14px", background: p.popular ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.04)", border: `2px solid ${selectedPlan === p.key ? (p.popular ? "rgba(245,158,11,0.7)" : "rgba(26,158,110,0.6)") : (p.popular ? "rgba(245,158,11,0.3)" : "rgba(255,255,255,0.08)")}`, borderRadius: "16px", position: "relative", cursor: "pointer", transition: "all 0.2s" }}>
               {p.popular && <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#f59e0b,#ef4444)", padding: "2px 12px", borderRadius: "20px", fontSize: "0.6rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>⭐ POPULAIRE</div>}
-              <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#a8edcf", marginBottom: "4px" }}>{p.name}</div>
-              <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#f59e0b" }}>{p.price}</div>
-              <div style={{ fontSize: "0.65rem", color: "#4a7a6a", marginBottom: "10px" }}>{p.period}</div>
-              {p.features.map(f => <div key={f} style={{ fontSize: "0.7rem", color: "#8ab8b0", marginBottom: "3px" }}>✓ {f}</div>)}
+              {p.savings && <div style={{ position: "absolute", top: -10, right: "10px", background: "#10b981", padding: "2px 8px", borderRadius: "20px", fontSize: "0.58rem", fontWeight: 700, color: "#fff" }}>-{p.savings}</div>}
+              <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#a8edcf", marginBottom: "4px" }}>{p.name}</div>
+              <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#f59e0b" }}>{formatPrice(p)}</div>
+              <div style={{ fontSize: "0.63rem", color: "#4a7a6a", marginBottom: "10px" }}>{formatPeriod(p)}</div>
+              {p.features.map(f => <div key={f} style={{ fontSize: "0.67rem", color: "#8ab8b0", marginBottom: "3px" }}>{f}</div>)}
             </div>
           ))}
         </div>
-        {STRIPE_MONTHLY_URL || STRIPE_ANNUAL_URL ? (
+        {plan?.url ? (
           <button onClick={handlePay} style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
-            💳 Payer avec Stripe · {plan.price}
+            💳 Payer avec Stripe · {formatPrice(plan)}
           </button>
         ) : (
           <button onClick={handlePay} style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)" }}>
@@ -1183,10 +1203,14 @@ function PremiumModal({ onClose, onActivate }) {
 function BookingModal({ spot, provider, onClose }) {
   const [date, setDate] = useState("");
   const [pax, setPax] = useState(1);
-  const [status, setStatus] = useState("idle"); // idle | loading | success | error
+  const [status, setStatus] = useState("idle");
   const [errMsg, setErrMsg] = useState("");
+  const [pointsEarned, setPointsEarned] = useState(0);
   const price = calcBookingPrice(provider, pax);
   const hasStripe = !!import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+  const dp = new DynamicPricing();
+  const dynPrice = date && price ? dp.calculate(price.total, date) : null;
+  const finalTotal = dynPrice ? dynPrice.final : price?.total;
 
   const confirm = async () => {
     if (!date) return;
@@ -1196,15 +1220,18 @@ function BookingModal({ spot, provider, onClose }) {
       if (hasStripe && price) {
         await stripeManager.processPayment({
           id: Date.now(),
-          totalPrice: price.total,
+          totalPrice: finalTotal || price.total,
           currency: price.currency === "€" ? "eur" : (price.currency || "eur").toLowerCase(),
           partnerId: provider?.id || "",
           routeId: String(spot.id),
           spotName: spot.name,
         });
       }
+      const pts = LoyaltyProgram.earnPoints(finalTotal || 0);
+      LoyaltyProgram.addPoints(pts);
+      setPointsEarned(pts);
       setStatus("success");
-      setTimeout(() => onClose(), 3500);
+      setTimeout(() => onClose(), 4000);
     } catch (e) {
       if (e.message?.includes('redirect')) { setStatus("success"); return; }
       setErrMsg(e.message || "Erreur de paiement");
@@ -1214,12 +1241,18 @@ function BookingModal({ spot, provider, onClose }) {
 
   return (
     <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: `1px solid ${spot.color}40`, borderRadius: "24px", padding: "24px", maxWidth: "400px", width: "100%", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
+      <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: `1px solid ${spot.color}40`, borderRadius: "24px", padding: "24px", maxWidth: "420px", width: "100%", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
         {status === "success" ? (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
             <div style={{ fontSize: "3rem", marginBottom: "12px" }}>🎉</div>
             <h3 style={{ color: "#a8edcf", fontSize: "1.1rem", marginBottom: "6px" }}>{hasStripe && price ? "Paiement confirmé !" : "Demande envoyée !"}</h3>
-            <p style={{ color: "#5a8a78", fontSize: "0.82rem" }}>{hasStripe && price ? "Votre réservation est confirmée. Bonne aventure !" : "Un prestataire local vous contactera sous 24h."}</p>
+            <p style={{ color: "#5a8a78", fontSize: "0.82rem", marginBottom: "12px" }}>{hasStripe && price ? "Votre réservation est confirmée. Bonne aventure !" : "Un prestataire local vous contactera sous 24h."}</p>
+            {pointsEarned > 0 && (
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "20px" }}>
+                <span style={{ fontSize: "0.85rem" }}>⭐</span>
+                <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#fbbf24" }}>+{pointsEarned} points fidélité gagnés !</span>
+              </div>
+            )}
           </div>
         ) : (
           <>
@@ -1229,6 +1262,9 @@ function BookingModal({ spot, provider, onClose }) {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div><label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "5px", fontWeight: 500 }}>Date souhaitée</label><input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ width: "100%", padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.25)", borderRadius: "12px", color: "#e8f4f0", fontSize: "0.84rem", outline: "none" }} /></div>
+              {dynPrice?.badge && (
+                <div style={{ padding: "6px 12px", background: `${dynPrice.badge.color}18`, border: `1px solid ${dynPrice.badge.color}40`, borderRadius: "10px", fontSize: "0.72rem", fontWeight: 700, color: dynPrice.badge.color, textAlign: "center" }}>{dynPrice.badge.label}</div>
+              )}
               <div><label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "5px", fontWeight: 500 }}>Personnes</label>
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
                   <button onClick={() => setPax(p => Math.max(1, p - 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "#a8edcf", fontSize: "1.1rem" }}>−</button>
@@ -1239,15 +1275,18 @@ function BookingModal({ spot, provider, onClose }) {
               {price && (
                 <div style={{ padding: "10px 14px", background: "rgba(26,158,110,0.08)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "12px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#6a9a8c", marginBottom: "4px" }}>
-                    <span>{price.unit}{price.currency} × {pax} pers.</span>
-                    <span style={{ fontWeight: 700, color: "#a8edcf", fontSize: "0.9rem" }}>{price.total}{price.currency}</span>
+                    <span>{price.unit}{price.currency} × {pax} pers.{dynPrice && dynPrice.final !== price.total ? <span style={{ color: "#9ca3af", textDecoration: "line-through", marginLeft: "6px" }}>{price.total}{price.currency}</span> : null}</span>
+                    <span style={{ fontWeight: 700, color: "#a8edcf", fontSize: "0.95rem" }}>{finalTotal}{price.currency}</span>
                   </div>
-                  <div style={{ fontSize: "0.62rem", color: "#4a7a6a" }}>Commission FleuVibe 18% incluse · Paiement sécurisé</div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.62rem", color: "#4a7a6a" }}>
+                    <span>Commission 18% incluse · Paiement sécurisé</span>
+                    <span style={{ color: "#f59e0b" }}>⭐ +{LoyaltyProgram.earnPoints(finalTotal || 0)} pts</span>
+                  </div>
                 </div>
               )}
               {status === "error" && <div style={{ padding: "8px 12px", background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.3)", borderRadius: "10px", color: "#f87171", fontSize: "0.72rem" }}>⚠️ {errMsg}</div>}
               <button onClick={confirm} disabled={status === "loading"} style={{ padding: "12px", background: `linear-gradient(135deg,${spot.color},#0891b2)`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", opacity: status === "loading" ? 0.7 : 1 }}>
-                {status === "loading" ? "⏳ Traitement..." : hasStripe && price ? `💳 Payer ${price.total}${price.currency}` : "✅ Envoyer ma demande"}
+                {status === "loading" ? "⏳ Traitement..." : hasStripe && price ? `💳 Payer ${finalTotal}${price.currency}` : "✅ Envoyer ma demande"}
               </button>
             </div>
           </>
@@ -1453,7 +1492,8 @@ export default function FleuVibe() {
   };
 
   const copyAffiliateLink = () => {
-    const link = `https://fleuvibe-8am5.vercel.app/?ref=${userName.replace(/\s/g,"_")}`;
+    const userId = session?.user?.id || userName.replace(/\s/g, "_");
+    const link = AffiliateProgram.generateLink(userId);
     navigator.clipboard.writeText(link).then(() => { setAffiliateCopied(true); setTimeout(() => setAffiliateCopied(false), 2500); });
   };
 
@@ -1730,9 +1770,13 @@ export default function FleuVibe() {
                 <p style={{ marginTop: "14px", color: "#5a8a78", marginBottom: "14px" }}>Aucun spot trouvé.</p>
                 <button onClick={() => setShowSubmit(true)} style={{ padding: "9px 20px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.8rem" }}>➕ Ajouter le premier</button>
               </div>
-            ) : filtered.map(s => (
-              <SpotCard key={s.id} spot={s} isFav={favorites.includes(s.id)} onFav={toggleFav} onBook={setBookingSpot} session={session} userName={userName} isPremium={isPremium} onShowPremium={() => setShowPremium(true)} allSpots={spots} />
-            ))}
+            ) : filtered.flatMap((s, i) => {
+              const card = <SpotCard key={s.id} spot={s} isFav={favorites.includes(s.id)} onFav={toggleFav} onBook={setBookingSpot} session={session} userName={userName} isPremium={isPremium} onShowPremium={() => setShowPremium(true)} allSpots={spots} />;
+              if (!isPremium && (i + 1) % 5 === 0 && i < filtered.length - 1) {
+                return [card, <NativeAd key={`ad_${i}`} activities={s.activities || []} type={s.type || ''} />];
+              }
+              return [card];
+            })}
           </div>
         )}
 
@@ -1957,7 +2001,7 @@ export default function FleuVibe() {
             <div style={{ marginBottom: "14px" }}>
               <label style={{ display: "block", fontSize: "0.7rem", color: "#6a9a8c", marginBottom: "6px", fontWeight: 500 }}>Ton lien unique</label>
               <div style={{ display: "flex", gap: "6px" }}>
-                <input readOnly value={`https://fleuvibe-8am5.vercel.app/?ref=${userName.replace(/\s/g,"_")}`} style={{ flex: 1, padding: "10px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "12px", color: "#8ab8b0", fontSize: "0.72rem", outline: "none" }} />
+                <input readOnly value={AffiliateProgram.generateLink(session?.user?.id || userName.replace(/\s/g,"_"))} style={{ flex: 1, padding: "10px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "12px", color: "#8ab8b0", fontSize: "0.72rem", outline: "none" }} />
                 <button onClick={copyAffiliateLink} style={{ padding: "10px 14px", background: affiliateCopied ? "rgba(26,158,110,0.3)" : "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "12px", color: "#fff", fontWeight: 600, fontSize: "0.72rem", cursor: "pointer", whiteSpace: "nowrap" }}>
                   {affiliateCopied ? "✅ Copié !" : "📋 Copier"}
                 </button>
