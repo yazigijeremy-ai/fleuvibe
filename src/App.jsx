@@ -1027,12 +1027,12 @@ function TranslateButton({ text, onTranslated }) {
 }
 
 const WATER_QUERIES = {
-  RIVER: ['kayaking,rapids', 'rafting,river', 'canoe,river', 'kayak,whitewater', 'paddling,river', 'kayaking,river', 'canoeing'],
-  LAKE: ['kayaking,lake', 'paddleboard,lake', 'sup,lake', 'canoe,lake', 'kayak,water', 'paddleboarding'],
-  SEA: ['surfing,wave', 'kayak,ocean', 'scuba,diving', 'sup,ocean', 'surfing,sea', 'kitesurfing', 'windsurfing'],
+  RIVER: ['river,landscape', 'river,mountains', 'waterfall,river', 'river,nature', 'rapids,river,landscape', 'river,forest', 'canyon,river'],
+  LAKE: ['lake,mountains', 'lake,reflection', 'alpine,lake', 'lake,landscape', 'lake,nature', 'mountain,lake'],
+  SEA: ['ocean,waves', 'sea,coast,landscape', 'ocean,horizon', 'sea,cliffs', 'ocean,landscape', 'waves,coast', 'sea,sunset'],
 };
 
-function getSpotPhoto(spot, w = 800, h = 320) {
+function getSpotPhoto(spot, w = 800, h = 240) {
   const queries = WATER_QUERIES[spot.type] || WATER_QUERIES.RIVER;
   const query = queries[spot.id % queries.length];
   return `https://loremflickr.com/${w}/${h}/${query}/all?lock=${spot.id}`;
@@ -1071,7 +1071,7 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
       onClick={() => setOpen(o => !o)}>
 
       {/* ── PHOTO HEADER ── */}
-      <div style={{ position: "relative", height: "200px", overflow: "hidden", borderRadius: "24px 24px 0 0" }}>
+      <div style={{ position: "relative", height: "120px", overflow: "hidden", borderRadius: "24px 24px 0 0" }}>
         {!imgLoaded && !imgError && (
           <div className="img-skeleton" style={{ position: "absolute", inset: 0 }} />
         )}
@@ -1724,7 +1724,7 @@ export default function FleuVibe() {
         {/* HERO / STATS */}
         {!session ? (
           <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ position: "relative", borderRadius: "28px", overflow: "hidden", marginBottom: "24px", minHeight: "320px" }}>
-            <img src="https://loremflickr.com/1400/560/kayaking,rapids/all?lock=99" alt="hero" loading="eager"
+            <img src="https://loremflickr.com/1400/560/river,landscape/all?lock=99" alt="hero" loading="eager"
               style={{ width: "100%", height: "320px", objectFit: "cover", display: "block", animation: "slowZoom 20s ease-in-out infinite", transformOrigin: "center center" }} />
             <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(5,15,30,0.65) 0%, rgba(8,40,30,0.75) 100%)" }} />
             <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", textAlign: "center" }}>
