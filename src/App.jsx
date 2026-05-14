@@ -1028,30 +1028,30 @@ function TranslateButton({ text, onTranslated }) {
 
 const WATER_PHOTOS = {
   RIVER: [
-    'photo-1558618666-fcd25c85cd64', // kayak rapides
     'photo-1544551763-46a013bb70d5', // rafting eaux vives
-    'photo-1506905925346-21bda4d32df4', // rivière montagne
+    'photo-1558618666-fcd25c85cd64', // kayak rapides
     'photo-1571019613454-1cb2f99b2d8b', // canoë rivière forêt
-    'photo-1580541631950-7282082b53ce', // kayak calme
-    'photo-1604537529428-15bcbeecfe4d', // rivière canyon
+    'photo-1504280390367-361c6d9f38f4', // kayak sport action
     'photo-1519904981063-b0cf448d479e', // pagaie rivière
+    'photo-1473773386757-42bbe9b4e670', // kayak canyon
+    'photo-1530053969600-caed2596d242', // pagayeurs lac/rivière
   ],
   LAKE: [
-    'photo-1501854140801-50d01698950b', // lac montagne aérien
-    'photo-1439853949212-36089e5e9f58', // lac reflets montagne
+    'photo-1530053969600-caed2596d242', // SUP lac calme
+    'photo-1504280390367-361c6d9f38f4', // kayak lac montagne
     'photo-1464822759023-fed622ff2c3b', // lac lever soleil
-    'photo-1530053969600-caed2596d242', // SUP lac
-    'photo-1600566753190-17f0baa2a6c3', // kayak lac calme
-    'photo-1534187886935-1e1236e856c3', // lac cristallin
+    'photo-1501854140801-50d01698950b', // lac montagne aérien
+    'photo-1571019613454-1cb2f99b2d8b', // canoë forêt lac
+    'photo-1544551763-46a013bb70d5', // pagayeurs lac
   ],
   SEA: [
-    'photo-1505118380757-91f5f5632de0', // vagues océan
-    'photo-1507525428034-b723cf961d3e', // plage tropicale
-    'photo-1505459668311-8dfac7952bf0', // surf vague
-    'photo-1519451241324-20b4ea2c4220', // falaise côte mer
-    'photo-1484821582734-6c6a0a82e7e2', // kayak mer
-    'photo-1559827260-dc66d52bef19', // plongée récif
+    'photo-1505459668311-8dfac7952bf0', // surf vague océan
+    'photo-1484821582734-6c6a0a82e7e2', // kayak mer côte
+    'photo-1559827260-dc66d52bef19', // plongée récif corail
     'photo-1566224595-d41e4a7fb6aa', // stand up paddle mer
+    'photo-1473773386757-42bbe9b4e670', // voile côte
+    'photo-1505118380757-91f5f5632de0', // surf vagues puissantes
+    'photo-1558618666-fcd25c85cd64', // kayak mer action
   ],
 };
 
@@ -1211,13 +1211,13 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
 function NativeAd({ activities, type }) {
   const ad = getRelevantAd(activities, type);
   return (
-    <div style={{ padding: "14px 16px", background: `linear-gradient(135deg,${ad.color}18,${ad.color}08)`, border: `1px solid ${ad.color}30`, borderRadius: "16px", display: "flex", alignItems: "center", gap: "12px", cursor: "pointer" }} onClick={() => trackEvent('ad_click', { adId: ad.id })}>
-      <div style={{ flex: 1 }}>
+    <div style={{ padding: "10px 14px 10px 14px", background: `linear-gradient(135deg,${ad.color}18,${ad.color}08)`, border: `1px solid ${ad.color}30`, borderRadius: "16px", display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", position: "relative" }} onClick={() => trackEvent('ad_click', { adId: ad.id })}>
+      <div style={{ position: "absolute", top: "4px", right: "8px", fontSize: "0.5rem", color: "#3a5a50", letterSpacing: "0.5px" }}>Sponsorisé</div>
+      <div style={{ flex: 1, paddingTop: "8px" }}>
         <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#daf0e8", marginBottom: "2px" }}>{ad.label}</div>
         <div style={{ fontSize: "0.68rem", color: "#5a8a78" }}>{ad.sub}</div>
       </div>
-      <div style={{ padding: "6px 12px", background: ad.color, borderRadius: "20px", fontSize: "0.68rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>{ad.cta}</div>
-      <div style={{ fontSize: "0.55rem", color: "#3a5a50", position: "absolute", bottom: "4px", right: "8px" }}>Sponsorisé</div>
+      <div style={{ padding: "6px 12px", background: ad.color, borderRadius: "20px", fontSize: "0.68rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap", flexShrink: 0 }}>{ad.cta}</div>
     </div>
   );
 }
@@ -1815,7 +1815,7 @@ export default function FleuVibe() {
 
         {/* NAV */}
         <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.06s", display: "flex", gap: "4px", marginBottom: "16px", background: "rgba(255,255,255,0.03)", padding: "5px", borderRadius: "50px", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.05)" }}>
-          {[["explore", "🗺️", "Explorer"], ["map", "🌍", "Carte"], ["hidden", "💎", "Pépites"], ["weather", "🌤️", "Météo"], ["favorites", "❤️", favorites.length > 0 ? `Favoris (${favorites.length})` : "Favoris"]].map(([id, icon, label]) => (
+          {[["explore", "🗺️", "Explorer"], ["map", "🌍", "Carte"], ["hidden", "💎", "Pépites"], ["weather", "🌤️", "Météo"], ["favorites", "❤️", favorites.length > 0 ? `Favoris (${favorites.length})` : "Favoris"], ["tourism", "🤝", "Partenaires"]].map(([id, icon, label]) => (
             <button key={id} onClick={() => handlePageChange(id)} className="ripple-btn" style={{ flex: 1, padding: "9px 10px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: page === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: page === id ? "#fff" : "#6a9a8c", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px", whiteSpace: "nowrap" }}>
               <span>{icon}</span><span>{label}</span>
               {page === id && <span style={{ width: 5, height: 5, background: "rgba(255,255,255,0.8)", borderRadius: "50%", flexShrink: 0 }} />}
@@ -1840,7 +1840,7 @@ export default function FleuVibe() {
             <div style={{ position: "relative", marginBottom: "14px" }}>
               <input type="text" value={search} onChange={e => { setSearch(e.target.value); if (aiSearchActive) clearAISearch(); }}
                 onKeyDown={e => e.key === "Enter" && handleAISearch()}
-                placeholder={page === "expeditions" ? "🔍  Filtrer les expéditions..." : '🔍  Recherche classique  ou  🤖 "kayak facile en Belgique"'}
+                placeholder={page === "expeditions" ? "🔍  Filtrer les expéditions..." : '🔍  Spot, activité, pays...  ou  🤖 "surf débutant Bali"'}
                 style={{ width: "100%", padding: "13px 18px", paddingRight: "130px", background: "rgba(255,255,255,0.05)", border: `1px solid ${aiSearchActive ? "rgba(99,102,241,0.5)" : "rgba(255,255,255,0.08)"}`, borderRadius: "50px", color: "#e8f4f0", fontSize: "0.84rem" }} />
               <div style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", display: "flex", gap: "4px" }}>
                 {aiSearchActive && <button onClick={clearAISearch} style={{ padding: "5px 10px", background: "rgba(220,38,38,0.2)", border: "none", borderRadius: "20px", color: "#f87171", fontSize: "0.65rem", fontWeight: 600 }}>✕ Reset</button>}
@@ -1991,8 +1991,8 @@ export default function FleuVibe() {
         {page === "tourism" && (
           <div>
             <div style={{ textAlign: "center", marginBottom: "18px" }}>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a8edcf", marginBottom: "5px" }}>⭐ Destinations Partenaires</h2>
-              <p style={{ color: "#4a7a6a", fontSize: "0.8rem" }}>Régions officielles partenaires de FleuVibe</p>
+              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a8edcf", marginBottom: "5px" }}>🤝 Destinations Nautiques Partenaires</h2>
+              <p style={{ color: "#4a7a6a", fontSize: "0.8rem" }}>Régions & clubs officiellement partenaires de FleuVibe</p>
             </div>
             {SPONSORED.map(r => (
               <div key={r.id} style={{ marginBottom: "12px", background: `linear-gradient(135deg,${r.color}07,rgba(255,255,255,0.02))`, border: `1px solid ${r.color}26`, borderRadius: "18px", overflow: "hidden" }}>
@@ -2018,8 +2018,8 @@ export default function FleuVibe() {
             ))}
             <div style={{ padding: "22px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "24px", textAlign: "center" }}>
               <div style={{ fontSize: "1.8rem", marginBottom: "8px" }}>🌍</div>
-              <h3 style={{ fontSize: "0.97rem", fontWeight: 700, color: "#a8edcf", marginBottom: "6px" }}>Vous êtes un office du tourisme ?</h3>
-              <p style={{ color: "#4a7a6a", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: "12px" }}>Mettez votre région en avant auprès de passionnés nautiques.</p>
+              <h3 style={{ fontSize: "0.97rem", fontWeight: 700, color: "#a8edcf", marginBottom: "6px" }}>Vous gérez un site ou club nautique ?</h3>
+              <p style={{ color: "#4a7a6a", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: "12px" }}>Mettez vos spots en avant auprès de milliers de passionnés de sports aquatiques.</p>
               <button style={{ padding: "9px 22px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.82rem" }}>📩 Nous contacter</button>
             </div>
           </div>

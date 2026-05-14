@@ -138,7 +138,8 @@ export class AffiliateProgram {
 
   static generateLink(userId, campaign = 'share') {
     const code = btoa(`${userId}:${campaign}:${Date.now()}`).replace(/=/g, '');
-    return `https://fleuvibe-8am5.vercel.app?ref=${code}`;
+    const base = typeof window !== 'undefined' ? window.location.origin : 'https://fleuvibe-8am5.vercel.app';
+    return `${base}?ref=${code}`;
   }
 
   static getTier(referralCount = 0) {
