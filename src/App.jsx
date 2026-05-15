@@ -5,6 +5,7 @@ import { GLOBAL_SPOTS_FLAT } from "./spots";
 import { stripeManager, calcBookingPrice } from "./stripe";
 import { partnershipManager, PARTNERSHIP_TIERS } from "./partnership";
 import { PREMIUM_PLANS as PLANS_V9, DynamicPricing, LoyaltyProgram, AffiliateProgram, getRelevantAd } from "./monetization";
+import SpotImage from "./components/SpotImage";
 
 const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
@@ -1046,100 +1047,75 @@ function getGalleryPhotos(spot) {
 function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, onShowPremium, allSpots }) {
   const [open, setOpen] = useState(false);
   const [desc, setDesc] = useState(spot.description);
-  const [imgError, setImgError] = useState(false);
-  const [imgLoaded, setImgLoaded] = useState(false);
   const [lightboxIdx, setLightboxIdx] = useState(null);
-  const typeColor = { RIVER: "#2563eb", LAKE: "#0891b2", SEA: "#7c3aed" }[spot.type] || "#1a9e6e";
   const typeIcon = { RIVER: "🏞️", LAKE: "🏔️", SEA: "🌊" }[spot.type] || "🌊";
   const typeName = { RIVER: "Rivière", LAKE: "Lac", SEA: "Mer" }[spot.type] || "";
   const provider = ALL_PROVIDERS.find(p => p.routeIds?.includes(spot.id));
-  const imgUrl = getSpotPhoto(spot);
   const gallery = getGalleryPhotos(spot);
+  const fallbackUrl = getSpotPhoto(spot);
+  const diffClass = { Facile: "debutant", Intermédiaire: "intermediaire", Sportif: "expert" }[spot.difficulty] || "debutant";
+  const reviewCount = Math.floor(spot.id * 3.7 + 12);
 
   return (
-    <div style={{
-      marginBottom: "16px", borderRadius: "20px", overflow: "hidden", position: "relative",
-      border: `1px solid ${open ? spot.color + "40" : "#e8f0ed"}`,
-      background: "#fff",
-      transition: "transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s",
-      cursor: "pointer",
-    }}
-      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.1)"; e.currentTarget.style.borderColor = "rgba(26,158,110,0.3)"; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; e.currentTarget.style.borderColor = open ? spot.color + "40" : "#e8f0ed"; }}
-      onClick={() => setOpen(o => !o)}>
+    <div className="fv-spot-card" style={{ marginBottom: "16px" }} onClick={() => setOpen(o => !o)}>
 
-      {/* ── PHOTO HEADER 160px ── */}
-      <div style={{ height: "160px", overflow: "hidden", position: "relative" }}>
-        {!imgLoaded && !imgError && <div className="img-skeleton" style={{ position: "absolute", inset: 0 }} />}
-        {!imgError ? (
-          <img src={imgUrl} alt={spot.name} loading="lazy"
-            onLoad={() => setImgLoaded(true)}
-            onError={() => { setImgError(true); setImgLoaded(true); }}
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", opacity: imgLoaded ? 1 : 0, transition: "transform 0.5s ease, opacity 0.4s ease" }}
-            onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
-            onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"} />
-        ) : (
-          <div style={{ width: "100%", height: "100%", background: `linear-gradient(135deg,${spot.color}40,${typeColor}25)`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "4rem" }}>{spot.emoji}</div>
-        )}
+      {/* ── IMAGE 220px ── */}
+      <div className="card-img-wrap">
+        <SpotImage spot={spot} fallbackUrl={fallbackUrl} />
         {/* gradient overlay */}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 60%)" }} />
-        {/* top badges */}
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)", pointerEvents: "none", zIndex: 2 }} />
+        {/* type badge top-left */}
+        <div style={{ position: "absolute", top: 12, left: 12, padding: "4px 10px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)", borderRadius: "20px", fontSize: "0.65rem", fontWeight: 600, color: "#fff", zIndex: 3 }}>{typeIcon} {typeName}</div>
+        {/* sponsored */}
+        {spot.sponsored && <div style={{ position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)", padding: "3px 10px", background: "rgba(245,158,11,0.9)", borderRadius: "20px", fontSize: "0.6rem", fontWeight: 700, color: "#fff", zIndex: 3, whiteSpace: "nowrap" }}>⭐ PARTENAIRE</div>}
+        {/* fav button top-right */}
+        <button className="fv-btn-fav" onClick={e => { e.stopPropagation(); onFav(spot.id); }}>{isFav ? "❤️" : "🤍"}</button>
+        {/* difficulty badge bottom-left */}
+        <span className={`fv-badge-level ${diffClass}`}>{spot.difficulty}</span>
+      </div>
+
+      {/* ── BODY ── */}
+      <div className="card-body">
+        <div className="card-region">{COUNTRIES[spot.country]?.flag} {COUNTRIES[spot.country]?.name} · {spot.region}</div>
+        <h3 className="card-title">{spot.name}</h3>
         {spot.rating && (
-          <div style={{ position: "absolute", top: 12, right: 12, padding: "4px 10px", background: "rgba(0,0,0,0.6)", backdropFilter: "blur(5px)", borderRadius: "20px", fontSize: "0.68rem", fontWeight: 600, color: "#fff" }}>⭐ {spot.rating.toFixed(1)}</div>
+          <div className="card-rating">
+            <span className="star">★</span>
+            <span style={{ fontWeight: 600, color: "#374151" }}>{spot.rating.toFixed(1)}</span>
+            <span>({reviewCount} avis)</span>
+          </div>
         )}
-        {spot.sponsored && (
-          <div style={{ position: "absolute", top: 12, left: 12, padding: "3px 10px", background: "rgba(245,158,11,0.9)", borderRadius: "20px", fontSize: "0.6rem", fontWeight: 700, color: "#fff" }}>⭐ PARTENAIRE</div>
-        )}
-        {/* bottom overlay: difficulty + fav */}
-        <div style={{ position: "absolute", bottom: 12, left: 14, right: 14, display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-          <span style={{ padding: "3px 10px", background: `${DIFF_COLOR[spot.difficulty] || "#1a9e6e"}cc`, borderRadius: "20px", fontSize: "0.62rem", fontWeight: 700, color: "#fff" }}>{spot.difficulty}</span>
-          <button onClick={e => { e.stopPropagation(); onFav(spot.id); }}
-            style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 34, height: 34, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", backdropFilter: "blur(6px)", cursor: "pointer" }}>
-            {isFav ? "❤️" : "🤍"}
-          </button>
+        <div className="card-meta">
+          <span>📏 {spot.distance}</span>
+          <span>⏱ {spot.duration}</span>
+          <span>{typeIcon} {typeName}</span>
+        </div>
+        <div className="card-tags">
+          {spot.activities.slice(0, 3).map(a => <span key={a} className="card-tag">{a}</span>)}
+          {spot.camping && <span className="card-tag">⛺ Camping</span>}
         </div>
       </div>
 
-      {/* ── CONTENT ── */}
-      <div style={{ padding: "16px" }}>
-        <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#1a2e28", marginBottom: "4px", lineHeight: 1.3 }}>{spot.name}</h3>
-        <p style={{ fontSize: "0.72rem", color: "#7a9a8e", marginBottom: "10px", display: "flex", alignItems: "center", gap: "4px" }}>{COUNTRIES[spot.country]?.flag} {COUNTRIES[spot.country]?.name} · {spot.region}</p>
-
-        {/* Stats row */}
-        <div style={{ display: "flex", gap: "12px", marginBottom: "10px", paddingBottom: "10px", borderTop: "1px solid #f0f5f3", borderBottom: "1px solid #f0f5f3", paddingTop: "10px", fontSize: "0.7rem", color: "#8aa89e", flexWrap: "wrap" }}>
-          <span>📏 {spot.distance}</span>
-          <span>⏱️ {spot.duration}</span>
-          <span style={{ padding: "1px 7px", background: `${typeColor}12`, border: `1px solid ${typeColor}25`, borderRadius: "8px", color: typeColor, fontWeight: 600 }}>{typeIcon} {typeName}</span>
-          <WeatherWidget coords={spot.coords} spotName={spot.name} difficulty={spot.difficulty} small />
-        </div>
-
-        {/* Activities */}
-        <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "12px" }}>
-          {spot.activities.slice(0, 5).map(a => (
-            <span key={a} style={{ padding: "3px 8px", background: "#f5f8f7", borderRadius: "12px", fontSize: "0.62rem", color: "#4a6a5e" }}>{a}</span>
-          ))}
-          {spot.camping && <span style={{ padding: "3px 8px", background: "#f5f8f7", color: "#4a6a5e", borderRadius: "12px", fontSize: "0.62rem" }}>⛺ Camping</span>}
-        </div>
-
-        {/* Price + CTA */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px", borderTop: "1px solid #f0f5f3" }}>
+      {/* ── FOOTER ── */}
+      <div className="card-footer">
+        <div>
           {provider ? (
-            <div>
-              <span style={{ fontSize: "1.2rem", fontWeight: 700, color: "#1a9e6e" }}>{provider.price}{provider.currency}</span>
-              <span style={{ fontSize: "0.65rem", color: "#8aa89e", marginLeft: "3px" }}>/pers</span>
-            </div>
-          ) : <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "0.72rem", color: "#8aa89e" }}>★ {spot.rating?.toFixed(1)}</div>}
-          <button onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
-            style={{ padding: "8px 18px", background: open ? "#f5f8f7" : "linear-gradient(135deg,#1a9e6e,#0891b2)", border: open ? "1px solid #d0dfdc" : "none", borderRadius: "40px", color: open ? "#1a9e6e" : "#fff", fontWeight: 600, fontSize: "0.75rem", cursor: "pointer" }}>
-            {open ? "▲ Réduire" : "Voir détails"}
-          </button>
+            <>
+              <span className="card-price-label">à partir de</span>
+              <span className="card-price-val">{provider.price}<span className="card-price-unit"> {provider.currency}/pers</span></span>
+            </>
+          ) : (
+            <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{spot.rating ? `★ ${spot.rating.toFixed(1)}` : "Accès libre"}</span>
+          )}
         </div>
+        <button className="card-cta" onClick={e => { e.stopPropagation(); setOpen(o => !o); }}>
+          {open ? "▲ Réduire" : "Voir →"}
+        </button>
       </div>
 
       {/* ── EXPANDED DETAILS ── */}
       {open && (
-        <div style={{ borderTop: "1px solid #f0f5f3", padding: "16px", animation: "slideUp 0.3s ease" }}>
-          {/* Gallery */}
+        <div style={{ borderTop: "1px solid #f0f5f3", padding: "16px", animation: "slideUp 0.3s ease" }} onClick={e => e.stopPropagation()}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "6px", marginBottom: "14px" }}>
             {gallery.map((src, idx) => (
               <div key={idx} onClick={e => { e.stopPropagation(); setLightboxIdx(idx); }}
@@ -1161,7 +1137,7 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
           <ProviderComparator routeId={spot.id} onShowPortal={p => window._setPartnerPortal?.(p)} />
           <LegalWarning country={spot.country} />
           <button onClick={e => { e.stopPropagation(); onBook(spot); }}
-            style={{ width: "100%", marginTop: "14px", padding: "12px 18px", background: `linear-gradient(135deg,${spot.color},#0891b2)`, border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
+            style={{ width: "100%", marginTop: "14px", padding: "12px 18px", background: "linear-gradient(135deg,#0d6e8a,#0891b2)", border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
             🛶 Réserver ce spot
             {provider && <span style={{ background: "rgba(255,255,255,0.2)", borderRadius: "20px", padding: "3px 12px", fontSize: "0.75rem" }}>{provider.price}{provider.currency}/pers.</span>}
           </button>
@@ -1788,6 +1764,35 @@ export default function FleuVibe() {
         @keyframes slowZoom{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
         @keyframes skeletonPulse{0%,100%{opacity:0.4}50%{opacity:0.8}}
         .img-skeleton{background:linear-gradient(90deg,#e8f0ed 0%,#f5f8f7 50%,#e8f0ed 100%);background-size:200% 100%;animation:shimmer 1.5s ease-in-out infinite}
+        @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+        /* ── SPOT CARD REDESIGN ───────────────────────────────── */
+        .fv-spot-card{background:#ffffff;border-radius:16px;border:1px solid rgba(0,0,0,0.08);overflow:hidden;cursor:pointer;transition:transform 0.2s ease,box-shadow 0.2s ease;position:relative}
+        .fv-spot-card:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,0.12)}
+        .fv-spot-card .card-img-wrap{position:relative;width:100%;height:220px;overflow:hidden}
+        @media(max-width:768px){.fv-spot-card .card-img-wrap{height:200px}}
+        .fv-badge-level{position:absolute;bottom:12px;left:12px;font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;backdrop-filter:blur(6px);color:#fff;z-index:3}
+        .fv-badge-level.debutant{background:rgba(22,163,74,0.85)}
+        .fv-badge-level.intermediaire{background:rgba(202,138,4,0.85)}
+        .fv-badge-level.expert{background:rgba(185,28,28,0.85)}
+        .fv-btn-fav{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;color:#fff;font-size:15px;transition:background 0.2s}
+        .fv-btn-fav:hover{background:rgba(255,255,255,0.35)}
+        .fv-spot-card .card-body{padding:14px 16px 12px}
+        .fv-spot-card .card-region{font-size:11px;color:#9ca3af;font-weight:500;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:4px}
+        .fv-spot-card .card-title{font-family:'Fraunces',Georgia,serif;font-size:17px;font-weight:600;color:#111827;line-height:1.3;margin-bottom:8px}
+        .fv-spot-card .card-rating{display:flex;align-items:center;gap:4px;font-size:12px;color:#6b7280;margin-bottom:10px}
+        .fv-spot-card .card-rating .star{color:#f59e0b}
+        .fv-spot-card .card-meta{display:flex;gap:10px;font-size:12px;color:#6b7280;margin-bottom:10px;flex-wrap:wrap}
+        .fv-spot-card .card-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+        .fv-spot-card .card-tag{font-size:11px;padding:3px 8px;border-radius:6px;background:#f3f4f6;color:#6b7280;border:1px solid #e5e7eb}
+        .fv-spot-card .card-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #f3f4f6;padding:11px 16px 14px}
+        .fv-spot-card .card-price-label{font-size:10px;color:#9ca3af;display:block;line-height:1;margin-bottom:2px}
+        .fv-spot-card .card-price-val{font-size:20px;font-weight:700;color:#111827;line-height:1}
+        .fv-spot-card .card-price-unit{font-size:12px;font-weight:400;color:#9ca3af}
+        .fv-spot-card .card-cta{background:#0d6e8a;color:#fff;font-size:13px;font-weight:500;padding:8px 18px;border-radius:10px;border:none;cursor:pointer;transition:background 0.15s;font-family:'DM Sans',sans-serif}
+        .fv-spot-card .card-cta:hover{background:#0a5a72}
+        @keyframes fv-pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+        .fv-skeleton{background:#e5e7eb;animation:fv-pulse 1.5s ease-in-out infinite;width:100%;height:100%}
       `}</style>
 
       {/* subtle light bg accents */}
