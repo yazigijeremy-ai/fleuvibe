@@ -1029,28 +1029,28 @@ function TranslateButton({ text, onTranslated }) {
 // IDs Unsplash vérifiés — paysages d'eau sans personnes
 const WATER_PHOTOS = {
   RIVER: [
-    'photo-1544551763-46a013bb70d5', // kayak rivière
-    'photo-1501785888041-af3ef285b470', // paysage rivière montagne
-    'photo-1587923623987-c6c0c0f5f5c8', // gorges rivière
+    'mqtPLM4jBQA',                    // vue rivière depuis kayak (forêt)
+    '8R8QOIL2i5A',                    // rapides eau vive
     'photo-1506905925346-21bda4d32df4', // rivière alpine
-    'photo-1544551763-46a013bb70d5', // kayak rapides (repeat)
-    'photo-1501785888041-af3ef285b470', // eaux vives (repeat)
+    'mqtPLM4jBQA',
+    '8R8QOIL2i5A',
+    'photo-1506905925346-21bda4d32df4',
   ],
   LAKE: [
-    'photo-1506905925346-21bda4d32df4', // lac montagne
-    'photo-1501785888041-af3ef285b470', // lac alpin
-    'photo-1544551763-46a013bb70d5', // lac kayak
-    'photo-1506905925346-21bda4d32df4', // reflets lac
-    'photo-1501785888041-af3ef285b470', // lac forêt
-    'photo-1544551763-46a013bb70d5', // SUP lac (repeat)
+    'DlkF4-dbCOU',   // Moraine Lake Canada reflets
+    'ZYY2lNM-J1Y',   // montagnes reflets lac
+    'W3Ys641WCdQ',   // Islande lac reflets
+    'UHhYeKcI4Wo',   // lac montagne Oregon
+    'DlkF4-dbCOU',
+    'ZYY2lNM-J1Y',
   ],
   SEA: [
-    'photo-1520466809213-7b9a56adcd45', // côte mer falaises
-    'photo-1507525428034-b723cf961d3e', // plage tropicale
-    'photo-1520466809213-7b9a56adcd45', // kayak mer
-    'photo-1507525428034-b723cf961d3e', // océan bleu
-    'photo-1520466809213-7b9a56adcd45', // vagues côte
-    'photo-1507525428034-b723cf961d3e', // mer caraïbes
+    'cgj91Rb_3SM',                    // coucher soleil côte rocheuse vagues
+    'photo-1507525428034-b723cf961d3e', // plage
+    'photo-1520466809213-7b9a56adcd45', // côte mer
+    'cgj91Rb_3SM',
+    'photo-1507525428034-b723cf961d3e',
+    'photo-1520466809213-7b9a56adcd45',
   ],
 };
 
