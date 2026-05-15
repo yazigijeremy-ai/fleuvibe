@@ -1028,44 +1028,19 @@ function TranslateButton({ text, onTranslated }) {
 
 // IDs Unsplash vérifiés — paysages d'eau sans personnes
 const WATER_PHOTOS = {
-  RIVER: [
-    'photo-1544551763-46a013bb70d5', // kayak rivière
-    'photo-1501785888041-af3ef285b470', // paysage rivière montagne
-    'photo-1587923623987-c6c0c0f5f5c8', // gorges rivière
-    'photo-1506905925346-21bda4d32df4', // rivière alpine
-    'photo-1544551763-46a013bb70d5', // kayak rapides (repeat)
-    'photo-1501785888041-af3ef285b470', // eaux vives (repeat)
-  ],
-  LAKE: [
-    'photo-1506905925346-21bda4d32df4', // lac montagne
-    'photo-1501785888041-af3ef285b470', // lac alpin
-    'photo-1544551763-46a013bb70d5', // lac kayak
-    'photo-1506905925346-21bda4d32df4', // reflets lac
-    'photo-1501785888041-af3ef285b470', // lac forêt
-    'photo-1544551763-46a013bb70d5', // SUP lac (repeat)
-  ],
-  SEA: [
-    'photo-1520466809213-7b9a56adcd45', // côte mer falaises
-    'photo-1507525428034-b723cf961d3e', // plage tropicale
-    'photo-1520466809213-7b9a56adcd45', // kayak mer
-    'photo-1507525428034-b723cf961d3e', // océan bleu
-    'photo-1520466809213-7b9a56adcd45', // vagues côte
-    'photo-1507525428034-b723cf961d3e', // mer caraïbes
-  ],
+  RIVER: ['/images/canyon-river.jpg', '/images/rafting-adventure.jpg', '/images/hero-kayaking.jpg'],
+  LAKE:  ['/images/kayak-lake.jpg',   '/images/river-camping.jpg',     '/images/canyon-river.jpg'],
+  SEA:   ['/images/hero-kayaking.jpg','/images/kayak-lake.jpg',        '/images/rafting-adventure.jpg'],
 };
 
-function getSpotPhoto(spot, w = 800, h = 320) {
+function getSpotPhoto(spot) {
   const pool = WATER_PHOTOS[spot.type] || WATER_PHOTOS.RIVER;
-  const id = pool[spot.id % pool.length];
-  return `https://images.unsplash.com/${id}?w=${w}&h=${h}&fit=crop&auto=format&q=80`;
+  return pool[spot.id % pool.length];
 }
 
 function getGalleryPhotos(spot) {
   const pool = WATER_PHOTOS[spot.type] || WATER_PHOTOS.RIVER;
-  return [0, 1, 2].map(offset => {
-    const id = pool[(spot.id + offset) % pool.length];
-    return `https://images.unsplash.com/${id}?w=700&h=480&fit=crop&auto=format&q=80`;
-  });
+  return [0, 1, 2].map(offset => pool[(spot.id + offset) % pool.length]);
 }
 
 function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, onShowPremium, allSpots }) {
@@ -1078,7 +1053,7 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
   const typeIcon = { RIVER: "🏞️", LAKE: "🏔️", SEA: "🌊" }[spot.type] || "🌊";
   const typeName = { RIVER: "Rivière", LAKE: "Lac", SEA: "Mer" }[spot.type] || "";
   const provider = ALL_PROVIDERS.find(p => p.routeIds?.includes(spot.id));
-  const imgUrl = getSpotPhoto(spot, 800, 320);
+  const imgUrl = getSpotPhoto(spot);
   const gallery = getGalleryPhotos(spot);
 
   return (
@@ -1668,7 +1643,7 @@ export default function FleuVibe() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: darkMode ? currentTheme.bg : "linear-gradient(160deg,#f0f9f4,#e8f4f0)", fontFamily: "'Inter',sans-serif", color: darkMode ? "#e8f4f0" : "#1a2e28", transition: "background 0.5s" }}>
+    <div style={{ minHeight: "100vh", background: "#f5f8f7", fontFamily: "'Inter',sans-serif", color: "#1a2e28" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
@@ -1739,45 +1714,50 @@ export default function FleuVibe() {
         </div>
       </div>
 
-      <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px 40px", position: "relative", zIndex: 1 }}>
-
-        {/* HERO */}
-        {!session ? (
-          <div style={{ background: "linear-gradient(135deg,#e8f4f0 0%,#d0ece4 100%)", padding: "48px 24px 60px", marginBottom: "0" }}>
-            <div style={{ maxWidth: "1100px", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px", alignItems: "center" }}>
-              <div>
-                <h2 style={{ fontSize: "2.4rem", fontWeight: 800, color: "#1a2e28", lineHeight: 1.2, marginBottom: "16px" }}>
-                  Trouvez votre<br/><span style={{ color: "#1a9e6e" }}>spot nautique</span> idéal
-                </h2>
-                <p style={{ fontSize: "1rem", color: "#4a6a5e", marginBottom: "28px", lineHeight: 1.5 }}>
-                  Kayak, SUP, rafting ou voile — Découvrez {spots.length}+ expériences sur les plus beaux plans d'eau du monde.
-                </p>
-                <div style={{ background: "#fff", borderRadius: "60px", boxShadow: "0 8px 30px rgba(0,0,0,0.08)", padding: "6px", display: "flex", alignItems: "center", gap: "6px", marginBottom: "16px" }}>
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "10px", padding: "8px 16px", background: "#f5f8f7", borderRadius: "50px" }}>
-                    <span>🔍</span>
-                    <input type="text" value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAISearch()}
-                      placeholder='Destination, rivière, activité...'
-                      style={{ border: "none", background: "transparent", width: "100%", fontSize: "0.9rem", color: "#1a2e28", outline: "none" }} />
-                  </div>
-                  <button onClick={handleAISearch} style={{ padding: "12px 24px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "50px", color: "#fff", fontWeight: 700, fontSize: "0.82rem", whiteSpace: "nowrap" }}>
-                    {aiSearchLoading ? "⏳" : "🤖 Rechercher"}
-                  </button>
-                </div>
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                  <button onClick={() => setShowAuth(true)} style={{ padding: "11px 28px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 700, fontSize: "0.88rem" }}>
-                    Commencer gratuitement
-                  </button>
-                  <button onClick={() => handlePageChange("map")} style={{ padding: "11px 20px", background: "transparent", border: "1px solid #a8c8bc", borderRadius: "40px", color: "#1a9e6e", fontWeight: 600, fontSize: "0.88rem" }}>
-                    🗺️ Carte
-                  </button>
-                </div>
+      {/* ── HERO PLEIN ÉCRAN ── */}
+      {!session && (
+        <div style={{ position: "relative", minHeight: "88vh", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+          <img src="/images/hero-kayaking.jpg" alt="Kayak" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(5,15,30,0.5) 0%, rgba(3,10,20,0.75) 100%)" }} />
+          <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "40px 24px", maxWidth: "820px", width: "100%" }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 18px", background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "40px", marginBottom: "28px", fontSize: "0.78rem", color: "rgba(255,255,255,0.92)", fontWeight: 600 }}>
+              <span style={{ width: 7, height: 7, background: "#4ade80", borderRadius: "50%", display: "inline-block" }} />
+              Saison 2026 — {spots.length}+ spots disponibles
+            </div>
+            <h2 style={{ fontSize: "clamp(2.6rem,7vw,5rem)", fontWeight: 900, color: "#fff", lineHeight: 1.1, marginBottom: "20px", letterSpacing: "-1.5px" }}>
+              Découvrez le<br />
+              <span style={{ background: "linear-gradient(90deg,#fff 0%,#4ade80 50%,#38bdf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Sauvage en Vous</span>
+            </h2>
+            <p style={{ color: "rgba(255,255,255,0.72)", fontSize: "1.1rem", marginBottom: "36px", maxWidth: "520px", margin: "0 auto 36px", lineHeight: 1.6 }}>
+              Kayak, SUP, rafting, voile — des expériences inoubliables sur les plus beaux plans d'eau du monde.
+            </p>
+            <div style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(20px)", borderRadius: "18px", padding: "8px", boxShadow: "0 30px 60px rgba(0,0,0,0.35)", display: "flex", gap: "6px", maxWidth: "640px", margin: "0 auto 20px" }}>
+              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px" }}>
+                <span style={{ fontSize: "1.1rem" }}>📍</span>
+                <input type="text" value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAISearch()}
+                  placeholder="Destination, rivière, activité..."
+                  style={{ border: "none", background: "transparent", width: "100%", fontSize: "0.95rem", color: "#1a2e28", outline: "none" }} />
               </div>
-              <div style={{ borderRadius: "24px", overflow: "hidden", boxShadow: "0 20px 40px rgba(0,0,0,0.12)" }}>
-                <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&h=400&fit=crop&auto=format&q=85" alt="kayak" style={{ width: "100%", height: "320px", objectFit: "cover", display: "block" }} />
-              </div>
+              <button onClick={handleAISearch} style={{ padding: "13px 28px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "12px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", whiteSpace: "nowrap", flexShrink: 0 }}>
+                {aiSearchLoading ? "⏳" : "🤖 Rechercher"}
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+              <button onClick={() => setShowAuth(true)} style={{ padding: "12px 32px", background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "40px", color: "#fff", fontWeight: 600, fontSize: "0.9rem" }}>
+                Commencer gratuitement
+              </button>
+              <button onClick={() => handlePageChange("map")} style={{ padding: "12px 24px", background: "transparent", border: "1px solid rgba(255,255,255,0.25)", borderRadius: "40px", color: "rgba(255,255,255,0.8)", fontWeight: 500, fontSize: "0.9rem" }}>
+                🗺️ Voir la carte
+              </button>
             </div>
           </div>
-        ) : (
+        </div>
+      )}
+
+      <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px 40px", position: "relative", zIndex: 1 }}>
+
+        {/* Logged-in stats row */}
+        {session && (
           <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "16px", marginBottom: "8px", flexWrap: "wrap" }}>
             <LevelBadge xp={userXP} />
             {earnedBadges.slice(0, 4).map(b => (
@@ -1804,7 +1784,7 @@ export default function FleuVibe() {
                   onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.1)"; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; }}>
                   <div style={{ position: "relative", height: "160px", overflow: "hidden" }}>
-                    <img src={getSpotPhoto(s, 400, 280)} alt={s.name} loading="lazy"
+                    <img src={getSpotPhoto(s)} alt={s.name} loading="lazy"
                       style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease" }}
                       onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
                       onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"} />
@@ -2050,27 +2030,40 @@ export default function FleuVibe() {
       </div>
 
       {/* FOOTER */}
-      <footer style={{ background: "#f5f8f7", padding: "48px 32px 24px", marginTop: "40px" }}>
-        <div style={{ maxWidth: "1280px", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "36px", marginBottom: "32px" }}>
-          <div>
-            <h4 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1a2e28", marginBottom: "14px" }}>🌊 FleuVibe</h4>
-            {["À propos", "Blog", "Carrières", "Presse"].map(l => <p key={l} style={{ fontSize: "0.78rem", color: "#5a7a6e", marginBottom: "8px", cursor: "pointer" }}>{l}</p>)}
+      <footer style={{ background: "#111827", padding: "64px 32px 32px", marginTop: "60px" }}>
+        <div style={{ maxWidth: "1280px", margin: "0 auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "40px", marginBottom: "48px", paddingBottom: "40px", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "16px" }}>
+                <span style={{ fontSize: "1.4rem" }}>🌊</span>
+                <span style={{ fontWeight: 700, color: "#fff", fontSize: "1.1rem" }}>FleuVibe</span>
+              </div>
+              <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.82rem", lineHeight: 1.7, marginBottom: "20px" }}>Connectez les aventuriers aux plus beaux plans d'eau du monde depuis 2024.</p>
+              <div style={{ display: "flex", gap: "10px" }}>
+                {["📸", "👍", "▶️", "🎵"].map((icon, i) => (
+                  <div key={i} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", cursor: "pointer" }}>{icon}</div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 style={{ fontSize: "0.82rem", fontWeight: 700, color: "#fff", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "1px" }}>Expériences</h4>
+              {["Kayak & Canoë", "Rafting", "SUP & Voile", "Camping rivière", "Expéditions"].map(l => <p key={l} style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.45)", marginBottom: "10px", cursor: "pointer" }}>{l}</p>)}
+            </div>
+            <div>
+              <h4 style={{ fontSize: "0.82rem", fontWeight: 700, color: "#fff", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "1px" }}>Destinations</h4>
+              {["France", "Espagne", "Suisse", "Canada", "Worldwide"].map(l => <p key={l} style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.45)", marginBottom: "10px", cursor: "pointer" }}>{l}</p>)}
+            </div>
+            <div>
+              <h4 style={{ fontSize: "0.82rem", fontWeight: 700, color: "#fff", marginBottom: "16px", textTransform: "uppercase", letterSpacing: "1px" }}>Support</h4>
+              {["Centre d'aide", "Contact", "Sécurité", "Partenaires", "Presse"].map(l => <p key={l} style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.45)", marginBottom: "10px", cursor: "pointer" }}>{l}</p>)}
+            </div>
           </div>
-          <div>
-            <h4 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1a2e28", marginBottom: "14px" }}>Explorer</h4>
-            {["Destinations", "Activités", "Carte interactive", "Guide par pays"].map(l => <p key={l} onClick={() => handlePageChange(l === "Carte interactive" ? "map" : "explore")} style={{ fontSize: "0.78rem", color: "#5a7a6e", marginBottom: "8px", cursor: "pointer" }}>{l}</p>)}
+          <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", alignItems: "center" }}>
+            <p style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem" }}>© 2026 FleuVibe — {spots.length}+ spots · {GlobalStats.totalCountries} pays · 🤖 IA · 📡 PWA</p>
+            <div style={{ display: "flex", gap: "20px" }}>
+              {["Confidentialité", "CGU", "Cookies"].map(l => <span key={l} style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem", cursor: "pointer" }}>{l}</span>)}
+            </div>
           </div>
-          <div>
-            <h4 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1a2e28", marginBottom: "14px" }}>Support</h4>
-            {["Centre d'aide", "Contact", "Conditions générales", "Politique de confidentialité"].map(l => <p key={l} style={{ fontSize: "0.78rem", color: "#5a7a6e", marginBottom: "8px", cursor: "pointer" }}>{l}</p>)}
-          </div>
-          <div>
-            <h4 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1a2e28", marginBottom: "14px" }}>Suivez-nous</h4>
-            {["Instagram", "Facebook", "YouTube", "TikTok"].map(l => <p key={l} style={{ fontSize: "0.78rem", color: "#5a7a6e", marginBottom: "8px", cursor: "pointer" }}>{l}</p>)}
-          </div>
-        </div>
-        <div style={{ borderTop: "1px solid #d0dfdc", paddingTop: "20px", textAlign: "center", fontSize: "0.7rem", color: "#8aa89e" }}>
-          <p>© 2025 FleuVibe — {spots.length}+ spots · {GlobalStats.totalCountries} pays · 🤖 IA · 📡 PWA</p>
         </div>
       </footer>
 
