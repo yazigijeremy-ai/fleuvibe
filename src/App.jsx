@@ -1459,7 +1459,7 @@ function GroupCreator({ spots, onCreate }) {
   );
 }
 
-// ─── TRIP FINDER CHAT ─────────────────────────────────────────────────────────
+// ─── AI CHAT (générique) ──────────────────────────────────────────────────────
 const TRIP_FINDER_SYSTEM = `Tu es FleuVibe Trip Finder.
 
 Objectif :
@@ -1484,10 +1484,29 @@ Quand tu proposes :
 Si l'utilisateur hésite :
 → guide-le vers une décision`;
 
-function TripFinderChat({ onClose }) {
-  const [messages, setMessages] = useState([
-    { role: "assistant", content: "Salut ! 🌊 Je suis ton guide FleuVibe. Dis-moi — tu cherches plutôt une sortie tranquille ou quelque chose qui envoie du bois ?" }
-  ]);
+const CONVERSION_SYSTEM = `Tu es un expert en conversion pour FleuVibe.
+
+Ta mission :
+Transformer l'intérêt en réservation.
+
+Quand un utilisateur :
+- hésite → rassure
+- pose une question → répond + redirige vers action
+- montre intérêt → propose réservation directe
+
+Tu dois :
+- rendre ça simple
+- enlever les freins
+- donner confiance
+
+Style :
+- humain
+- direct
+- pas agressif`;
+
+function AIChat({ onClose, systemPrompt, title, subtitle, greeting, accentColor }) {
+  const accent = accentColor || "rgba(26,158,110,0.3)";
+  const [messages, setMessages] = useState([{ role: "assistant", content: greeting }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
@@ -1504,66 +1523,38 @@ function TripFinderChat({ onClose }) {
     setMessages(updated);
     setInput("");
     setLoading(true);
-    const apiMessages = [
-      { role: "system", content: TRIP_FINDER_SYSTEM },
-      ...updated,
-    ];
-    const reply = await callAI(apiMessages, 300);
+    const reply = await callAI([{ role: "system", content: systemPrompt }, ...updated], 300);
     setMessages(prev => [...prev, { role: "assistant", content: reply || "Je n'ai pas pu te répondre, réessaie !" }]);
     setLoading(false);
   };
 
   return (
     <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(26,158,110,0.3)", borderRadius: "28px", padding: "0", maxWidth: "480px", width: "100%", maxHeight: "88vh", display: "flex", flexDirection: "column", animation: "slideUp 0.3s ease", boxShadow: "0 30px 80px rgba(0,0,0,0.6)" }}>
-        {/* Header */}
+      <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: `1px solid ${accent}`, borderRadius: "28px", padding: "0", maxWidth: "480px", width: "100%", maxHeight: "88vh", display: "flex", flexDirection: "column", animation: "slideUp 0.3s ease", boxShadow: "0 30px 80px rgba(0,0,0,0.6)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "20px 24px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <div>
-            <h2 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#a8edcf", margin: 0 }}>🧭 Trip Finder</h2>
-            <p style={{ fontSize: "0.68rem", color: "#5a8a78", margin: "2px 0 0" }}>Trouve ton activité rivière idéale</p>
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 800, color: "#a8edcf", margin: 0 }}>{title}</h2>
+            <p style={{ fontSize: "0.68rem", color: "#5a8a78", margin: "2px 0 0" }}>{subtitle}</p>
           </div>
           <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#5a8a78", borderRadius: "50%", width: 32, height: 32, cursor: "pointer", fontSize: "1rem" }}>✕</button>
         </div>
-        {/* Messages */}
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: "12px" }}>
           {messages.map((m, i) => (
             <div key={i} style={{ display: "flex", justifyContent: m.role === "user" ? "flex-end" : "flex-start" }}>
-              <div style={{
-                maxWidth: "82%",
-                padding: "10px 14px",
-                borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
-                background: m.role === "user"
-                  ? "linear-gradient(135deg,#1a9e6e,#0891b2)"
-                  : "rgba(255,255,255,0.06)",
-                border: m.role === "assistant" ? "1px solid rgba(255,255,255,0.08)" : "none",
-                fontSize: "0.82rem",
-                color: "#daf0e8",
-                lineHeight: 1.5,
-                whiteSpace: "pre-wrap",
-              }}>
+              <div style={{ maxWidth: "82%", padding: "10px 14px", borderRadius: m.role === "user" ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: m.role === "user" ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.06)", border: m.role === "assistant" ? "1px solid rgba(255,255,255,0.08)" : "none", fontSize: "0.82rem", color: "#daf0e8", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
                 {m.content}
               </div>
             </div>
           ))}
           {loading && (
             <div style={{ display: "flex", justifyContent: "flex-start" }}>
-              <div style={{ padding: "10px 16px", borderRadius: "18px 18px 18px 4px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontSize: "0.82rem", color: "#5a8a78" }}>
-                <span style={{ animation: "pulse 1.2s infinite" }}>✦ ✦ ✦</span>
-              </div>
+              <div style={{ padding: "10px 16px", borderRadius: "18px 18px 18px 4px", background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)", fontSize: "0.82rem", color: "#5a8a78" }}>✦ ✦ ✦</div>
             </div>
           )}
           <div ref={bottomRef} />
         </div>
-        {/* Input */}
         <div style={{ padding: "12px 16px 16px", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", gap: "8px" }}>
-          <input
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()}
-            placeholder="Réponds ici..."
-            disabled={loading}
-            style={{ flex: 1, padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.25)", borderRadius: "20px", color: "#e8f4f0", fontSize: "0.82rem", outline: "none" }}
-          />
+          <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && !e.shiftKey && send()} placeholder="Réponds ici..." disabled={loading} style={{ flex: 1, padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: `1px solid ${accent}`, borderRadius: "20px", color: "#e8f4f0", fontSize: "0.82rem", outline: "none" }} />
           <button onClick={send} disabled={loading || !input.trim()} style={{ padding: "10px 16px", background: loading ? "rgba(26,158,110,0.3)" : "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.82rem", cursor: loading ? "default" : "pointer", opacity: !input.trim() ? 0.5 : 1 }}>
             {loading ? "⏳" : "→"}
           </button>
@@ -1591,6 +1582,7 @@ export default function FleuVibe() {
   const [showGroups, setShowGroups] = useState(false);
   const [showAffiliate, setShowAffiliate] = useState(false);
   const [showTripFinder, setShowTripFinder] = useState(false);
+  const [showConversionChat, setShowConversionChat] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [partnerPortal, setPartnerPortal] = useState(null);
   const [showAdmin, setShowAdmin] = useState(false);
@@ -2182,19 +2174,25 @@ export default function FleuVibe() {
         </div>
       </footer>
 
-      {/* TRIP FINDER FAB */}
+      {/* FLOATING ACTION BUTTONS */}
       <button
         onClick={() => setShowTripFinder(true)}
         title="Trip Finder — trouve ton activité idéale"
-        style={{ position: "fixed", bottom: 28, right: 28, zIndex: 1500, width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", boxShadow: "0 6px 24px rgba(26,158,110,0.45)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.5rem", transition: "transform 0.2s" }}
+        style={{ position: "fixed", bottom: 96, right: 28, zIndex: 1500, width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", boxShadow: "0 6px 20px rgba(26,158,110,0.4)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem", transition: "transform 0.2s" }}
         onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
         onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
-      >
-        🧭
-      </button>
+      >🧭</button>
+      <button
+        onClick={() => setShowConversionChat(true)}
+        title="Aide à la réservation"
+        style={{ position: "fixed", bottom: 28, right: 28, zIndex: 1500, width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", boxShadow: "0 6px 20px rgba(245,158,11,0.4)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem", transition: "transform 0.2s" }}
+        onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
+        onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+      >💬</button>
 
-      {/* TRIP FINDER MODAL */}
-      {showTripFinder && <TripFinderChat onClose={() => setShowTripFinder(false)} />}
+      {/* AI CHAT MODALS */}
+      {showTripFinder && <AIChat onClose={() => setShowTripFinder(false)} systemPrompt={TRIP_FINDER_SYSTEM} title="🧭 Trip Finder" subtitle="Trouve ton activité rivière idéale" greeting="Salut ! 🌊 Je suis ton guide FleuVibe. Tu cherches plutôt une sortie tranquille ou quelque chose qui envoie du bois ?" accentColor="rgba(26,158,110,0.3)" />}
+      {showConversionChat && <AIChat onClose={() => setShowConversionChat(false)} systemPrompt={CONVERSION_SYSTEM} title="💬 On t'aide à réserver" subtitle="Des questions ? On lève tous les freins." greeting="Bonjour ! 😊 Tu hésites ou tu as une question avant de réserver ? Je suis là." accentColor="rgba(245,158,11,0.3)" />}
 
       {/* MODALS */}
       {bookingSpot && <BookingModal spot={bookingSpot} provider={ALL_PROVIDERS.find(p => p.routeIds?.includes(bookingSpot.id))} onClose={() => setBookingSpot(null)} />}
