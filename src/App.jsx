@@ -1084,14 +1084,13 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
   return (
     <div style={{
       marginBottom: "16px", borderRadius: "20px", overflow: "hidden", position: "relative",
-      border: `1px solid ${open ? spot.color + "40" : "rgba(255,255,255,0.08)"}`,
-      background: "rgba(255,255,255,0.04)",
-      backdropFilter: "blur(10px)",
+      border: `1px solid ${open ? spot.color + "40" : "#e8f0ed"}`,
+      background: "#fff",
       transition: "transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s",
       cursor: "pointer",
     }}
-      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 20px 40px rgba(0,0,0,0.3)"; e.currentTarget.style.borderColor = "rgba(26,158,110,0.3)"; }}
-      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; e.currentTarget.style.borderColor = open ? spot.color + "40" : "rgba(255,255,255,0.08)"; }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.1)"; e.currentTarget.style.borderColor = "rgba(26,158,110,0.3)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; e.currentTarget.style.borderColor = open ? spot.color + "40" : "#e8f0ed"; }}
       onClick={() => setOpen(o => !o)}>
 
       {/* ── PHOTO HEADER 160px ── */}
@@ -1128,40 +1127,43 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
 
       {/* ── CONTENT ── */}
       <div style={{ padding: "16px" }}>
-        <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#daf0e8", marginBottom: "4px", lineHeight: 1.3 }}>{spot.name}</h3>
-        <p style={{ fontSize: "0.72rem", color: "#5a8a78", marginBottom: "10px" }}>{COUNTRIES[spot.country]?.flag} {COUNTRIES[spot.country]?.name} · {spot.region}</p>
+        <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#1a2e28", marginBottom: "4px", lineHeight: 1.3 }}>{spot.name}</h3>
+        <p style={{ fontSize: "0.72rem", color: "#7a9a8e", marginBottom: "10px", display: "flex", alignItems: "center", gap: "4px" }}>{COUNTRIES[spot.country]?.flag} {COUNTRIES[spot.country]?.name} · {spot.region}</p>
 
         {/* Stats row */}
-        <div style={{ display: "flex", gap: "14px", marginBottom: "10px", paddingBottom: "10px", borderTop: "1px solid rgba(255,255,255,0.05)", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingTop: "10px", fontSize: "0.7rem", color: "#6a9a8c", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "12px", marginBottom: "10px", paddingBottom: "10px", borderTop: "1px solid #f0f5f3", borderBottom: "1px solid #f0f5f3", paddingTop: "10px", fontSize: "0.7rem", color: "#8aa89e", flexWrap: "wrap" }}>
           <span>📏 {spot.distance}</span>
           <span>⏱️ {spot.duration}</span>
-          <span style={{ padding: "1px 7px", background: `${typeColor}18`, border: `1px solid ${typeColor}30`, borderRadius: "8px", color: typeColor, fontWeight: 600 }}>{typeIcon} {typeName}</span>
+          <span style={{ padding: "1px 7px", background: `${typeColor}12`, border: `1px solid ${typeColor}25`, borderRadius: "8px", color: typeColor, fontWeight: 600 }}>{typeIcon} {typeName}</span>
           <WeatherWidget coords={spot.coords} spotName={spot.name} difficulty={spot.difficulty} small />
         </div>
 
         {/* Activities */}
         <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "12px" }}>
           {spot.activities.slice(0, 5).map(a => (
-            <span key={a} style={{ padding: "3px 10px", background: "rgba(26,158,110,0.12)", borderRadius: "20px", fontSize: "0.63rem", color: "#7ecfb0" }}>{a}</span>
+            <span key={a} style={{ padding: "3px 8px", background: "#f5f8f7", borderRadius: "12px", fontSize: "0.62rem", color: "#4a6a5e" }}>{a}</span>
           ))}
-          {spot.camping && <span style={{ padding: "3px 8px", background: "rgba(26,158,110,0.1)", color: "#7ecfb0", borderRadius: "10px", fontSize: "0.63rem" }}>⛺ Camping</span>}
+          {spot.camping && <span style={{ padding: "3px 8px", background: "#f5f8f7", color: "#4a6a5e", borderRadius: "12px", fontSize: "0.62rem" }}>⛺ Camping</span>}
         </div>
 
         {/* Price + CTA */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: "12px", borderTop: "1px solid #f0f5f3" }}>
           {provider ? (
-            <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a8edcf" }}>{provider.price}{provider.currency} <span style={{ fontSize: "0.65rem", color: "#5a8a78", fontWeight: 400 }}>/pers</span></span>
-          ) : <span />}
+            <div>
+              <span style={{ fontSize: "1.2rem", fontWeight: 700, color: "#1a9e6e" }}>{provider.price}{provider.currency}</span>
+              <span style={{ fontSize: "0.65rem", color: "#8aa89e", marginLeft: "3px" }}>/pers</span>
+            </div>
+          ) : <div style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "0.72rem", color: "#8aa89e" }}>★ {spot.rating?.toFixed(1)}</div>}
           <button onClick={e => { e.stopPropagation(); setOpen(o => !o); }}
-            style={{ padding: "8px 18px", background: open ? "rgba(26,158,110,0.15)" : "linear-gradient(135deg,#1a9e6e,#0891b2)", border: open ? "1px solid rgba(26,158,110,0.3)" : "none", borderRadius: "12px", color: "#fff", fontWeight: 600, fontSize: "0.75rem", cursor: "pointer" }}>
-            {open ? "▲ Réduire" : "📅 Voir détails"}
+            style={{ padding: "8px 18px", background: open ? "#f5f8f7" : "linear-gradient(135deg,#1a9e6e,#0891b2)", border: open ? "1px solid #d0dfdc" : "none", borderRadius: "40px", color: open ? "#1a9e6e" : "#fff", fontWeight: 600, fontSize: "0.75rem", cursor: "pointer" }}>
+            {open ? "▲ Réduire" : "Voir détails"}
           </button>
         </div>
       </div>
 
       {/* ── EXPANDED DETAILS ── */}
       {open && (
-        <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", padding: "16px", animation: "slideUp 0.3s ease" }}>
+        <div style={{ borderTop: "1px solid #f0f5f3", padding: "16px", animation: "slideUp 0.3s ease" }}>
           {/* Gallery */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "6px", marginBottom: "14px" }}>
             {gallery.map((src, idx) => (
@@ -1173,7 +1175,7 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
             ))}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", gap: "10px" }}>
-            <p style={{ color: "#8ab8b0", fontSize: "0.82rem", lineHeight: 1.7, flex: 1 }}>{desc}</p>
+            <p style={{ color: "#4a6a5e", fontSize: "0.82rem", lineHeight: 1.7, flex: 1 }}>{desc}</p>
             <TranslateButton text={spot.description} onTranslated={setDesc} />
           </div>
           <AIDescriptionButton spot={spot} isPremium={isPremium} onShowPremium={onShowPremium} />
@@ -1515,7 +1517,7 @@ export default function FleuVibe() {
   const [selType, setSelType] = useState("ALL");
   const [selDiff, setSelDiff] = useState("ALL");
   const [selContinent, setSelContinent] = useState("ALL");
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
   const [theme, setTheme] = useState("ocean");
   const [viewMode, setViewMode] = useState("comfort");
   const [groups, setGroups] = useState([]);
@@ -1670,7 +1672,8 @@ export default function FleuVibe() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
-        ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:rgba(255,255,255,0.03);border-radius:10px}::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#1a9e6e,#0891b2);border-radius:10px}
+        body{background:#f5f8f7}
+        ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:#e8f0ed;border-radius:10px}::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#1a9e6e,#0891b2);border-radius:10px}
         button{cursor:pointer;transition:all 0.2s ease}button:active{transform:scale(0.97)}
         .fade-in{opacity:0;transform:translateY(16px);transition:opacity 0.5s ease,transform 0.5s ease}
         .fade-in.loaded{opacity:1;transform:translateY(0)}
@@ -1695,128 +1698,138 @@ export default function FleuVibe() {
         .loading-spinner{width:44px;height:44px;border-radius:50%;background:conic-gradient(from 0deg,#1a9e6e,#0891b2,#38bdf8,#1a9e6e);animation:rotate-slow 1s linear infinite;-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 5px));mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 5px))}
         .ripple-btn{position:relative;overflow:hidden}.ripple-btn::after{content:'';position:absolute;top:50%;left:50%;width:0;height:0;border-radius:50%;background:rgba(255,255,255,0.25);transform:translate(-50%,-50%);transition:width 0.4s,height 0.4s,opacity 0.4s}.ripple-btn:active::after{width:200px;height:200px;opacity:0}
         .card-3d{transition:all 0.5s cubic-bezier(0.2,0.9,0.4,1.1);transform-style:preserve-3d;perspective:1000px}
-        input::placeholder,textarea::placeholder{color:#4a7a6a}
+        input::placeholder,textarea::placeholder{color:#8aa89e}
         input:focus,textarea:focus,select:focus{outline:none;border-color:rgba(26,158,110,0.5)!important}
-        select option{background:#0d2240}
+        select option{background:#fff;color:#1a2e28}
         .spot-img{width:100%;height:100%;object-fit:cover;transition:transform 0.6s ease;display:block}
         @media(max-width:600px){.featured-grid{grid-template-columns:1fr!important}}
         @keyframes slowZoom{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
         @keyframes skeletonPulse{0%,100%{opacity:0.4}50%{opacity:0.8}}
-        .img-skeleton{background:linear-gradient(90deg,rgba(255,255,255,0.04) 0%,rgba(255,255,255,0.1) 50%,rgba(255,255,255,0.04) 100%);background-size:200% 100%;animation:shimmer 1.5s ease-in-out infinite}
+        .img-skeleton{background:linear-gradient(90deg,#e8f0ed 0%,#f5f8f7 50%,#e8f0ed 100%);background-size:200% 100%;animation:shimmer 1.5s ease-in-out infinite}
       `}</style>
 
-      {/* ── PARTICULES FOND ── */}
+      {/* subtle light bg accents */}
       <div style={{ position: "fixed", inset: 0, overflow: "hidden", pointerEvents: "none", zIndex: 0 }}>
-        <div style={{ position: "absolute", top: "5%", right: "-10%", width: "400px", height: "400px", background: "radial-gradient(circle,rgba(26,158,110,0.08) 0%,transparent 70%)", borderRadius: "50%", filter: "blur(40px)", animation: "float 8s ease-in-out infinite" }} />
-        <div style={{ position: "absolute", bottom: "15%", left: "-10%", width: "300px", height: "300px", background: "radial-gradient(circle,rgba(8,145,178,0.06) 0%,transparent 70%)", borderRadius: "50%", filter: "blur(40px)", animation: "float 10s ease-in-out infinite", animationDelay: "2s" }} />
-        {[...Array(12)].map((_, i) => (
-          <div key={i} style={{ position: "absolute", left: `${(i * 8.5) % 100}%`, top: `${(i * 14.3) % 100}%`, width: `${(i % 3) + 1}px`, height: `${(i % 3) + 1}px`, background: "rgba(26,158,110,0.2)", borderRadius: "50%", animation: `float ${6 + (i % 5)}s ease-in-out infinite`, animationDelay: `${i * 0.5}s` }} />
-        ))}
+        <div style={{ position: "absolute", top: "5%", right: "-10%", width: "400px", height: "400px", background: "radial-gradient(circle,rgba(26,158,110,0.04) 0%,transparent 70%)", borderRadius: "50%", filter: "blur(60px)" }} />
+        <div style={{ position: "absolute", bottom: "15%", left: "-10%", width: "300px", height: "300px", background: "radial-gradient(circle,rgba(8,145,178,0.03) 0%,transparent 70%)", borderRadius: "50%", filter: "blur(60px)" }} />
       </div>
 
-      {/* ── HEADER ── */}
-      <div style={{ position: "sticky", top: 0, background: darkMode ? "rgba(10,22,40,0.95)" : "rgba(240,249,244,0.95)", backdropFilter: "blur(24px)", borderBottom: "1px solid rgba(255,255,255,0.06)", zIndex: 100, padding: "12px 20px" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" }}>
+      {/* ── HEADER MOMONDO STYLE ── */}
+      <div style={{ position: "sticky", top: 0, background: "#fff", boxShadow: "0 1px 0 rgba(0,0,0,0.06)", zIndex: 100, padding: "0 20px" }}>
+        <div style={{ maxWidth: "1280px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", height: "68px", gap: "12px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-            <span style={{ fontSize: "1.6rem", animation: "float 4s ease-in-out infinite" }}>🌊</span>
-            <h1 className="shimmer-text" style={{ fontSize: "1.25rem", fontWeight: 800, letterSpacing: "-0.5px" }}>FleuVibe</h1>
-            <span style={{ background: "linear-gradient(135deg,rgba(99,102,241,0.2),rgba(139,92,246,0.2))", border: "1px solid rgba(99,102,241,0.35)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#a5b4fc", fontWeight: 700 }}>🤖 IA</span>
-            {!isOnline && <span style={{ background: "rgba(220,38,38,0.2)", border: "1px solid rgba(220,38,38,0.4)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#f87171", fontWeight: 700 }}>📡 Hors-ligne</span>}
+            <span style={{ fontSize: "1.5rem" }}>🌊</span>
+            <h1 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#1a9e6e", letterSpacing: "-0.5px" }}>FleuVibe</h1>
+            <span style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#6366f1", fontWeight: 700 }}>🤖 IA</span>
+            {!isOnline && <span style={{ background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.3)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#dc2626", fontWeight: 700 }}>📡 Hors-ligne</span>}
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            {isAdmin && <button onClick={() => setShowAdmin(true)} style={{ background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.35)", borderRadius: "20px", padding: "6px 12px", fontSize: "0.62rem", color: "#a5b4fc", fontWeight: 700 }}>🛡️ Admin</button>}
-            <button onClick={() => setShowSubmit(true)} style={{ padding: "8px 14px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", color: "#a8edcf", fontWeight: 600, fontSize: "0.72rem" }}>➕ Ajouter</button>
-            {!isPremium && <button onClick={() => setShowPremium(true)} style={{ padding: "8px 14px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.72rem", boxShadow: "0 2px 10px rgba(245,158,11,0.3)" }}>⭐ Premium</button>}
+            {isAdmin && <button onClick={() => setShowAdmin(true)} style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "40px", padding: "6px 12px", fontSize: "0.68rem", color: "#6366f1", fontWeight: 600 }}>🛡️ Admin</button>}
+            <button onClick={() => setShowSubmit(true)} style={{ padding: "8px 16px", background: "transparent", border: "1px solid #d0dfdc", borderRadius: "40px", color: "#1a9e6e", fontWeight: 600, fontSize: "0.72rem" }}>+ Ajouter</button>
+            {!isPremium && <button onClick={() => setShowPremium(true)} style={{ padding: "8px 16px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 700, fontSize: "0.72rem" }}>⭐ Premium</button>}
             {session ? (
-              <button onClick={() => setShowProfile(true)} style={{ display: "flex", alignItems: "center", gap: "7px", padding: "6px 14px", background: "rgba(26,158,110,0.15)", border: "1px solid rgba(26,158,110,0.3)", borderRadius: "20px", color: "#a8edcf", fontSize: "0.72rem", fontWeight: 600 }}>
-                <div style={{ width: 24, height: 24, borderRadius: "50%", background: `linear-gradient(135deg,${currentTheme.primary},${currentTheme.secondary})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, color: "#fff" }}>{userName[0].toUpperCase()}</div>
-                <span style={{ display: "none" }} id="username-label">{userName}</span>
+              <button onClick={() => setShowProfile(true)} style={{ display: "flex", alignItems: "center", gap: "7px", padding: "6px 14px", background: "rgba(26,158,110,0.08)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "40px", color: "#1a9e6e", fontSize: "0.72rem", fontWeight: 600 }}>
+                <div style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, color: "#fff" }}>{userName[0].toUpperCase()}</div>
                 {isPremium && <span style={{ fontSize: "0.6rem", color: "#f59e0b" }}>⭐</span>}
               </button>
             ) : (
-              <button onClick={() => setShowAuth(true)} style={{ padding: "8px 18px", background: `linear-gradient(135deg,${currentTheme.primary},${currentTheme.secondary})`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.72rem", boxShadow: `0 2px 10px ${currentTheme.primary}40` }}>Connexion</button>
+              <button onClick={() => setShowAuth(true)} style={{ padding: "9px 20px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 700, fontSize: "0.72rem" }}>Connexion</button>
             )}
           </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "20px 16px", position: "relative", zIndex: 1 }}>
+      <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px 40px", position: "relative", zIndex: 1 }}>
 
-        {/* HERO / STATS */}
+        {/* HERO */}
         {!session ? (
-          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ position: "relative", borderRadius: "28px", overflow: "hidden", marginBottom: "24px", minHeight: "320px" }}>
-            <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=1400&h=560&fit=crop&auto=format&q=85" alt="hero" loading="eager"
-              style={{ width: "100%", height: "320px", objectFit: "cover", display: "block", animation: "slowZoom 20s ease-in-out infinite", transformOrigin: "center center" }} />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, rgba(5,15,30,0.65) 0%, rgba(8,40,30,0.75) 100%)" }} />
-            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "24px", textAlign: "center" }}>
-              <p style={{ fontSize: "0.72rem", color: "rgba(168,237,207,0.9)", fontWeight: 700, letterSpacing: "2px", marginBottom: "12px" }}>🌊 LA PLATEFORME NAUTIQUE MONDIALE</p>
-              <h2 style={{ fontSize: "2rem", fontWeight: 900, color: "#fff", lineHeight: 1.2, marginBottom: "10px", textShadow: "0 4px 24px rgba(0,0,0,0.6)", maxWidth: "560px" }}>
-                Découvrez les plus beaux<br/>spots nautiques du monde
-              </h2>
-              <p style={{ fontSize: "0.88rem", color: "rgba(255,255,255,0.72)", marginBottom: "24px" }}>
-                {spots.length}+ spots · {Object.keys(COUNTRIES).length} pays · ⭐ 4.8/5
-              </p>
-              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", justifyContent: "center" }}>
-                <button onClick={() => setShowAuth(true)} style={{ padding: "13px 32px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "50px", color: "#fff", fontWeight: 700, fontSize: "0.92rem", boxShadow: "0 6px 28px rgba(26,158,110,0.55)", transition: "transform 0.2s" }}
-                  onMouseEnter={e => e.currentTarget.style.transform = "scale(1.04)"}
-                  onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}>
-                  🌊 Commencer gratuitement
-                </button>
-                <button onClick={() => handlePageChange("map")} style={{ padding: "13px 24px", background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "50px", color: "#fff", fontWeight: 600, fontSize: "0.88rem", backdropFilter: "blur(8px)" }}>
-                  🗺️ Explorer la carte
-                </button>
+          <div style={{ background: "linear-gradient(135deg,#e8f4f0 0%,#d0ece4 100%)", padding: "48px 24px 60px", marginBottom: "0" }}>
+            <div style={{ maxWidth: "1100px", margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px", alignItems: "center" }}>
+              <div>
+                <h2 style={{ fontSize: "2.4rem", fontWeight: 800, color: "#1a2e28", lineHeight: 1.2, marginBottom: "16px" }}>
+                  Trouvez votre<br/><span style={{ color: "#1a9e6e" }}>spot nautique</span> idéal
+                </h2>
+                <p style={{ fontSize: "1rem", color: "#4a6a5e", marginBottom: "28px", lineHeight: 1.5 }}>
+                  Kayak, SUP, rafting ou voile — Découvrez {spots.length}+ expériences sur les plus beaux plans d'eau du monde.
+                </p>
+                <div style={{ background: "#fff", borderRadius: "60px", boxShadow: "0 8px 30px rgba(0,0,0,0.08)", padding: "6px", display: "flex", alignItems: "center", gap: "6px", marginBottom: "16px" }}>
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "10px", padding: "8px 16px", background: "#f5f8f7", borderRadius: "50px" }}>
+                    <span>🔍</span>
+                    <input type="text" value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAISearch()}
+                      placeholder='Destination, rivière, activité...'
+                      style={{ border: "none", background: "transparent", width: "100%", fontSize: "0.9rem", color: "#1a2e28", outline: "none" }} />
+                  </div>
+                  <button onClick={handleAISearch} style={{ padding: "12px 24px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "50px", color: "#fff", fontWeight: 700, fontSize: "0.82rem", whiteSpace: "nowrap" }}>
+                    {aiSearchLoading ? "⏳" : "🤖 Rechercher"}
+                  </button>
+                </div>
+                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                  <button onClick={() => setShowAuth(true)} style={{ padding: "11px 28px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 700, fontSize: "0.88rem" }}>
+                    Commencer gratuitement
+                  </button>
+                  <button onClick={() => handlePageChange("map")} style={{ padding: "11px 20px", background: "transparent", border: "1px solid #a8c8bc", borderRadius: "40px", color: "#1a9e6e", fontWeight: 600, fontSize: "0.88rem" }}>
+                    🗺️ Carte
+                  </button>
+                </div>
+              </div>
+              <div style={{ borderRadius: "24px", overflow: "hidden", boxShadow: "0 20px 40px rgba(0,0,0,0.12)" }}>
+                <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=600&h=400&fit=crop&auto=format&q=85" alt="kayak" style={{ width: "100%", height: "320px", objectFit: "cover", display: "block" }} />
               </div>
             </div>
           </div>
         ) : (
-          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "flex", gap: "10px", alignItems: "center", marginBottom: "14px", flexWrap: "wrap" }}>
+          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "16px", marginBottom: "8px", flexWrap: "wrap" }}>
             <LevelBadge xp={userXP} />
             {earnedBadges.slice(0, 4).map(b => (
-              <span key={b.name} style={{ padding: "3px 9px", background: "rgba(26,158,110,0.1)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", fontSize: "0.65rem", color: "#a8edcf" }}>{b.icon} {b.name}</span>
+              <span key={b.name} style={{ padding: "3px 9px", background: "rgba(26,158,110,0.08)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", fontSize: "0.65rem", color: "#1a9e6e" }}>{b.icon} {b.name}</span>
             ))}
             <div style={{ marginLeft: "auto", display: "flex", gap: "6px" }}>
-              <button onClick={() => setShowChallenges(true)} style={{ padding: "5px 10px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "20px", color: "#fbbf24", fontWeight: 600, fontSize: "0.65rem" }}>🏆 Défis</button>
-              <button onClick={() => setShowGroups(true)} style={{ padding: "5px 10px", background: "rgba(8,145,178,0.12)", border: "1px solid rgba(8,145,178,0.25)", borderRadius: "20px", color: "#67e8f9", fontWeight: 600, fontSize: "0.65rem" }}>👥 Groupes</button>
-              <button onClick={() => setDarkMode(d => !d)} style={{ background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "50%", width: 28, height: 28, fontSize: "0.8rem" }}>{darkMode ? "☀️" : "🌙"}</button>
+              <button onClick={() => setShowChallenges(true)} style={{ padding: "5px 10px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "20px", color: "#d97706", fontWeight: 600, fontSize: "0.65rem" }}>🏆 Défis</button>
+              <button onClick={() => setShowGroups(true)} style={{ padding: "5px 10px", background: "rgba(8,145,178,0.08)", border: "1px solid rgba(8,145,178,0.2)", borderRadius: "20px", color: "#0891b2", fontWeight: 600, fontSize: "0.65rem" }}>👥 Groupes</button>
             </div>
           </div>
         )}
 
         {/* SPOTS À LA UNE */}
         {page === "explore" && !search && (
-          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ marginBottom: "20px", transitionDelay: "0.05s" }}>
-            <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#5a8a78", letterSpacing: "1.5px", marginBottom: "12px" }}>✨ SPOTS À LA UNE</p>
+          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ marginBottom: "20px", marginTop: "32px", transitionDelay: "0.05s" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "16px" }}>
+              <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#1a2e28" }}>🔥 Spots populaires</h2>
+              <span style={{ color: "#1a9e6e", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Voir tout →</span>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-              {spots.filter(s => s.rating >= 4.5 || s.sponsored).slice(0, 3).map(s => {
-                const imgS = `${s.type || "WATER"}_${s.id}`;
-                return (
-                  <div key={s.id} onClick={() => { handlePageChange("explore"); setTimeout(() => setSearch(s.name), 100); }}
-                    style={{ position: "relative", borderRadius: "18px", overflow: "hidden", height: "140px", cursor: "pointer", transition: "transform 0.3s ease, box-shadow 0.3s ease", boxShadow: "0 4px 20px rgba(0,0,0,0.3)" }}
-                    onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 32px rgba(0,0,0,0.4)"; }}
-                    onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.3)"; }}>
+              {spots.filter(s => s.rating >= 4.5 || s.sponsored).slice(0, 3).map(s => (
+                <div key={s.id} onClick={() => { handlePageChange("explore"); setTimeout(() => setSearch(s.name), 100); }}
+                  style={{ background: "#fff", borderRadius: "20px", overflow: "hidden", border: "1px solid #e8f0ed", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", cursor: "pointer", transition: "all 0.3s" }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.1)"; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; }}>
+                  <div style={{ position: "relative", height: "160px", overflow: "hidden" }}>
                     <img src={getSpotPhoto(s, 400, 280)} alt={s.name} loading="lazy"
                       style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease" }}
-                      onMouseEnter={e => e.currentTarget.style.transform = "scale(1.08)"}
+                      onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
                       onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"} />
-                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 30%, rgba(0,0,0,0.8) 100%)" }} />
-                    <div style={{ position: "absolute", bottom: 10, left: 10, right: 10 }}>
-                      <p style={{ fontSize: "0.78rem", fontWeight: 700, color: "#fff", textShadow: "0 2px 6px rgba(0,0,0,0.8)", marginBottom: "2px" }}>{s.name}</p>
-                      <p style={{ fontSize: "0.6rem", color: "rgba(255,255,255,0.7)" }}>{COUNTRIES[s.country]?.flag} {COUNTRIES[s.country]?.name}</p>
-                    </div>
-                    {s.rating && <div style={{ position: "absolute", top: 8, right: 8, padding: "2px 8px", background: "rgba(0,0,0,0.55)", borderRadius: "20px", fontSize: "0.62rem", color: "#f59e0b", fontWeight: 700, backdropFilter: "blur(4px)" }}>★ {s.rating.toFixed(1)}</div>}
+                    <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)" }} />
+                    {s.rating && <div style={{ position: "absolute", top: 10, left: 10, padding: "3px 8px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", borderRadius: "20px", fontSize: "0.65rem", color: "#fff", fontWeight: 600 }}>⭐ {s.rating.toFixed(1)}</div>}
+                    <div style={{ position: "absolute", top: 10, right: 10, background: "#fff", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.85rem" }}>🤍</div>
                   </div>
-                );
-              })}
+                  <div style={{ padding: "12px 14px" }}>
+                    <p style={{ fontSize: "0.88rem", fontWeight: 700, color: "#1a2e28", marginBottom: "3px" }}>{s.name.split("·")[0].trim()}</p>
+                    <p style={{ fontSize: "0.68rem", color: "#7a9a8e" }}>{COUNTRIES[s.country]?.flag} {COUNTRIES[s.country]?.name} · {s.region}</p>
+                    <div style={{ display: "flex", gap: "8px", marginTop: "8px", fontSize: "0.65rem", color: "#8aa89e" }}>
+                      <span>📏 {s.distance}</span><span>⏱️ {s.duration}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        {/* NAV */}
-        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.06s", display: "flex", gap: "4px", marginBottom: "16px", background: "rgba(255,255,255,0.03)", padding: "5px", borderRadius: "50px", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.05)" }}>
+        {/* NAV FILTER CHIPS */}
+        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.06s", background: "#fff", borderRadius: "60px", padding: "8px 16px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", display: "flex", gap: "6px", marginTop: "24px", marginBottom: "20px", flexWrap: "wrap" }}>
           {[["explore", "🗺️", "Explorer"], ["map", "🌍", "Carte"], ["hidden", "💎", "Pépites"], ["weather", "🌤️", "Météo"], ["favorites", "❤️", favorites.length > 0 ? `Favoris (${favorites.length})` : "Favoris"], ["tourism", "🤝", "Partenaires"]].map(([id, icon, label]) => (
-            <button key={id} onClick={() => handlePageChange(id)} className="ripple-btn" style={{ flex: 1, padding: "9px 10px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: page === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "transparent", color: page === id ? "#fff" : "#6a9a8c", display: "flex", alignItems: "center", justifyContent: "center", gap: "5px", whiteSpace: "nowrap" }}>
-              <span>{icon}</span><span>{label}</span>
-              {page === id && <span style={{ width: 5, height: 5, background: "rgba(255,255,255,0.8)", borderRadius: "50%", flexShrink: 0 }} />}
+            <button key={id} onClick={() => handlePageChange(id)} style={{ padding: "8px 18px", borderRadius: "40px", border: "none", fontSize: "0.82rem", fontWeight: 600, background: page === id ? "#1a9e6e" : "#f5f8f7", color: page === id ? "#fff" : "#4a6a5e", transition: "all 0.2s", cursor: "pointer" }}>
+              {icon} {label}
             </button>
           ))}
         </div>
@@ -1839,20 +1852,20 @@ export default function FleuVibe() {
               <input type="text" value={search} onChange={e => { setSearch(e.target.value); if (aiSearchActive) clearAISearch(); }}
                 onKeyDown={e => e.key === "Enter" && handleAISearch()}
                 placeholder={page === "expeditions" ? "🔍  Filtrer les expéditions..." : '🔍  Spot, activité, pays...  ou  🤖 "surf débutant Bali"'}
-                style={{ width: "100%", padding: "13px 18px", paddingRight: "130px", background: "rgba(255,255,255,0.05)", border: `1px solid ${aiSearchActive ? "rgba(99,102,241,0.5)" : "rgba(255,255,255,0.08)"}`, borderRadius: "50px", color: "#e8f4f0", fontSize: "0.84rem" }} />
+                style={{ width: "100%", padding: "13px 18px", paddingRight: "130px", background: "#fff", border: `1px solid ${aiSearchActive ? "rgba(99,102,241,0.5)" : "#d0dfdc"}`, borderRadius: "50px", color: "#1a2e28", fontSize: "0.84rem", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }} />
               <div style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", display: "flex", gap: "4px" }}>
-                {aiSearchActive && <button onClick={clearAISearch} style={{ padding: "5px 10px", background: "rgba(220,38,38,0.2)", border: "none", borderRadius: "20px", color: "#f87171", fontSize: "0.65rem", fontWeight: 600 }}>✕ Reset</button>}
-                {page === "explore" && <button onClick={handleAISearch} disabled={aiSearchLoading || !search.trim()} style={{ padding: "5px 12px", background: aiSearchLoading ? "rgba(99,102,241,0.3)" : "linear-gradient(135deg,#6366f1,#8b5cf6)", border: "none", borderRadius: "20px", color: "#fff", fontSize: "0.65rem", fontWeight: 700 }}>
+                {aiSearchActive && <button onClick={clearAISearch} style={{ padding: "5px 10px", background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: "20px", color: "#dc2626", fontSize: "0.65rem", fontWeight: 600 }}>✕ Reset</button>}
+                {page === "explore" && <button onClick={handleAISearch} disabled={aiSearchLoading || !search.trim()} style={{ padding: "5px 12px", background: aiSearchLoading ? "rgba(99,102,241,0.2)" : "linear-gradient(135deg,#6366f1,#8b5cf6)", border: "none", borderRadius: "20px", color: "#fff", fontSize: "0.65rem", fontWeight: 700 }}>
                   {aiSearchLoading ? "⏳" : "🤖 IA"}
                 </button>}
               </div>
             </div>
             {aiSearchActive && (
-              <div style={{ padding: "8px 14px", background: "linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1))", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "12px", marginBottom: "12px", fontSize: "0.72rem", color: "#a5b4fc", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <div style={{ padding: "8px 14px", background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "12px", marginBottom: "12px", fontSize: "0.72rem", color: "#6366f1", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                 <span>🤖 Recherche IA · <strong>{filtered.length} résultats</strong></span>
-                {aiFilters?.type && <span style={{ padding: "1px 7px", background: "rgba(99,102,241,0.2)", borderRadius: "10px" }}>{aiFilters.type}</span>}
-                {aiFilters?.difficulty && <span style={{ padding: "1px 7px", background: "rgba(99,102,241,0.2)", borderRadius: "10px" }}>{aiFilters.difficulty}</span>}
-                {aiFilters?.countries?.map(c => <span key={c} style={{ padding: "1px 7px", background: "rgba(99,102,241,0.2)", borderRadius: "10px" }}>{COUNTRIES[c]?.flag} {c}</span>)}
+                {aiFilters?.type && <span style={{ padding: "1px 7px", background: "rgba(99,102,241,0.1)", borderRadius: "10px" }}>{aiFilters.type}</span>}
+                {aiFilters?.difficulty && <span style={{ padding: "1px 7px", background: "rgba(99,102,241,0.1)", borderRadius: "10px" }}>{aiFilters.difficulty}</span>}
+                {aiFilters?.countries?.map(c => <span key={c} style={{ padding: "1px 7px", background: "rgba(99,102,241,0.1)", borderRadius: "10px" }}>{COUNTRIES[c]?.flag} {c}</span>)}
               </div>
             )}
             {page === "explore" && !aiSearchActive && (() => {
@@ -2026,18 +2039,40 @@ export default function FleuVibe() {
         {/* FAVORIS */}
         {page === "favorites" && (
           <div>
-            {!session && <div style={{ padding: "50px", textAlign: "center", background: "rgba(255,255,255,0.03)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.06)" }}><div style={{ fontSize: "3rem", marginBottom: "12px" }}>❤️</div><h3 style={{ color: "#a8edcf", marginBottom: "8px" }}>Connecte-toi pour voir tes favoris</h3><button onClick={() => setShowAuth(true)} style={{ padding: "10px 24px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.85rem" }}>🌊 Se connecter</button></div>}
-            {session && favorites.length === 0 && <div style={{ padding: "50px", textAlign: "center", background: "rgba(255,255,255,0.03)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.06)" }}><div style={{ fontSize: "3rem", marginBottom: "12px" }}>🏞️</div><h3 style={{ color: "#a8edcf", marginBottom: "8px" }}>Aucun favori</h3><button onClick={() => setPage("explore")} style={{ padding: "9px 20px", background: "rgba(26,158,110,0.15)", border: "1px solid rgba(26,158,110,0.3)", borderRadius: "20px", color: "#a8edcf", fontWeight: 600, fontSize: "0.83rem" }}>🗺️ Explorer</button></div>}
+            {!session && <div style={{ padding: "50px", textAlign: "center", background: "#fff", borderRadius: "24px", border: "1px solid #e8f0ed" }}><div style={{ fontSize: "3rem", marginBottom: "12px" }}>❤️</div><h3 style={{ color: "#1a2e28", marginBottom: "8px" }}>Connecte-toi pour voir tes favoris</h3><button onClick={() => setShowAuth(true)} style={{ padding: "10px 24px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 700, fontSize: "0.85rem" }}>Se connecter</button></div>}
+            {session && favorites.length === 0 && <div style={{ padding: "50px", textAlign: "center", background: "#fff", borderRadius: "24px", border: "1px solid #e8f0ed" }}><div style={{ fontSize: "3rem", marginBottom: "12px" }}>🏞️</div><h3 style={{ color: "#1a2e28", marginBottom: "8px" }}>Aucun favori pour l'instant</h3><button onClick={() => setPage("explore")} style={{ padding: "9px 20px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 600, fontSize: "0.83rem" }}>Explorer les spots</button></div>}
             {session && filtered.map(s => <SpotCard key={s.id} spot={s} isFav={favorites.includes(s.id)} onFav={toggleFav} onBook={setBookingSpot} session={session} userName={userName} isPremium={isPremium} onShowPremium={() => setShowPremium(true)} allSpots={spots} />)}
           </div>
         )}
 
-        <div style={{ marginTop: "40px", paddingTop: "20px", borderTop: "1px solid rgba(255,255,255,0.05)", textAlign: "center", fontSize: "0.65rem", color: "#2a5a4a" }}>
-          <p>🌊 FleuVibe World · v6.0 · {spots.length} spots · {GlobalStats.totalCountries} pays · {GlobalStats.totalPartners}+ partenaires · 🤖 IA · 🗺️ Carte · 📡 PWA · 💳 Stripe · 🔒 Zod · 📊 Analytics</p>
-        </div>
           </div>
         )}
       </div>
+
+      {/* FOOTER */}
+      <footer style={{ background: "#f5f8f7", padding: "48px 32px 24px", marginTop: "40px" }}>
+        <div style={{ maxWidth: "1280px", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "36px", marginBottom: "32px" }}>
+          <div>
+            <h4 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1a2e28", marginBottom: "14px" }}>🌊 FleuVibe</h4>
+            {["À propos", "Blog", "Carrières", "Presse"].map(l => <p key={l} style={{ fontSize: "0.78rem", color: "#5a7a6e", marginBottom: "8px", cursor: "pointer" }}>{l}</p>)}
+          </div>
+          <div>
+            <h4 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1a2e28", marginBottom: "14px" }}>Explorer</h4>
+            {["Destinations", "Activités", "Carte interactive", "Guide par pays"].map(l => <p key={l} onClick={() => handlePageChange(l === "Carte interactive" ? "map" : "explore")} style={{ fontSize: "0.78rem", color: "#5a7a6e", marginBottom: "8px", cursor: "pointer" }}>{l}</p>)}
+          </div>
+          <div>
+            <h4 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1a2e28", marginBottom: "14px" }}>Support</h4>
+            {["Centre d'aide", "Contact", "Conditions générales", "Politique de confidentialité"].map(l => <p key={l} style={{ fontSize: "0.78rem", color: "#5a7a6e", marginBottom: "8px", cursor: "pointer" }}>{l}</p>)}
+          </div>
+          <div>
+            <h4 style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1a2e28", marginBottom: "14px" }}>Suivez-nous</h4>
+            {["Instagram", "Facebook", "YouTube", "TikTok"].map(l => <p key={l} style={{ fontSize: "0.78rem", color: "#5a7a6e", marginBottom: "8px", cursor: "pointer" }}>{l}</p>)}
+          </div>
+        </div>
+        <div style={{ borderTop: "1px solid #d0dfdc", paddingTop: "20px", textAlign: "center", fontSize: "0.7rem", color: "#8aa89e" }}>
+          <p>© 2025 FleuVibe — {spots.length}+ spots · {GlobalStats.totalCountries} pays · 🤖 IA · 📡 PWA</p>
+        </div>
+      </footer>
 
       {/* MODALS */}
       {bookingSpot && <BookingModal spot={bookingSpot} provider={ALL_PROVIDERS.find(p => p.routeIds?.includes(bookingSpot.id))} onClose={() => setBookingSpot(null)} />}
