@@ -1955,34 +1955,55 @@ export default function FleuVibe() {
               const activeCount = [selType !== "ALL", selDiff !== "ALL", selContinent !== "ALL"].filter(Boolean).length;
               return (
                 <>
-                  <div style={{ display: "flex", gap: "8px", marginBottom: "12px", alignItems: "center" }}>
-                    <button onClick={() => setShowFilters(f => !f)} style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 16px", background: activeCount > 0 ? "rgba(26,158,110,0.15)" : "rgba(255,255,255,0.05)", border: `1px solid ${activeCount > 0 ? "rgba(26,158,110,0.4)" : "rgba(255,255,255,0.1)"}`, borderRadius: "50px", color: activeCount > 0 ? "#a8edcf" : "#6a9a8c", fontSize: "0.72rem", fontWeight: 600 }}>
-                      🎛️ Filtres
-                      {activeCount > 0 && <span style={{ background: "#1a9e6e", borderRadius: "50%", width: 16, height: 16, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: 700, color: "#fff" }}>{activeCount}</span>}
-                    </button>
-                    {activeCount > 0 && <button onClick={() => { setSelType("ALL"); setSelDiff("ALL"); setSelContinent("ALL"); }} style={{ padding: "6px 12px", background: "none", border: "1px solid rgba(220,38,38,0.3)", borderRadius: "50px", color: "#f87171", fontSize: "0.68rem", fontWeight: 600 }}>✕ Réinitialiser</button>}
-                    {selType !== "ALL" && <span style={{ padding: "4px 10px", background: "rgba(26,158,110,0.1)", border: "1px solid rgba(26,158,110,0.25)", borderRadius: "20px", fontSize: "0.65rem", color: "#a8edcf" }}>{selType}</span>}
-                    {selDiff !== "ALL" && <span style={{ padding: "4px 10px", background: "rgba(26,158,110,0.1)", border: "1px solid rgba(26,158,110,0.25)", borderRadius: "20px", fontSize: "0.65rem", color: "#a8edcf" }}>{selDiff}</span>}
-                    {selContinent !== "ALL" && <span style={{ padding: "4px 10px", background: "rgba(26,158,110,0.1)", border: "1px solid rgba(26,158,110,0.25)", borderRadius: "20px", fontSize: "0.65rem", color: "#a8edcf" }}>{selContinent}</span>}
+                  {/* Quick pill filters */}
+                  <div style={{ display: "flex", gap: "8px", overflowX: "auto", paddingBottom: "6px", marginBottom: "10px", scrollbarWidth: "none" }}>
+                    {[
+                      ["ALL","ALL","🌍 Tous"],
+                      ["RIVER","ALL","🏞️ Rivières"],
+                      ["LAKE","ALL","🏔️ Lacs"],
+                      ["SEA","ALL","🌊 Mer"],
+                      ["ALL","Facile","🟢 Facile"],
+                      ["ALL","Intermédiaire","🟡 Intermédiaire"],
+                      ["ALL","Sportif","🔴 Sportif"],
+                    ].map(([type, diff, label]) => {
+                      const active = selType === type && selDiff === diff && (type !== "ALL" || diff !== "ALL" || (selType === "ALL" && selDiff === "ALL"));
+                      const isAll = type === "ALL" && diff === "ALL";
+                      const pillActive = isAll ? (selType === "ALL" && selDiff === "ALL") : (selType === type && selDiff === diff);
+                      return (
+                        <button
+                          key={label}
+                          onClick={() => { setSelType(type); setSelDiff(diff); }}
+                          style={{
+                            padding: "7px 16px", borderRadius: "50px", whiteSpace: "nowrap",
+                            fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", flexShrink: 0,
+                            background: pillActive ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.05)",
+                            color: pillActive ? "#fff" : "#6a9a8c",
+                            border: `1px solid ${pillActive ? "transparent" : "rgba(255,255,255,0.08)"}`,
+                            transition: "all 0.15s ease",
+                          }}
+                        >{label}</button>
+                      );
+                    })}
+                    {/* Région collapse trigger */}
+                    <button
+                      onClick={() => setShowFilters(f => !f)}
+                      style={{
+                        padding: "7px 16px", borderRadius: "50px", whiteSpace: "nowrap",
+                        fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", flexShrink: 0,
+                        background: selContinent !== "ALL" ? "rgba(26,158,110,0.15)" : "rgba(255,255,255,0.05)",
+                        color: selContinent !== "ALL" ? "#a8edcf" : "#6a9a8c",
+                        border: `1px solid ${selContinent !== "ALL" ? "rgba(26,158,110,0.4)" : "rgba(255,255,255,0.08)"}`,
+                      }}
+                    >🌍 Région {selContinent !== "ALL" ? `· ${selContinent}` : ""}</button>
+                    {activeCount > 0 && (
+                      <button
+                        onClick={() => { setSelType("ALL"); setSelDiff("ALL"); setSelContinent("ALL"); }}
+                        style={{ padding: "7px 12px", borderRadius: "50px", whiteSpace: "nowrap", fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", flexShrink: 0, background: "none", color: "#f87171", border: "1px solid rgba(220,38,38,0.3)" }}
+                      >✕ Reset</button>
+                    )}
                   </div>
                   {showFilters && (
                     <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "16px", marginBottom: "14px", animation: "slideUp 0.2s ease" }}>
-                      <div style={{ marginBottom: "12px" }}>
-                        <p style={{ fontSize: "0.65rem", color: "#5a8a78", fontWeight: 600, marginBottom: "6px", letterSpacing: "0.5px" }}>TYPE D'EAU</p>
-                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                          {[["ALL", "🌊 Tous"], ["RIVER", "🏞️ Rivières"], ["LAKE", "🏔️ Lacs"], ["SEA", "🌊 Mer"]].map(([id, label]) => (
-                            <button key={id} onClick={() => setSelType(id)} style={{ padding: "7px 14px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: selType === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.05)", color: selType === id ? "#fff" : "#6a9a8c" }}>{label}</button>
-                          ))}
-                        </div>
-                      </div>
-                      <div style={{ marginBottom: "12px" }}>
-                        <p style={{ fontSize: "0.65rem", color: "#5a8a78", fontWeight: 600, marginBottom: "6px", letterSpacing: "0.5px" }}>NIVEAU</p>
-                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
-                          {["ALL", "Facile", "Intermédiaire", "Sportif"].map(d => (
-                            <button key={d} onClick={() => setSelDiff(d)} style={{ padding: "7px 14px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: selDiff === d ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.05)", color: selDiff === d ? "#fff" : "#6a9a8c" }}>{d === "ALL" ? "Tous niveaux" : d}</button>
-                          ))}
-                        </div>
-                      </div>
                       <div>
                         <p style={{ fontSize: "0.65rem", color: "#5a8a78", fontWeight: 600, marginBottom: "6px", letterSpacing: "0.5px" }}>RÉGION</p>
                         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
@@ -2006,13 +2027,17 @@ export default function FleuVibe() {
                 <p style={{ marginTop: "14px", color: "#5a8a78", marginBottom: "14px" }}>Aucun spot trouvé.</p>
                 <button onClick={() => setShowSubmit(true)} style={{ padding: "9px 20px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.8rem" }}>➕ Ajouter le premier</button>
               </div>
-            ) : filtered.flatMap((s, i) => {
-              const card = <SpotCard key={s.id} spot={s} isFav={favorites.includes(s.id)} onFav={toggleFav} onBook={setBookingSpot} session={session} userName={userName} isPremium={isPremium} onShowPremium={() => setShowPremium(true)} allSpots={spots} />;
-              if (!isPremium && (i + 1) % 5 === 0 && i < filtered.length - 1) {
-                return [card, <NativeAd key={`ad_${i}`} activities={s.activities || []} type={s.type || ''} />];
-              }
-              return [card];
-            })}
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "16px" }}>
+                {filtered.flatMap((s, i) => {
+                  const card = <SpotCard key={s.id} spot={s} isFav={favorites.includes(s.id)} onFav={toggleFav} onBook={setBookingSpot} session={session} userName={userName} isPremium={isPremium} onShowPremium={() => setShowPremium(true)} allSpots={spots} />;
+                  if (!isPremium && (i + 1) % 5 === 0 && i < filtered.length - 1) {
+                    return [card, <div key={`ad_${i}`} style={{ gridColumn: "1 / -1" }}><NativeAd activities={s.activities || []} type={s.type || ''} /></div>];
+                  }
+                  return [card];
+                })}
+              </div>
+            )}
           </div>
         )}
 
