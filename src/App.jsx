@@ -7,8 +7,13 @@ import { partnershipManager, PARTNERSHIP_TIERS } from "./partnership";
 import { PREMIUM_PLANS as PLANS_V9, DynamicPricing, LoyaltyProgram, AffiliateProgram, getRelevantAd } from "./monetization";
 import SpotImage from "./components/SpotImage";
 import HeroSection from "./components/HeroSection";
+import ProofBar from "./components/ProofBar";
+import ProblemSection from "./components/ProblemSection";
 import HowItWorksSection from "./components/HowItWorksSection";
+import FeaturesSection from "./components/FeaturesSection";
+import TestimonialsSection from "./components/TestimonialsSection";
 import PricingSection from "./components/PricingSection";
+import FinalCTASection from "./components/FinalCTASection";
 
 const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
@@ -1833,8 +1838,13 @@ export default function FleuVibe() {
             setShowAuth={setShowAuth}
             handlePageChange={handlePageChange}
           />
+          <ProofBar />
+          <ProblemSection />
           <HowItWorksSection />
+          <FeaturesSection />
+          <TestimonialsSection />
           <PricingSection setShowAuth={setShowAuth} setShowPremium={setShowPremium} />
+          <FinalCTASection setShowAuth={setShowAuth} />
         </>
       )}
 

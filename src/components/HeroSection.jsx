@@ -2,107 +2,114 @@ export default function HeroSection({ spots, search, setSearch, handleAISearch, 
   return (
     <section
       aria-label="Présentation FleuVibe"
-      style={{ position: "relative", minHeight: "88vh", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}
+      style={{ position: "relative", minHeight: "92vh", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}
     >
-      {/* Background */}
+      {/* Background image with slow-zoom animation */}
       <img
         src="/images/hero-kayaking.jpg"
         alt=""
         aria-hidden="true"
-        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", animation: "slowZoom 20s ease-in-out infinite" }}
       />
-      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(5,15,30,0.45) 0%, rgba(3,10,20,0.78) 100%)" }} />
+      {/* Multi-stop gradient for readability at all scroll positions */}
+      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(4,12,24,0.55) 0%, rgba(4,12,24,0.35) 40%, rgba(4,12,24,0.75) 100%)" }} />
+
+      {/* Subtle animated grain overlay */}
+      <div aria-hidden="true" style={{ position: "absolute", inset: 0, opacity: 0.025, backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")", backgroundSize: "160px" }} />
 
       {/* Content */}
-      <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "48px 24px", maxWidth: "860px", width: "100%" }}>
+      <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "56px 24px 48px", maxWidth: "900px", width: "100%" }}>
 
-        {/* Eyebrow */}
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 18px", background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "40px", marginBottom: "28px", fontSize: "0.78rem", color: "rgba(255,255,255,0.92)", fontWeight: 600 }}>
-          <span style={{ width: 7, height: 7, background: "#4ade80", borderRadius: "50%", display: "inline-block", animation: "pulse 2s infinite" }} />
-          Saison 2026 — {spots.length}+ spots vérifiés
+        {/* Eyebrow pill */}
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "7px 20px", background: "rgba(255,255,255,0.1)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: "40px", marginBottom: "32px", fontSize: "0.75rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, letterSpacing: "0.2px" }}>
+          <span style={{ width: 7, height: 7, background: "#4ade80", borderRadius: "50%", flexShrink: 0, boxShadow: "0 0 8px #4ade80" }} aria-hidden="true" />
+          Saison 2026 — {spots.length}+ spots vérifiés en Europe
         </div>
 
-        {/* Headline */}
-        <h1 style={{ fontSize: "clamp(2.4rem,6.5vw,4.8rem)", fontWeight: 900, color: "#fff", lineHeight: 1.08, marginBottom: "20px", letterSpacing: "-1.5px" }}>
-          Le bon spot,{" "}
-          <span style={{ background: "linear-gradient(90deg,#4ade80 0%,#38bdf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            au bon moment.
+        {/* H1 */}
+        <h1 style={{ fontSize: "clamp(2.6rem,7vw,5.2rem)", fontWeight: 900, color: "#fff", lineHeight: 1.05, marginBottom: "22px", letterSpacing: "-2px", fontFamily: "'Fraunces', Georgia, serif" }}>
+          Le bon spot.{" "}
+          <br />
+          <span style={{ background: "linear-gradient(90deg,#4ade80 0%,#38bdf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>
+            Les bonnes conditions.
           </span>
         </h1>
 
         {/* Subtitle */}
-        <p style={{ color: "rgba(255,255,255,0.72)", fontSize: "clamp(0.95rem,2.5vw,1.15rem)", lineHeight: 1.65, maxWidth: "540px", margin: "0 auto 20px" }}>
-          FleuVibe analyse la météo du jour et te propose les meilleurs spots kayak,
-          paddle et rafting à ta portée — avec les conditions réelles, pas les moyennes.
+        <p style={{ color: "rgba(255,255,255,0.72)", fontSize: "clamp(1rem,2.5vw,1.2rem)", lineHeight: 1.6, maxWidth: "520px", margin: "0 auto 36px" }}>
+          Dis-nous où tu es et ce que tu veux faire.
+          On trouve le spot parfait avec la météo du jour — en 10 secondes.
         </p>
-
-        {/* Value bullets */}
-        <ul
-          aria-label="Avantages clés"
-          style={{ listStyle: "none", padding: 0, margin: "0 auto 36px", display: "flex", flexDirection: "column", gap: "10px", maxWidth: "440px", textAlign: "left" }}
-        >
-          {[
-            ["🌤️", "Conditions en temps réel", "— pas de mauvaises surprises à l'arrivée"],
-            ["🗺️", "40 spots vérifiés", "— rivières, lacs et côtes à travers l'Europe"],
-            ["👥", "Une communauté de pagayeurs", "— expéditions, avis, spots secrets"],
-          ].map(([icon, strong, rest]) => (
-            <li key={strong} style={{ display: "flex", alignItems: "baseline", gap: "10px", fontSize: "0.9rem", color: "rgba(255,255,255,0.82)" }}>
-              <span aria-hidden="true" style={{ fontSize: "1rem", flexShrink: 0 }}>{icon}</span>
-              <span><strong style={{ color: "#fff", fontWeight: 700 }}>{strong}</strong>{rest}</span>
-            </li>
-          ))}
-        </ul>
 
         {/* Search bar */}
         <div
           role="search"
-          style={{ background: "rgba(255,255,255,0.97)", borderRadius: "18px", padding: "8px", boxShadow: "0 30px 60px rgba(0,0,0,0.35)", display: "flex", gap: "6px", maxWidth: "640px", margin: "0 auto 20px" }}
+          style={{ background: "rgba(255,255,255,0.97)", borderRadius: "20px", padding: "8px", boxShadow: "0 32px 80px rgba(0,0,0,0.4)", display: "flex", gap: "6px", maxWidth: "660px", margin: "0 auto 24px" }}
         >
-          <label htmlFor="hero-search" style={{ display: "flex", flex: 1, alignItems: "center", gap: "10px", padding: "10px 16px" }}>
-            <span aria-hidden="true" style={{ fontSize: "1.1rem" }}>📍</span>
+          <label htmlFor="hero-search" style={{ display: "flex", flex: 1, alignItems: "center", gap: "12px", padding: "10px 18px" }}>
+            <span aria-hidden="true" style={{ fontSize: "1.1rem", flexShrink: 0 }}>📍</span>
             <input
               id="hero-search"
               type="search"
               value={search}
               onChange={e => setSearch(e.target.value)}
               onKeyDown={e => e.key === "Enter" && handleAISearch()}
-              placeholder="Destination, rivière, activité..."
-              aria-label="Rechercher un spot nautique"
-              style={{ border: "none", background: "transparent", width: "100%", fontSize: "0.95rem", color: "#1a2e28", outline: "none" }}
+              placeholder='Essaie : "rafting débutant Ardèche" ou "paddle lac calme"'
+              aria-label="Rechercher un spot nautique par activité, lieu ou niveau"
+              style={{ border: "none", background: "transparent", width: "100%", fontSize: "0.92rem", color: "#1a2e28", outline: "none" }}
             />
           </label>
           <button
             onClick={handleAISearch}
             disabled={aiSearchLoading}
-            aria-label="Lancer la recherche"
-            style={{ padding: "13px 28px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "12px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", whiteSpace: "nowrap", flexShrink: 0, cursor: "pointer", opacity: aiSearchLoading ? 0.7 : 1 }}
+            aria-label="Lancer la recherche intelligente"
+            style={{ padding: "13px 28px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", whiteSpace: "nowrap", flexShrink: 0, opacity: aiSearchLoading ? 0.7 : 1, transition: "transform 0.15s,opacity 0.15s" }}
           >
-            {aiSearchLoading ? "⏳" : "🔍 Trouver mon spot"}
+            {aiSearchLoading ? "⏳ Recherche…" : "🔍 Trouver mon spot"}
           </button>
         </div>
 
+        {/* Suggestion pills */}
+        <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap", marginBottom: "28px" }}>
+          {["🛶 Kayak rivière", "🏄 Paddle lac", "🌊 Rafting sportif", "⛵ Voile côtière"].map(pill => (
+            <button
+              key={pill}
+              onClick={() => { setSearch(pill.slice(3)); handleAISearch(); }}
+              style={{ padding: "7px 16px", background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: "40px", color: "rgba(255,255,255,0.85)", fontSize: "0.78rem", fontWeight: 500 }}
+            >
+              {pill}
+            </button>
+          ))}
+        </div>
+
         {/* CTAs */}
-        <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap", marginBottom: "28px" }}>
           <button
             onClick={() => setShowAuth(true)}
             aria-label="Créer un compte gratuit"
-            style={{ padding: "13px 32px", background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "40px", color: "#fff", fontWeight: 700, fontSize: "0.9rem", cursor: "pointer" }}
+            style={{ padding: "14px 36px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 700, fontSize: "0.92rem", boxShadow: "0 12px 32px rgba(26,158,110,0.45)" }}
           >
-            Commencer gratuitement
+            Commencer gratuitement →
           </button>
           <button
             onClick={() => handlePageChange("map")}
             aria-label="Voir la carte des spots"
-            style={{ padding: "13px 24px", background: "transparent", border: "1px solid rgba(255,255,255,0.22)", borderRadius: "40px", color: "rgba(255,255,255,0.78)", fontWeight: 500, fontSize: "0.9rem", cursor: "pointer" }}
+            style={{ padding: "14px 28px", background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.28)", borderRadius: "40px", color: "#fff", fontWeight: 600, fontSize: "0.92rem" }}
           >
             🗺️ Voir les {spots.length} spots
           </button>
         </div>
 
-        {/* Social proof */}
-        <p style={{ marginTop: "22px", fontSize: "0.75rem", color: "rgba(255,255,255,0.45)", letterSpacing: "0.3px" }}>
-          Déjà <strong style={{ color: "rgba(255,255,255,0.7)" }}>1 200+ pagayeurs</strong> ont planifié leur prochaine sortie ici · Sans carte bancaire
+        {/* Micro social proof */}
+        <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.42)", letterSpacing: "0.3px" }}>
+          <strong style={{ color: "rgba(255,255,255,0.65)" }}>1 200+ pagayeurs</strong> ont planifié leur sortie ici · Gratuit, sans carte bancaire
         </p>
+      </div>
+
+      {/* Scroll hint */}
+      <div aria-hidden="true" style={{ position: "absolute", bottom: 28, left: "50%", transform: "translateX(-50%)", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px", opacity: 0.4 }}>
+        <span style={{ fontSize: "0.62rem", color: "#fff", letterSpacing: "1px", textTransform: "uppercase", fontWeight: 600 }}>Défiler</span>
+        <div style={{ width: 1, height: 32, background: "linear-gradient(to bottom,rgba(255,255,255,0.6),transparent)" }} />
       </div>
     </section>
   );
