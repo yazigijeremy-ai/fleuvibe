@@ -77,6 +77,7 @@ Variables d'environnement à configurer dans Vercel :
 | `VITE_OPENAI_KEY` | Clé OpenAI (GPT-4o mini) |
 | `VITE_STRIPE_MONTHLY_URL` | Lien Stripe mensuel (4,99€) |
 | `VITE_STRIPE_ANNUAL_URL` | Lien Stripe annuel (39,99€) |
+| `VITE_UNSPLASH_ACCESS_KEY` | Clé Unsplash API — [unsplash.com/developers](https://unsplash.com/developers) |
 
 Les variables Supabase et Weather sont déjà dans le code (clés publiques).
 
