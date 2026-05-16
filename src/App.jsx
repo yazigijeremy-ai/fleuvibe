@@ -6,6 +6,9 @@ import { stripeManager, calcBookingPrice } from "./stripe";
 import { partnershipManager, PARTNERSHIP_TIERS } from "./partnership";
 import { PREMIUM_PLANS as PLANS_V9, DynamicPricing, LoyaltyProgram, AffiliateProgram, getRelevantAd } from "./monetization";
 import SpotImage from "./components/SpotImage";
+import HeroSection from "./components/HeroSection";
+import HowItWorksSection from "./components/HowItWorksSection";
+import PricingSection from "./components/PricingSection";
 
 const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
@@ -1817,44 +1820,21 @@ export default function FleuVibe() {
         </div>
       </div>
 
-      {/* ── HERO PLEIN ÉCRAN ── */}
+      {/* ── LANDING (non connecté) ── */}
       {!session && (
-        <div style={{ position: "relative", minHeight: "88vh", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-          <img src="/images/hero-kayaking.jpg" alt="Kayak" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }} />
-          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, rgba(5,15,30,0.5) 0%, rgba(3,10,20,0.75) 100%)" }} />
-          <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: "40px 24px", maxWidth: "820px", width: "100%" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "6px 18px", background: "rgba(255,255,255,0.12)", backdropFilter: "blur(12px)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: "40px", marginBottom: "28px", fontSize: "0.78rem", color: "rgba(255,255,255,0.92)", fontWeight: 600 }}>
-              <span style={{ width: 7, height: 7, background: "#4ade80", borderRadius: "50%", display: "inline-block" }} />
-              Saison 2026 — {spots.length}+ spots disponibles
-            </div>
-            <h2 style={{ fontSize: "clamp(2.6rem,7vw,5rem)", fontWeight: 900, color: "#fff", lineHeight: 1.1, marginBottom: "20px", letterSpacing: "-1.5px" }}>
-              Découvrez le<br />
-              <span style={{ background: "linear-gradient(90deg,#fff 0%,#4ade80 50%,#38bdf8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>Sauvage en Vous</span>
-            </h2>
-            <p style={{ color: "rgba(255,255,255,0.72)", fontSize: "1.1rem", marginBottom: "36px", maxWidth: "520px", margin: "0 auto 36px", lineHeight: 1.6 }}>
-              Kayak, SUP, rafting, voile — des expériences inoubliables sur les plus beaux plans d'eau du monde.
-            </p>
-            <div style={{ background: "rgba(255,255,255,0.97)", backdropFilter: "blur(20px)", borderRadius: "18px", padding: "8px", boxShadow: "0 30px 60px rgba(0,0,0,0.35)", display: "flex", gap: "6px", maxWidth: "640px", margin: "0 auto 20px" }}>
-              <div style={{ flex: 1, display: "flex", alignItems: "center", gap: "10px", padding: "10px 16px" }}>
-                <span style={{ fontSize: "1.1rem" }}>📍</span>
-                <input type="text" value={search} onChange={e => setSearch(e.target.value)} onKeyDown={e => e.key === "Enter" && handleAISearch()}
-                  placeholder="Destination, rivière, activité..."
-                  style={{ border: "none", background: "transparent", width: "100%", fontSize: "0.95rem", color: "#1a2e28", outline: "none" }} />
-              </div>
-              <button onClick={handleAISearch} style={{ padding: "13px 28px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "12px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", whiteSpace: "nowrap", flexShrink: 0 }}>
-                {aiSearchLoading ? "⏳" : "🤖 Rechercher"}
-              </button>
-            </div>
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-              <button onClick={() => setShowAuth(true)} style={{ padding: "12px 32px", background: "rgba(255,255,255,0.15)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.3)", borderRadius: "40px", color: "#fff", fontWeight: 600, fontSize: "0.9rem" }}>
-                Commencer gratuitement
-              </button>
-              <button onClick={() => handlePageChange("map")} style={{ padding: "12px 24px", background: "transparent", border: "1px solid rgba(255,255,255,0.25)", borderRadius: "40px", color: "rgba(255,255,255,0.8)", fontWeight: 500, fontSize: "0.9rem" }}>
-                🗺️ Voir la carte
-              </button>
-            </div>
-          </div>
-        </div>
+        <>
+          <HeroSection
+            spots={spots}
+            search={search}
+            setSearch={setSearch}
+            handleAISearch={handleAISearch}
+            aiSearchLoading={aiSearchLoading}
+            setShowAuth={setShowAuth}
+            handlePageChange={handlePageChange}
+          />
+          <HowItWorksSection />
+          <PricingSection setShowAuth={setShowAuth} setShowPremium={setShowPremium} />
+        </>
       )}
 
       <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px 40px", position: "relative", zIndex: 1 }}>
