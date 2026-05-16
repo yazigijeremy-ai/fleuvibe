@@ -1030,11 +1030,12 @@ function TranslateButton({ text, onTranslated }) {
   );
 }
 
-// IDs Unsplash vérifiés — paysages d'eau sans personnes
+// Fallback pool — 4 images per type reduces thumbnail collisions across 40 spots
+// SEA pool avoids river/rafting images; real diversity comes from SpotImage + Unsplash
 const WATER_PHOTOS = {
-  RIVER: ['/images/canyon-river.jpg', '/images/rafting-adventure.jpg', '/images/hero-kayaking.jpg'],
-  LAKE:  ['/images/kayak-lake.jpg',   '/images/river-camping.jpg',     '/images/canyon-river.jpg'],
-  SEA:   ['/images/hero-kayaking.jpg','/images/kayak-lake.jpg',        '/images/rafting-adventure.jpg'],
+  RIVER: ['/images/canyon-river.jpg', '/images/rafting-adventure.jpg', '/images/hero-kayaking.jpg', '/images/river-camping.jpg'],
+  LAKE:  ['/images/kayak-lake.jpg',   '/images/hero-kayaking.jpg',     '/images/canyon-river.jpg',  '/images/river-camping.jpg'],
+  SEA:   ['/images/hero-kayaking.jpg','/images/kayak-lake.jpg',        '/images/river-camping.jpg', '/images/canyon-river.jpg'],
 };
 
 function getSpotPhoto(spot) {
@@ -1142,7 +1143,7 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
       {lightboxIdx !== null && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 3000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={e => { e.stopPropagation(); setLightboxIdx(null); }}>
           <button onClick={e => { e.stopPropagation(); setLightboxIdx(i => (i - 1 + gallery.length) % gallery.length); }} style={{ position: "absolute", left: 20, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", fontSize: "1.2rem", cursor: "pointer" }}>&#8592;</button>
-          <img src={gallery[lightboxIdx]} alt="" style={{ maxWidth: "90vw", maxHeight: "85vh", borderRadius: "16px", objectFit: "contain" }} onClick={e => e.stopPropagation()} />
+          <img src={gallery[lightboxIdx]} alt={spot.name} style={{ maxWidth: "90vw", maxHeight: "85vh", borderRadius: "16px", objectFit: "contain" }} onClick={e => e.stopPropagation()} />
           <button onClick={e => { e.stopPropagation(); setLightboxIdx(i => (i + 1) % gallery.length); }} style={{ position: "absolute", right: 20, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", fontSize: "1.2rem", cursor: "pointer" }}>&#8594;</button>
           <button onClick={e => { e.stopPropagation(); setLightboxIdx(null); }} style={{ position: "absolute", top: 20, right: 20, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 38, height: 38, color: "#fff", fontSize: "1rem", cursor: "pointer" }}>&#10005;</button>
           <div style={{ position: "absolute", bottom: 20, color: "rgba(255,255,255,0.6)", fontSize: "0.75rem" }}>{lightboxIdx + 1} / {gallery.length}</div>
