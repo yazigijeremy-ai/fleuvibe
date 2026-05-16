@@ -8,21 +8,35 @@ const FALLBACK_GRADIENTS = {
   default: "linear-gradient(160deg,#1a2a4a,#4a6a9e)",
 };
 
-// Type-based landscape terms for Unsplash queries
-const TYPE_TERMS = {
-  RIVER: "river gorge water nature landscape",
-  LAKE:  "lake mountain reflection nature landscape",
-  SEA:   "sea coast cliffs ocean landscape",
-};
-
-// Build a spot-specific query to minimise photo repetition
+// Type-coherent, activity-aware Unsplash query builder
 function buildQuery(spot) {
-  const parts = [];
-  // Use the river/water body name when it's specific
-  const skip = ["Lac", "Océan", "Mer", "Fjord", "Cenotes", "Lac Malawi", "Lac Louise"];
-  if (spot.river && !skip.includes(spot.river)) parts.push(spot.river);
-  parts.push(TYPE_TERMS[spot.type] || "water outdoor adventure");
-  return parts.join(" ");
+  const type = spot.type?.toLowerCase() || '';
+  const activity = (spot.activities?.join(' ') || '').toLowerCase();
+
+  if (type === 'river' || activity.includes('rafting') || activity.includes('kayak')) {
+    return 'river kayaking whitewater';
+  }
+  if (type === 'lake' || activity.includes('paddle') || activity.includes('lac')) {
+    return 'lake paddleboard calm water';
+  }
+  if (type === 'sea' || type === 'coast' || activity.includes('mer') || activity.includes('voile')) {
+    return 'sea kayaking coast ocean';
+  }
+  if (type === 'waterfall') {
+    return 'waterfall nature wild';
+  }
+  return 'water sport nature outdoor';
+}
+
+// Last-resort local fallback: always type-coherent, never shows a river image on a sea spot
+function getFinalFallback(spotType) {
+  switch (spotType?.toUpperCase()) {
+    case 'RIVER': return '/images/canyon-river.jpg';
+    case 'LAKE':  return '/images/lake-calm.jpg';
+    case 'SEA':
+    case 'COAST': return '/images/sea-coast.jpg';
+    default:      return '/images/hero-kayaking.jpg';
+  }
 }
 
 // Cache key v2 — different prefix forces refresh of old generic-query photos
@@ -33,11 +47,14 @@ export default function SpotImage({ spot, fallbackUrl }) {
   const [fetching, setFetching] = useState(true);
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
+  // Track whether we already fell back to the local image (prevents infinite error loop)
+  const [usedLocalFallback, setUsedLocalFallback] = useState(false);
 
   useEffect(() => {
     setFetching(true);
     setImgLoaded(false);
     setImgError(false);
+    setUsedLocalFallback(false);
 
     if (spot.image_url) {
       setImgData({ url: spot.image_url, credit: spot.image_credit, creditUrl: spot.image_credit_url });
@@ -70,11 +87,24 @@ export default function SpotImage({ spot, fallbackUrl }) {
     load();
   }, [spot.id]);
 
-  const fallback = FALLBACK_GRADIENTS[spot.type] || FALLBACK_GRADIENTS.default;
-  const srcUrl = imgData?.url || fallbackUrl;
+  const gradientFallback = FALLBACK_GRADIENTS[spot.type] || FALLBACK_GRADIENTS.default;
+  const localFallback = getFinalFallback(spot.type);
+  // Use Unsplash result first, then WATER_PHOTOS entry passed from parent, then type-safe local
+  const srcUrl = usedLocalFallback ? localFallback : (imgData?.url || fallbackUrl);
+
+  const handleError = () => {
+    if (!usedLocalFallback && srcUrl !== localFallback) {
+      // First failure: retry with the type-coherent local image
+      setUsedLocalFallback(true);
+      setImgLoaded(false);
+    } else {
+      // Already on local fallback — stop retrying, show emoji
+      setImgError(true);
+    }
+  };
 
   return (
-    <div style={{ width: "100%", height: "100%", position: "relative", background: fallback }}>
+    <div style={{ width: "100%", height: "100%", position: "relative", background: gradientFallback }}>
       {(fetching || (!imgLoaded && srcUrl && !imgError)) && (
         <div className="fv-skeleton" style={{ position: "absolute", inset: 0, zIndex: 1 }} />
       )}
@@ -82,10 +112,10 @@ export default function SpotImage({ spot, fallbackUrl }) {
       {srcUrl && !imgError ? (
         <img
           src={srcUrl}
-          alt={spot.name}
+          alt={`${spot.name} - spot ${spot.type?.toLowerCase() || 'nautique'}`}
           loading="lazy"
           onLoad={() => setImgLoaded(true)}
-          onError={() => setImgError(true)}
+          onError={handleError}
           style={{
             width: "100%", height: "100%", objectFit: "cover", objectPosition: "center",
             display: "block", opacity: imgLoaded ? 1 : 0, transition: "opacity 0.4s ease",

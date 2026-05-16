@@ -7,8 +7,13 @@ import { partnershipManager, PARTNERSHIP_TIERS } from "./partnership";
 import { PREMIUM_PLANS as PLANS_V9, DynamicPricing, LoyaltyProgram, AffiliateProgram, getRelevantAd } from "./monetization";
 import SpotImage from "./components/SpotImage";
 import HeroSection from "./components/HeroSection";
+import ProofBar from "./components/ProofBar";
+import ProblemSection from "./components/ProblemSection";
 import HowItWorksSection from "./components/HowItWorksSection";
+import FeaturesSection from "./components/FeaturesSection";
+import TestimonialsSection from "./components/TestimonialsSection";
 import PricingSection from "./components/PricingSection";
+import FinalCTASection from "./components/FinalCTASection";
 
 const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
@@ -1030,12 +1035,12 @@ function TranslateButton({ text, onTranslated }) {
   );
 }
 
-// Fallback pool — 4 images per type reduces thumbnail collisions across 40 spots
-// SEA pool avoids river/rafting images; real diversity comes from SpotImage + Unsplash
+// Fallback pool — each type uses only semantically coherent images
+// Real diversity comes from SpotImage + Unsplash API; these are last-resort fallbacks
 const WATER_PHOTOS = {
   RIVER: ['/images/canyon-river.jpg', '/images/rafting-adventure.jpg', '/images/hero-kayaking.jpg', '/images/river-camping.jpg'],
-  LAKE:  ['/images/kayak-lake.jpg',   '/images/hero-kayaking.jpg',     '/images/canyon-river.jpg',  '/images/river-camping.jpg'],
-  SEA:   ['/images/hero-kayaking.jpg','/images/kayak-lake.jpg',        '/images/river-camping.jpg', '/images/canyon-river.jpg'],
+  LAKE:  ['/images/kayak-lake.jpg', '/images/lake-calm.jpg', 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&q=80&fit=crop&auto=format', 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80&fit=crop&auto=format'],
+  SEA:   ['/images/sea-coast.jpg', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80&fit=crop&auto=format', 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800&q=80&fit=crop&auto=format', 'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=800&q=80&fit=crop&auto=format'],
 };
 
 function getSpotPhoto(spot) {
@@ -1114,7 +1119,7 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
             {gallery.map((src, idx) => (
               <div key={idx} onClick={e => { e.stopPropagation(); setLightboxIdx(idx); }}
                 style={{ borderRadius: "10px", overflow: "hidden", aspectRatio: "4/3", cursor: "zoom-in", position: "relative" }}>
-                <img src={src} alt={`${spot.name} ${idx + 1}`} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+                <img src={src} alt={`${spot.name} - photo ${idx + 1}`} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
                 {idx === 2 && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.68rem", color: "#fff", fontWeight: 600 }}>🔍</div>}
               </div>
             ))}
@@ -1143,7 +1148,7 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
       {lightboxIdx !== null && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 3000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={e => { e.stopPropagation(); setLightboxIdx(null); }}>
           <button onClick={e => { e.stopPropagation(); setLightboxIdx(i => (i - 1 + gallery.length) % gallery.length); }} style={{ position: "absolute", left: 20, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", fontSize: "1.2rem", cursor: "pointer" }}>&#8592;</button>
-          <img src={gallery[lightboxIdx]} alt={spot.name} style={{ maxWidth: "90vw", maxHeight: "85vh", borderRadius: "16px", objectFit: "contain" }} onClick={e => e.stopPropagation()} />
+          <img src={gallery[lightboxIdx]} alt={`${spot.name} - galerie photo ${lightboxIdx + 1}`} style={{ maxWidth: "90vw", maxHeight: "85vh", borderRadius: "16px", objectFit: "contain" }} onClick={e => e.stopPropagation()} />
           <button onClick={e => { e.stopPropagation(); setLightboxIdx(i => (i + 1) % gallery.length); }} style={{ position: "absolute", right: 20, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", fontSize: "1.2rem", cursor: "pointer" }}>&#8594;</button>
           <button onClick={e => { e.stopPropagation(); setLightboxIdx(null); }} style={{ position: "absolute", top: 20, right: 20, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 38, height: 38, color: "#fff", fontSize: "1rem", cursor: "pointer" }}>&#10005;</button>
           <div style={{ position: "absolute", bottom: 20, color: "rgba(255,255,255,0.6)", fontSize: "0.75rem" }}>{lightboxIdx + 1} / {gallery.length}</div>
@@ -1833,8 +1838,13 @@ export default function FleuVibe() {
             setShowAuth={setShowAuth}
             handlePageChange={handlePageChange}
           />
+          <ProofBar />
+          <ProblemSection />
           <HowItWorksSection />
+          <FeaturesSection />
+          <TestimonialsSection />
           <PricingSection setShowAuth={setShowAuth} setShowPremium={setShowPremium} />
+          <FinalCTASection setShowAuth={setShowAuth} />
         </>
       )}
 
@@ -1868,7 +1878,7 @@ export default function FleuVibe() {
                   onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.1)"; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; }}>
                   <div style={{ position: "relative", height: "160px", overflow: "hidden" }}>
-                    <img src={getSpotPhoto(s)} alt={s.name} loading="lazy"
+                    <img src={getSpotPhoto(s)} alt={`${s.name} - spot nautique populaire`} loading="lazy"
                       style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease" }}
                       onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
                       onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"} />
