@@ -2,13 +2,31 @@ import { useState, useEffect } from "react";
 import { fetchSpotImage, getSpotImageById } from "../utils/getSpotImage";
 
 const FALLBACK_GRADIENTS = {
-  RIVER:   "linear-gradient(135deg,#1a4a5c,#14a085)",
-  LAKE:    "linear-gradient(135deg,#1b3a2a,#4a9e5c)",
-  SEA:     "linear-gradient(135deg,#1a2a4a,#0891b2)",
-  default: "linear-gradient(135deg,#1a2a4a,#4a6a9e)",
+  RIVER:   "linear-gradient(160deg,#1a4a5c,#14a085)",
+  LAKE:    "linear-gradient(160deg,#1b3a2a,#4a9e5c)",
+  SEA:     "linear-gradient(160deg,#1a2a4a,#0891b2)",
+  default: "linear-gradient(160deg,#1a2a4a,#4a6a9e)",
 };
 
-const lsKey = (id) => `fv_img_${id}`;
+// Type-based landscape terms for Unsplash queries
+const TYPE_TERMS = {
+  RIVER: "river gorge water nature landscape",
+  LAKE:  "lake mountain reflection nature landscape",
+  SEA:   "sea coast cliffs ocean landscape",
+};
+
+// Build a spot-specific query to minimise photo repetition
+function buildQuery(spot) {
+  const parts = [];
+  // Use the river/water body name when it's specific
+  const skip = ["Lac", "Océan", "Mer", "Fjord", "Cenotes", "Lac Malawi", "Lac Louise"];
+  if (spot.river && !skip.includes(spot.river)) parts.push(spot.river);
+  parts.push(TYPE_TERMS[spot.type] || "water outdoor adventure");
+  return parts.join(" ");
+}
+
+// Cache key v2 — different prefix forces refresh of old generic-query photos
+const lsKey = (id) => `fv_img2_${id}`;
 
 export default function SpotImage({ spot, fallbackUrl }) {
   const [imgData, setImgData] = useState(null);
@@ -41,7 +59,7 @@ export default function SpotImage({ spot, fallbackUrl }) {
       if (spot.unsplash_id) {
         data = await getSpotImageById(spot.unsplash_id);
       } else {
-        data = await fetchSpotImage(spot.type, spot.name);
+        data = await fetchSpotImage(buildQuery(spot));
       }
       if (data) {
         try { localStorage.setItem(lsKey(spot.id), JSON.stringify(data)); } catch {}
@@ -57,7 +75,6 @@ export default function SpotImage({ spot, fallbackUrl }) {
 
   return (
     <div style={{ width: "100%", height: "100%", position: "relative", background: fallback }}>
-      {/* Skeleton shown while fetching or while image is loading */}
       {(fetching || (!imgLoaded && srcUrl && !imgError)) && (
         <div className="fv-skeleton" style={{ position: "absolute", inset: 0, zIndex: 1 }} />
       )}
@@ -75,7 +92,7 @@ export default function SpotImage({ spot, fallbackUrl }) {
           }}
         />
       ) : !fetching && (
-        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "3rem" }}>
+        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "3.5rem" }}>
           {spot.emoji}
         </div>
       )}
@@ -88,11 +105,11 @@ export default function SpotImage({ spot, fallbackUrl }) {
           rel="noopener noreferrer"
           onClick={e => e.stopPropagation()}
           style={{
-            position: "absolute", bottom: 6, right: 8, fontSize: "10px",
-            color: "rgba(255,255,255,0.6)", zIndex: 4, textDecoration: "none",
+            position: "absolute", bottom: 6, right: 8, fontSize: "9px",
+            color: "rgba(255,255,255,0.5)", zIndex: 4, textDecoration: "none",
           }}
         >
-          Photo: {imgData.credit} / Unsplash
+          {imgData.credit} / Unsplash
         </a>
       )}
     </div>

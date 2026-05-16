@@ -1053,69 +1053,59 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
   const provider = ALL_PROVIDERS.find(p => p.routeIds?.includes(spot.id));
   const gallery = getGalleryPhotos(spot);
   const fallbackUrl = getSpotPhoto(spot);
-  const diffClass = { Facile: "debutant", Intermédiaire: "intermediaire", Sportif: "expert" }[spot.difficulty] || "debutant";
-  const reviewCount = Math.floor(spot.id * 3.7 + 12);
+  const countryName = COUNTRIES[spot.country]?.name || "";
 
   return (
     <div className="fv-spot-card" style={{ marginBottom: "16px" }} onClick={() => setOpen(o => !o)}>
 
-      {/* ── IMAGE 220px ── */}
-      <div className="card-img-wrap">
+      {/* ── FULL IMAGE OVERLAY ── */}
+      <div style={{ position: "relative", height: "300px", overflow: "hidden" }}>
         <SpotImage spot={spot} fallbackUrl={fallbackUrl} />
-        {/* gradient overlay */}
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)", pointerEvents: "none", zIndex: 2 }} />
-        {/* type badge top-left */}
-        <div style={{ position: "absolute", top: 12, left: 12, padding: "4px 10px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(6px)", borderRadius: "20px", fontSize: "0.65rem", fontWeight: 600, color: "#fff", zIndex: 3 }}>{typeIcon} {typeName}</div>
-        {/* sponsored */}
-        {spot.sponsored && <div style={{ position: "absolute", top: 12, left: "50%", transform: "translateX(-50%)", padding: "3px 10px", background: "rgba(245,158,11,0.9)", borderRadius: "20px", fontSize: "0.6rem", fontWeight: 700, color: "#fff", zIndex: 3, whiteSpace: "nowrap" }}>⭐ PARTENAIRE</div>}
-        {/* fav button top-right */}
-        <button className="fv-btn-fav" onClick={e => { e.stopPropagation(); onFav(spot.id); }}>{isFav ? "❤️" : "🤍"}</button>
-        {/* difficulty badge bottom-left */}
-        <span className={`fv-badge-level ${diffClass}`}>{spot.difficulty}</span>
-      </div>
 
-      {/* ── BODY ── */}
-      <div className="card-body">
-        <div className="card-region">{COUNTRIES[spot.country]?.flag} {COUNTRIES[spot.country]?.name} · {spot.region}</div>
-        <h3 className="card-title">{spot.name}</h3>
-        {spot.rating && (
-          <div className="card-rating">
-            <span className="star">★</span>
-            <span style={{ fontWeight: 600, color: "#374151" }}>{spot.rating.toFixed(1)}</span>
-            <span>({reviewCount} avis)</span>
+        {/* Deep gradient for text legibility */}
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.35) 55%, rgba(0,0,0,0.08) 100%)", zIndex: 2, pointerEvents: "none" }} />
+
+        {/* TOP ROW — activity tags left, fav right */}
+        <div style={{ position: "absolute", top: 12, left: 12, right: 12, display: "flex", justifyContent: "space-between", alignItems: "flex-start", zIndex: 3 }}>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            {spot.activities.slice(0, 2).map(a => (
+              <span key={a} style={{ padding: "4px 10px", background: "rgba(255,255,255,0.18)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: "20px", fontSize: "0.65rem", color: "#fff", fontWeight: 500 }}>{a}</span>
+            ))}
+            {spot.sponsored && <span style={{ padding: "4px 10px", background: "rgba(245,158,11,0.85)", backdropFilter: "blur(6px)", borderRadius: "20px", fontSize: "0.62rem", fontWeight: 700, color: "#fff" }}>⭐ Partenaire</span>}
           </div>
-        )}
-        <div className="card-meta">
-          <span>📏 {spot.distance}</span>
-          <span>⏱ {spot.duration}</span>
-          <span>{typeIcon} {typeName}</span>
+          <button className="fv-btn-fav" onClick={e => { e.stopPropagation(); onFav(spot.id); }} style={{ flexShrink: 0 }}>{isFav ? "❤️" : "🤍"}</button>
         </div>
-        <div className="card-tags">
-          {spot.activities.slice(0, 3).map(a => <span key={a} className="card-tag">{a}</span>)}
-          {spot.camping && <span className="card-tag">⛺ Camping</span>}
-        </div>
-      </div>
 
-      {/* ── FOOTER ── */}
-      <div className="card-footer">
-        <div>
-          {provider ? (
-            <>
-              <span className="card-price-label">à partir de</span>
-              <span className="card-price-val">{provider.price}<span className="card-price-unit"> {provider.currency}/pers</span></span>
-            </>
-          ) : (
-            <span style={{ fontSize: "0.75rem", color: "#9ca3af" }}>{spot.rating ? `★ ${spot.rating.toFixed(1)}` : "Accès libre"}</span>
-          )}
+        {/* BOTTOM INFO — location, title, price + CTA */}
+        <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "16px 16px 14px", zIndex: 3 }}>
+          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", marginBottom: "5px", display: "flex", alignItems: "center", gap: "5px", letterSpacing: "0.03em" }}>
+            📍 {spot.river && spot.river !== "Lac" && spot.river !== "Océan" && spot.river !== "Mer" ? spot.river + " · " : ""}{countryName}
+          </div>
+          <h3 style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: "1.15rem", fontWeight: 600, color: "#fff", lineHeight: 1.2, marginBottom: "12px" }}>{spot.name}</h3>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div>
+              {provider ? (
+                <span style={{ color: "#fff", fontWeight: 700, fontSize: "1rem" }}>
+                  {provider.price} <span style={{ fontSize: "0.75rem", fontWeight: 400, opacity: 0.8 }}>{provider.currency}/pers</span>
+                </span>
+              ) : (
+                <span style={{ display: "flex", gap: "8px", fontSize: "0.75rem", color: "rgba(255,255,255,0.75)" }}>
+                  <span>{typeIcon} {typeName}</span>
+                  <span>·</span>
+                  <span>{spot.difficulty}</span>
+                </span>
+              )}
+            </div>
+            <button className="card-cta" onClick={e => { e.stopPropagation(); setOpen(o => !o); }}>
+              {open ? "▲" : "Voir →"}
+            </button>
+          </div>
         </div>
-        <button className="card-cta" onClick={e => { e.stopPropagation(); setOpen(o => !o); }}>
-          {open ? "▲ Réduire" : "Voir →"}
-        </button>
       </div>
 
       {/* ── EXPANDED DETAILS ── */}
       {open && (
-        <div style={{ borderTop: "1px solid #f0f5f3", padding: "16px", animation: "slideUp 0.3s ease" }} onClick={e => e.stopPropagation()}>
+        <div style={{ background: "#fff", borderTop: "1px solid #f0f5f3", padding: "16px", animation: "slideUp 0.3s ease" }} onClick={e => e.stopPropagation()}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "6px", marginBottom: "14px" }}>
             {gallery.map((src, idx) => (
               <div key={idx} onClick={e => { e.stopPropagation(); setLightboxIdx(idx); }}
@@ -1158,6 +1148,7 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
     </div>
   );
 }
+
 
 function NativeAd({ activities, type }) {
   const ad = getRelevantAd(activities, type);

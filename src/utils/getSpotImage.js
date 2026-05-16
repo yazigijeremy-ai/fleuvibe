@@ -1,17 +1,11 @@
 const UNSPLASH_KEY = import.meta.env.VITE_UNSPLASH_ACCESS_KEY;
 
-const TYPE_QUERIES = {
-  RIVER: 'kayak river forest belgium ardennes',
-  LAKE:  'paddleboard lake calm nature',
-  SEA:   'sea kayak coastline ocean',
-};
-
-export async function fetchSpotImage(type, spotName) {
+export async function fetchSpotImage(query) {
   if (!UNSPLASH_KEY) return null;
-  const query = TYPE_QUERIES[type] || 'river outdoor adventure water nature';
+  const q = query || 'river outdoor adventure water landscape';
   try {
     const res = await fetch(
-      `https://api.unsplash.com/photos/random?query=${encodeURIComponent(query)}&orientation=landscape`,
+      `https://api.unsplash.com/photos/random?query=${encodeURIComponent(q)}&orientation=landscape`,
       { headers: { Authorization: `Client-ID ${UNSPLASH_KEY}` } }
     );
     if (!res.ok) return null;
