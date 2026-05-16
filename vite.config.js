@@ -18,5 +18,6 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    allowedHosts: ['sb-64q7sg4mnhrt.vercel.run'],
   },
 })
