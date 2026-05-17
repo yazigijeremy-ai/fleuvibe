@@ -1038,26 +1038,55 @@ function TranslateButton({ text, onTranslated }) {
 // Fallback pool — each type uses only semantically coherent images
 // Real diversity comes from SpotImage + Unsplash API; these are last-resort fallbacks
 const WATER_PHOTOS = {
-  RIVER: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80&fit=crop&auto=format&orientation=landscape', '/images/rafting-adventure.jpg', '/images/hero-kayaking.jpg', '/images/river-camping.jpg'],
-  LAKE:  ['/images/kayak-lake.jpg', '/images/lake-calm.jpg', 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&q=80&fit=crop&auto=format&orientation=landscape', 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80&fit=crop&auto=format&orientation=landscape'],
-  SEA:   ['/images/sea-coast.jpg', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80&fit=crop&auto=format&orientation=landscape', 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800&q=80&fit=crop&auto=format&orientation=landscape', 'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=800&q=80&fit=crop&auto=format&orientation=landscape'],
+  RIVER: [
+    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80&fit=crop&auto=format&orientation=landscape',
+    'https://images.unsplash.com/photo-1544551763-92ab472cad5d?w=800&q=80&fit=crop&auto=format&orientation=landscape',
+    '/images/rafting-adventure.jpg',
+    '/images/hero-kayaking.jpg',
+    '/images/river-camping.jpg',
+    '/images/canyon-river.jpg',
+  ],
+  LAKE: [
+    'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&q=80&fit=crop&auto=format&orientation=landscape',
+    'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80&fit=crop&auto=format&orientation=landscape',
+    '/images/kayak-lake.jpg',
+    '/images/lake-calm.jpg',
+  ],
+  SEA: [
+    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80&fit=crop&auto=format&orientation=landscape',
+    'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800&q=80&fit=crop&auto=format&orientation=landscape',
+    'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=800&q=80&fit=crop&auto=format&orientation=landscape',
+    '/images/sea-coast.jpg',
+  ],
 };
+
+// Deterministic Fisher-Yates shuffle seeded by spot id — guarantees unique picks, no repeats
+function seededGalleryIndices(poolLen, seed) {
+  const idx = Array.from({ length: poolLen }, (_, i) => i);
+  let s = (seed * 1664525 + 1013904223) >>> 0;
+  for (let i = poolLen - 1; i > 0; i--) {
+    s = (s * 1664525 + 1013904223) >>> 0;
+    const j = s % (i + 1);
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  return idx.slice(0, 3);
+}
 
 function getSpotPhoto(spot) {
   if (spot.image_url) return spot.image_url;
   if (spot.unsplash_id) return `https://images.unsplash.com/photo-${spot.unsplash_id}?w=800&q=80&fit=crop&auto=format&orientation=landscape`;
   const pool = WATER_PHOTOS[spot.type] || WATER_PHOTOS.RIVER;
-  return pool[spot.id % pool.length];
+  const [i0] = seededGalleryIndices(pool.length, spot.id * 2654435761 >>> 0);
+  return pool[i0];
 }
 
 function getGalleryPhotos(spot) {
   const pool = WATER_PHOTOS[spot.type] || WATER_PHOTOS.RIVER;
+  const [i0, i1, i2] = seededGalleryIndices(pool.length, spot.id * 2654435761 >>> 0);
   const primaryImg = spot.unsplash_id
     ? `https://images.unsplash.com/photo-${spot.unsplash_id}?w=800&q=80&fit=crop&auto=format&orientation=landscape`
-    : pool[spot.id % pool.length];
-  const secondary = pool[(spot.id + 1) % pool.length];
-  const tertiary  = pool[(spot.id + 2) % pool.length];
-  return [primaryImg, secondary, tertiary];
+    : pool[i0];
+  return [primaryImg, pool[i1], pool[i2]];
 }
 
 function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, onShowPremium, allSpots }) {
