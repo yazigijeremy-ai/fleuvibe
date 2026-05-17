@@ -1527,6 +1527,11 @@ function AIChat({ onClose, systemPrompt, title, subtitle, greeting, accentColor 
 // ─── APP ──────────────────────────────────────────────────────────────────────
 export default function FleuVibe() {
   const [spots, setSpots] = useState(SPOTS_WORLD);
+  const SPOTS_PER_PAGE = 20;
+  const [dbSpots, setDbSpots] = useState([]);
+  const [dbTotal, setDbTotal] = useState(0);
+  const [dbPage, setDbPage] = useState(1);
+  const [dbLoading, setDbLoading] = useState(false);
   const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [favorites, setFavorites] = useState([]);
@@ -1608,6 +1613,34 @@ export default function FleuVibe() {
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // ─── SERVER-SIDE FILTERED SPOT FETCH ────────────────────────────────────────
+  useEffect(() => {
+    if (page !== "explore" && page !== "expeditions") return;
+    let cancelled = false;
+    const run = async () => {
+      setDbLoading(true);
+      let query = supabase.from("spots").select("*", { count: "exact" });
+      if (page === "expeditions") {
+        query = query.or("duration.ilike.%jour%,duration.ilike.%semaine%");
+      } else if (aiSearchActive && aiFilters) {
+        if (aiFilters.type)               query = query.eq("type", aiFilters.type);
+        if (aiFilters.difficulty)         query = query.eq("difficulty", aiFilters.difficulty);
+        if (aiFilters.countries?.length)  query = query.in("country", aiFilters.countries);
+        if (aiFilters.activities?.length) query = query.overlaps("activities", aiFilters.activities);
+      } else {
+        if (selType !== "ALL")      query = query.eq("type", selType);
+        if (selDiff !== "ALL")      query = query.eq("difficulty", selDiff);
+        if (selContinent !== "ALL") query = query.eq("continent", selContinent);
+        if (search)                 query = query.or(`name.ilike.%${search}%,river.ilike.%${search}%`);
+      }
+      const from = (dbPage - 1) * SPOTS_PER_PAGE;
+      const { data, count } = await query.range(from, from + SPOTS_PER_PAGE - 1).order("id");
+      if (!cancelled) { setDbSpots(data || []); setDbTotal(count || 0); setDbLoading(false); }
+    };
+    run();
+    return () => { cancelled = true; };
+  }, [page, selType, selDiff, selContinent, search, dbPage, aiSearchActive, aiFilters]);
 
   const addXP = (amount) => {
     const newXP = userXP + amount;
@@ -1908,7 +1941,7 @@ export default function FleuVibe() {
         {(page === "explore" || page === "expeditions") && (
           <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.1s" }}>
             <div style={{ position: "relative", marginBottom: "14px" }}>
-              <input type="text" value={search} onChange={e => { setSearch(e.target.value); if (aiSearchActive) clearAISearch(); }}
+              <input type="text" value={search} onChange={e => { setSearch(e.target.value); setDbPage(1); if (aiSearchActive) clearAISearch(); }}
                 onKeyDown={e => e.key === "Enter" && handleAISearch()}
                 placeholder={page === "expeditions" ? "🔍  Filtrer les expéditions..." : '🔍  Spot, activité, pays...  ou  🤖 "surf débutant Bali"'}
                 style={{ width: "100%", padding: "13px 18px", paddingRight: "130px", background: "#fff", border: `1px solid ${aiSearchActive ? "rgba(99,102,241,0.5)" : "#d0dfdc"}`, borderRadius: "50px", color: "#1a2e28", fontSize: "0.84rem", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }} />
@@ -1921,7 +1954,7 @@ export default function FleuVibe() {
             </div>
             {aiSearchActive && (
               <div style={{ padding: "8px 14px", background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "12px", marginBottom: "12px", fontSize: "0.72rem", color: "#6366f1", display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                <span>🤖 Recherche IA · <strong>{filtered.length} résultats</strong></span>
+                <span>🤖 Recherche IA · <strong>{dbTotal} résultats</strong></span>
                 {aiFilters?.type && <span style={{ padding: "1px 7px", background: "rgba(99,102,241,0.1)", borderRadius: "10px" }}>{aiFilters.type}</span>}
                 {aiFilters?.difficulty && <span style={{ padding: "1px 7px", background: "rgba(99,102,241,0.1)", borderRadius: "10px" }}>{aiFilters.difficulty}</span>}
                 {aiFilters?.countries?.map(c => <span key={c} style={{ padding: "1px 7px", background: "rgba(99,102,241,0.1)", borderRadius: "10px" }}>{COUNTRIES[c]?.flag} {c}</span>)}
@@ -1948,7 +1981,7 @@ export default function FleuVibe() {
                       return (
                         <button
                           key={label}
-                          onClick={() => { setSelType(type); setSelDiff(diff); }}
+                          onClick={() => { setSelType(type); setSelDiff(diff); setDbPage(1); }}
                           style={{
                             padding: "7px 16px", borderRadius: "50px", whiteSpace: "nowrap",
                             fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", flexShrink: 0,
@@ -1973,7 +2006,7 @@ export default function FleuVibe() {
                     >🌍 Région {selContinent !== "ALL" ? `· ${selContinent}` : ""}</button>
                     {activeCount > 0 && (
                       <button
-                        onClick={() => { setSelType("ALL"); setSelDiff("ALL"); setSelContinent("ALL"); }}
+                        onClick={() => { setSelType("ALL"); setSelDiff("ALL"); setSelContinent("ALL"); setDbPage(1); }}
                         style={{ padding: "7px 12px", borderRadius: "50px", whiteSpace: "nowrap", fontSize: "0.68rem", fontWeight: 600, cursor: "pointer", flexShrink: 0, background: "none", color: "#f87171", border: "1px solid rgba(220,38,38,0.3)" }}
                       >✕ Reset</button>
                     )}
@@ -1984,7 +2017,7 @@ export default function FleuVibe() {
                         <p style={{ fontSize: "0.65rem", color: "#5a8a78", fontWeight: 600, marginBottom: "6px", letterSpacing: "0.5px" }}>RÉGION</p>
                         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                           {[["ALL", "🌍 Monde"], ["EU", "🇪🇺 Europe"], ["AM", "🌎 Amériques"], ["AS", "🌏 Asie"], ["AF", "🌍 Afrique"], ["OC", "🌊 Océanie"]].map(([id, label]) => (
-                            <button key={id} onClick={() => setSelContinent(id)} style={{ padding: "7px 14px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: selContinent === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.05)", color: selContinent === id ? "#fff" : "#6a9a8c" }}>{label}</button>
+                            <button key={id} onClick={() => { setSelContinent(id); setDbPage(1); }} style={{ padding: "7px 14px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: selContinent === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.05)", color: selContinent === id ? "#fff" : "#6a9a8c" }}>{label}</button>
                           ))}
                         </div>
                       </div>
@@ -1994,25 +2027,46 @@ export default function FleuVibe() {
               );
             })()}
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-              <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf", background: "rgba(26,158,110,0.12)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", padding: "3px 10px" }}>{filtered.length} spots</span>
-              <span style={{ fontSize: "0.68rem", color: "#4a7a6a" }}>{[...new Set(filtered.map(s => s.country))].length} pays{page === "expeditions" ? " · ⛺ Expéditions longue durée" : ""}</span>
+              <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf", background: "rgba(26,158,110,0.12)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", padding: "3px 10px" }}>{dbTotal} spots</span>
+              <span style={{ fontSize: "0.68rem", color: "#4a7a6a" }}>{[...new Set(dbSpots.map(s => s.country))].length} pays{page === "expeditions" ? " · ⛺ Expéditions longue durée" : ""}</span>
             </div>
-            {filtered.length === 0 ? (
+            {dbLoading ? (
+              <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}><div className="loading-spinner" /></div>
+            ) : dbSpots.length === 0 ? (
               <div style={{ padding: "50px", textAlign: "center", background: "rgba(255,255,255,0.03)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <span style={{ fontSize: "3rem" }}>🏄</span>
                 <p style={{ marginTop: "14px", color: "#5a8a78", marginBottom: "14px" }}>Aucun spot trouvé.</p>
                 <button onClick={() => setShowSubmit(true)} style={{ padding: "9px 20px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.8rem" }}>➕ Ajouter le premier</button>
               </div>
             ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "16px" }}>
-                {filtered.flatMap((s, i) => {
-                  const card = <SpotCard key={s.id} spot={s} isFav={favorites.includes(s.id)} onFav={toggleFav} onBook={setBookingSpot} session={session} userName={userName} isPremium={isPremium} onShowPremium={() => setShowPremium(true)} allSpots={spots} />;
-                  if (!isPremium && (i + 1) % 5 === 0 && i < filtered.length - 1) {
-                    return [card, <div key={`ad_${i}`} style={{ gridColumn: "1 / -1" }}><NativeAd activities={s.activities || []} type={s.type || ''} /></div>];
-                  }
-                  return [card];
-                })}
-              </div>
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "16px" }}>
+                  {dbSpots.flatMap((s, i) => {
+                    const card = <SpotCard key={s.id} spot={s} isFav={favorites.includes(s.id)} onFav={toggleFav} onBook={setBookingSpot} session={session} userName={userName} isPremium={isPremium} onShowPremium={() => setShowPremium(true)} allSpots={spots} />;
+                    if (!isPremium && (i + 1) % 5 === 0 && i < dbSpots.length - 1) {
+                      return [card, <div key={`ad_${i}`} style={{ gridColumn: "1 / -1" }}><NativeAd activities={s.activities || []} type={s.type || ''} /></div>];
+                    }
+                    return [card];
+                  })}
+                </div>
+                {dbTotal > SPOTS_PER_PAGE && (
+                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", marginTop: "24px", paddingBottom: "8px" }}>
+                    <button
+                      onClick={() => setDbPage(p => Math.max(1, p - 1))}
+                      disabled={dbPage === 1}
+                      style={{ padding: "8px 20px", borderRadius: "24px", border: "1px solid rgba(26,158,110,0.3)", background: dbPage === 1 ? "rgba(255,255,255,0.03)" : "rgba(26,158,110,0.1)", color: dbPage === 1 ? "#3a6a5a" : "#7ecfb0", fontSize: "0.78rem", fontWeight: 600 }}
+                    >← Précédent</button>
+                    <span style={{ fontSize: "0.72rem", color: "#5a8a78", minWidth: "100px", textAlign: "center" }}>
+                      {(dbPage - 1) * SPOTS_PER_PAGE + 1}–{Math.min(dbPage * SPOTS_PER_PAGE, dbTotal)} / {dbTotal}
+                    </span>
+                    <button
+                      onClick={() => setDbPage(p => p + 1)}
+                      disabled={dbPage * SPOTS_PER_PAGE >= dbTotal}
+                      style={{ padding: "8px 20px", borderRadius: "24px", border: "1px solid rgba(26,158,110,0.3)", background: dbPage * SPOTS_PER_PAGE >= dbTotal ? "rgba(255,255,255,0.03)" : "rgba(26,158,110,0.1)", color: dbPage * SPOTS_PER_PAGE >= dbTotal ? "#3a6a5a" : "#7ecfb0", fontSize: "0.78rem", fontWeight: 600 }}
+                    >Suivant →</button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}

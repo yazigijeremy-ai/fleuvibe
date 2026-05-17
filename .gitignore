@@ -9,4 +9,5 @@ coverage/
 *.log
 backups/
 *.sql
+!supabase/**/*.sql
 .vercel/
