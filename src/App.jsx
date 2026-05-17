@@ -320,14 +320,14 @@ const SPOTS = [
   { id: 7, type: "RIVER", country: "FR", name: "Verdon · Gorges", river: "Verdon", region: "PACA", distance: "22 km", duration: "2 jours", difficulty: "Sportif", activities: ["Kayak", "Rafting"], description: "Le Grand Canyon européen. Eaux turquoise et falaises à pic de 700m.", color: "#06b6d4", emoji: "💎", open: true, coords: [43.760, 6.340], camping: true, waterPoints: false },
   { id: 8, type: "RIVER", country: "FR", name: "Dordogne · Argentat", river: "Dordogne", region: "Corrèze", distance: "28 km", duration: "1 journée", difficulty: "Intermédiaire", activities: ["Kayak", "Canoë"], description: "Les gorges de la Dordogne entre falaises et villages médiévaux.", color: "#f97316", emoji: "🦅", open: true, coords: [45.090, 1.940], camping: false, waterPoints: true },
   { id: 9, type: "RIVER", country: "FR", name: "Loire · Amboise → Tours", river: "Loire", region: "Indre-et-Loire", distance: "26 km", duration: "5h", difficulty: "Facile", activities: ["Kayak", "Canoë", "SUP"], description: "Glisser sur la Loire au fil des châteaux Renaissance UNESCO.", color: "#f59e0b", emoji: "👑", open: true, coords: [47.370, 0.820], camping: false, waterPoints: true },
-  { id: 10, type: "LAKE", country: "FR", name: "Lac d'Annecy · Tour complet", river: "Lac d'Annecy", region: "Haute-Savoie", distance: "35 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "SUP", "Voile", "Baignade"], description: "Le lac le plus pur d'Europe entouré par les Alpes.", color: "#0891b2", emoji: "🏔️", open: true, coords: [45.866, 6.165], sponsored: "Lac d'Annecy", camping: false, waterPoints: true },
-  { id: 11, type: "RIVER", country: "SI", name: "Soča · Bovec → Tolmin", river: "Soča", region: "Primorska", distance: "55 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Rafting", "SUP"], description: "La Soča aux eaux émeraude — l'une des plus belles rivières du monde.", color: "#10b981", emoji: "💚", open: true, coords: [46.240, 13.650], sponsored: "Visit Slovenia", camping: true, waterPoints: true },
+  { id: 10, type: "LAKE", country: "FR", name: "Lac d'Annecy · Tour complet", river: "Lac d'Annecy", region: "Haute-Savoie", distance: "35 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "SUP", "Voile", "Baignade"], description: "Le lac le plus pur d'Europe entouré par les Alpes.", color: "#0891b2", emoji: "🏔️", open: true, coords: [45.866, 6.165], sponsored: "Lac d'Annecy", camping: false, waterPoints: true, popular: true },
+  { id: 11, type: "RIVER", country: "SI", name: "Soča · Bovec → Tolmin", river: "Soča", region: "Primorska", distance: "55 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Rafting", "SUP"], description: "La Soča aux eaux émeraude — l'une des plus belles rivières du monde.", color: "#10b981", emoji: "💚", open: true, coords: [46.240, 13.650], sponsored: "Visit Slovenia", camping: true, waterPoints: true, popular: true, unsplash_id: "1502920493886-4d3bfa1578d8" },
   { id: 12, type: "RIVER", country: "NO", name: "Sjoa · Åmot → Harpefoss", river: "Sjoa", region: "Innlandet", distance: "18 km", duration: "4h", difficulty: "Sportif", activities: ["Kayak", "Rafting"], description: "L'une des meilleures rivières de white-water en Europe.", color: "#dc2626", emoji: "🐺", open: true, coords: [61.680, 9.560], camping: true, waterPoints: true },
   { id: 13, type: "SEA", country: "NO", name: "Fjords de Norvège", river: "Sognefjord", region: "Vestland", distance: "50 km", duration: "3 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Camping"], description: "Pagayer dans les fjords entre cascades et villages colorés.", color: "#1a9e6e", emoji: "🏔️", open: true, coords: [61.050, 6.850], camping: true, waterPoints: true },
   { id: 14, type: "RIVER", country: "DE", name: "Rhin · Vallée Romantique", river: "Rhin", region: "Rhénanie", distance: "65 km", duration: "3 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Canoë"], description: "La vallée du Rhin romantique entre châteaux et vignobles UNESCO.", color: "#dc2626", emoji: "🏰", open: true, coords: [50.180, 7.620], camping: true, waterPoints: true },
   { id: 15, type: "LAKE", country: "CH", name: "Lac Léman · Lausanne", river: "Lac Léman", region: "Vaud", distance: "60 km", duration: "2 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Voile", "SUP"], description: "Le plus grand lac d'Europe occidentale entre vignobles et Alpes.", color: "#2563eb", emoji: "🍇", open: true, coords: [46.500, 6.600], camping: false, waterPoints: true },
   { id: 16, type: "SEA", country: "HR", name: "Îles Dalmates · Croatie", river: "Mer Adriatique", region: "Dalmatie", distance: "40 km", duration: "3 jours", difficulty: "Intermédiaire", activities: ["Kayak", "Voile", "Plongée"], description: "Longer les îles dalmates en kayak. Criques secrètes et eau turquoise.", color: "#06b6d4", emoji: "⛵", open: true, coords: [43.508, 16.440], camping: true, waterPoints: true },
-  { id: 17, type: "SEA", country: "PT", name: "Algarve · Grottes Marines", river: "Côte Algarve", region: "Algarve", distance: "15 km", duration: "3h", difficulty: "Facile", activities: ["Kayak", "Plongée", "Baignade", "SUP"], description: "Les grottes et arches naturelles de l'Algarve.", color: "#f59e0b", emoji: "🌊", open: true, coords: [37.085, -8.668], sponsored: "Algarve Tourism", camping: false, waterPoints: true },
+  { id: 17, type: "SEA", country: "PT", name: "Algarve · Grottes Marines", river: "Côte Algarve", region: "Algarve", distance: "15 km", duration: "3h", difficulty: "Facile", activities: ["Kayak", "Plongée", "Baignade", "SUP"], description: "Les grottes et arches naturelles de l'Algarve.", color: "#f59e0b", emoji: "🌊", open: true, coords: [37.085, -8.668], sponsored: "Algarve Tourism", camping: false, waterPoints: true, popular: true, unsplash_id: "1507525428034-b723cf961d3e" },
   { id: 18, type: "SEA", country: "GR", name: "Îles Ioniques · Grèce", river: "Mer Ionienne", region: "Îles Ioniennes", distance: "30 km", duration: "2 jours", difficulty: "Facile", activities: ["Kayak", "Plongée", "Baignade"], description: "Pagayer entre les îles grecques aux eaux cristallines.", color: "#2563eb", emoji: "🏛️", open: true, coords: [38.620, 20.630], camping: true, waterPoints: true },
   { id: 19, type: "LAKE", country: "IS", name: "Þingvallavatn · Islande", river: "Þingvallavatn", region: "Suðurland", distance: "12 km", duration: "3h", difficulty: "Facile", activities: ["Kayak", "Plongée", "SUP"], description: "Plongée dans les failles tectoniques entre deux continents.", color: "#7c3aed", emoji: "🌋", open: true, coords: [64.183, -21.117], camping: true, waterPoints: true },
   { id: 20, type: "RIVER", country: "US", name: "Colorado · Grand Canyon", river: "Colorado", region: "Arizona", distance: "360 km", duration: "14 jours", difficulty: "Sportif", activities: ["Rafting", "Kayak", "Camping"], description: "L'expédition ultime dans le Grand Canyon.", color: "#f97316", emoji: "🏜️", open: true, coords: [36.100, -112.100], camping: true, waterPoints: false },
@@ -1039,11 +1039,13 @@ function TranslateButton({ text, onTranslated }) {
 // Real diversity comes from SpotImage + Unsplash API; these are last-resort fallbacks
 const WATER_PHOTOS = {
   RIVER: ['/images/canyon-river.jpg', '/images/rafting-adventure.jpg', '/images/hero-kayaking.jpg', '/images/river-camping.jpg'],
-  LAKE:  ['/images/kayak-lake.jpg', '/images/lake-calm.jpg', 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&q=80&fit=crop&auto=format', 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80&fit=crop&auto=format'],
-  SEA:   ['/images/sea-coast.jpg', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80&fit=crop&auto=format', 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800&q=80&fit=crop&auto=format', 'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=800&q=80&fit=crop&auto=format'],
+  LAKE:  ['/images/kayak-lake.jpg', '/images/lake-calm.jpg', 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&q=80&fit=crop&auto=format&orientation=landscape', 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80&fit=crop&auto=format&orientation=landscape'],
+  SEA:   ['/images/sea-coast.jpg', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80&fit=crop&auto=format&orientation=landscape', 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800&q=80&fit=crop&auto=format&orientation=landscape', 'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=800&q=80&fit=crop&auto=format&orientation=landscape'],
 };
 
 function getSpotPhoto(spot) {
+  if (spot.image_url) return spot.image_url;
+  if (spot.unsplash_id) return `https://images.unsplash.com/photo-${spot.unsplash_id}?w=800&q=80&fit=crop&auto=format&orientation=landscape`;
   const pool = WATER_PHOTOS[spot.type] || WATER_PHOTOS.RIVER;
   return pool[spot.id % pool.length];
 }
@@ -1761,6 +1763,7 @@ export default function FleuVibe() {
         select option{background:#fff;color:#1a2e28}
         .spot-img{width:100%;height:100%;object-fit:cover;transition:transform 0.6s ease;display:block}
         @media(max-width:600px){.featured-grid{grid-template-columns:1fr!important}}
+        .pop-img-wrap img{transition:transform 0.5s ease}.pop-img-wrap:hover img{transform:scale(1.05)}
         @keyframes slowZoom{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
         @keyframes skeletonPulse{0%,100%{opacity:0.4}50%{opacity:0.8}}
         .img-skeleton{background:linear-gradient(90deg,#e8f0ed 0%,#f5f8f7 50%,#e8f0ed 100%);background-size:200% 100%;animation:shimmer 1.5s ease-in-out infinite}
@@ -1872,16 +1875,16 @@ export default function FleuVibe() {
               <span style={{ color: "#1a9e6e", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Voir tout →</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-              {spots.filter(s => s.rating >= 4.5 || s.sponsored).slice(0, 3).map(s => (
+              {spots.filter(s => s.popular).slice(0, 3).map(s => (
                 <div key={s.id} onClick={() => { handlePageChange("explore"); setTimeout(() => setSearch(s.name), 100); }}
                   style={{ background: "#fff", borderRadius: "20px", overflow: "hidden", border: "1px solid #e8f0ed", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", cursor: "pointer", transition: "all 0.3s" }}
                   onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.1)"; }}
                   onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; }}>
-                  <div style={{ position: "relative", height: "160px", overflow: "hidden" }}>
-                    <img src={getSpotPhoto(s)} alt={`${s.name} - spot nautique populaire`} loading="lazy"
-                      style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.5s ease" }}
-                      onMouseEnter={e => e.currentTarget.style.transform = "scale(1.05)"}
-                      onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"} />
+                  <div className="pop-img-wrap" style={{ position: "relative", height: "160px", overflow: "hidden" }}>
+                    <SpotImage
+                      spot={s}
+                      fallbackUrl={getSpotPhoto(s)}
+                    />
                     <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)" }} />
                     {s.rating && <div style={{ position: "absolute", top: 10, left: 10, padding: "3px 8px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", borderRadius: "20px", fontSize: "0.65rem", color: "#fff", fontWeight: 600 }}>⭐ {s.rating.toFixed(1)}</div>}
                     <div style={{ position: "absolute", top: 10, right: 10, background: "#fff", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.85rem" }}>🤍</div>
