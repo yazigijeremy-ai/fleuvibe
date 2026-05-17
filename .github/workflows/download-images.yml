@@ -1,0 +1,33 @@
+name: Download Unsplash Images
+
+on:
+  workflow_dispatch:
+
+  jobs:
+    download-images:
+        runs-on: ubuntu-latest
+            permissions:
+                  contents: write
+                      steps:
+                            - name: Checkout branch
+                                    uses: actions/checkout@v4
+                                            with:
+                                                      ref: claude/extract-image-urls-8Q94P
+
+                                                            - name: Download sea-coast.jpg
+                                                                    run: |
+                                                                              curl -L -o public/images/sea-coast.jpg \
+                                                                                          "https://images.unsplash.com/photo-1505118380757-91f5f5632de0?w=1200&q=85&fit=crop&auto=format"
+
+                                                                                                - name: Download lake-calm.jpg
+                                                                                                        run: |
+                                                                                                                  curl -L -o public/images/lake-calm.jpg \
+                                                                                                                              "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=85&fit=crop&auto=format"
+                                                                                                                              
+                                                                                                                                    - name: Commit and push images
+                                                                                                                                            run: |
+                                                                                                                                                      git config user.name "github-actions[bot]"
+                                                                                                                                                                git config user.email "github-actions[bot]@users.noreply.github.com"
+                                                                                                                                                                          git add public/images/sea-coast.jpg public/images/lake-calm.jpg
+                                                                                                                                                                                    git diff --staged --quiet || git commit -m "feat(images): remplacer placeholders par vraies photos Unsplash"
+                                                                                                                                                                                              git push origin claude/extract-image-urls-8Q94P
