@@ -31,7 +31,7 @@ function buildQuery(spot) {
 // Last-resort local fallback: always type-coherent, never shows a river image on a sea spot
 function getFinalFallback(spotType) {
   switch (spotType?.toUpperCase()) {
-    case 'RIVER': return '/images/canyon-river.jpg';
+    case 'RIVER': return '/images/hero-kayaking.jpg';
     case 'LAKE':  return '/images/lake-calm.jpg';
     case 'SEA':
     case 'COAST': return '/images/sea-coast.jpg';

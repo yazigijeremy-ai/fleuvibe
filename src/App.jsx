@@ -1038,7 +1038,7 @@ function TranslateButton({ text, onTranslated }) {
 // Fallback pool — each type uses only semantically coherent images
 // Real diversity comes from SpotImage + Unsplash API; these are last-resort fallbacks
 const WATER_PHOTOS = {
-  RIVER: ['/images/canyon-river.jpg', '/images/rafting-adventure.jpg', '/images/hero-kayaking.jpg', '/images/river-camping.jpg'],
+  RIVER: ['https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80&fit=crop&auto=format&orientation=landscape', '/images/rafting-adventure.jpg', '/images/hero-kayaking.jpg', '/images/river-camping.jpg'],
   LAKE:  ['/images/kayak-lake.jpg', '/images/lake-calm.jpg', 'https://images.unsplash.com/photo-1439066615861-d1af74d74000?w=800&q=80&fit=crop&auto=format&orientation=landscape', 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=800&q=80&fit=crop&auto=format&orientation=landscape'],
   SEA:   ['/images/sea-coast.jpg', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80&fit=crop&auto=format&orientation=landscape', 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=800&q=80&fit=crop&auto=format&orientation=landscape', 'https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?w=800&q=80&fit=crop&auto=format&orientation=landscape'],
 };
@@ -1067,7 +1067,7 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
   const typeIcon = { RIVER: "🏞️", LAKE: "🏔️", SEA: "🌊" }[spot.type] || "🌊";
   const typeName = { RIVER: "Rivière", LAKE: "Lac", SEA: "Mer" }[spot.type] || "";
   const provider = ALL_PROVIDERS.find(p => p.routeIds?.includes(spot.id));
-  const gallery = getGalleryPhotos(spot);
+  const galleryFallbacks = getGalleryPhotos(spot);
   const fallbackUrl = getSpotPhoto(spot);
   const countryName = COUNTRIES[spot.country]?.name || "";
 
@@ -1123,13 +1123,16 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
       {open && (
         <div style={{ background: "#fff", borderTop: "1px solid #f0f5f3", padding: "16px", animation: "slideUp 0.3s ease" }} onClick={e => e.stopPropagation()}>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "6px", marginBottom: "14px" }}>
-            {gallery.map((src, idx) => (
-              <div key={idx} onClick={e => { e.stopPropagation(); setLightboxIdx(idx); }}
-                style={{ borderRadius: "10px", overflow: "hidden", aspectRatio: "4/3", cursor: "zoom-in", position: "relative" }}>
-                <img src={src} alt={`${spot.name} - photo ${idx + 1}`} loading="lazy" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                {idx === 2 && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.68rem", color: "#fff", fontWeight: 600 }}>🔍</div>}
-              </div>
-            ))}
+            {[0, 1, 2].map(idx => {
+              const vSpot = idx === 0 ? spot : { ...spot, id: spot.id * 100 + idx, unsplash_id: undefined };
+              return (
+                <div key={idx} onClick={e => { e.stopPropagation(); setLightboxIdx(idx); }}
+                  style={{ borderRadius: "10px", overflow: "hidden", aspectRatio: "4/3", cursor: "zoom-in", position: "relative" }}>
+                  <SpotImage spot={vSpot} fallbackUrl={galleryFallbacks[idx]} />
+                  {idx === 2 && <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.68rem", color: "#fff", fontWeight: 600 }}>🔍</div>}
+                </div>
+              );
+            })}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "12px", gap: "10px" }}>
             <p style={{ color: "#4a6a5e", fontSize: "0.82rem", lineHeight: 1.7, flex: 1 }}>{desc}</p>
@@ -1154,11 +1157,11 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
       {/* Lightbox */}
       {lightboxIdx !== null && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.95)", zIndex: 3000, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={e => { e.stopPropagation(); setLightboxIdx(null); }}>
-          <button onClick={e => { e.stopPropagation(); setLightboxIdx(i => (i - 1 + gallery.length) % gallery.length); }} style={{ position: "absolute", left: 20, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", fontSize: "1.2rem", cursor: "pointer" }}>&#8592;</button>
-          <img src={gallery[lightboxIdx]} alt={`${spot.name} - galerie photo ${lightboxIdx + 1}`} style={{ maxWidth: "90vw", maxHeight: "85vh", borderRadius: "16px", objectFit: "contain" }} onClick={e => e.stopPropagation()} />
-          <button onClick={e => { e.stopPropagation(); setLightboxIdx(i => (i + 1) % gallery.length); }} style={{ position: "absolute", right: 20, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", fontSize: "1.2rem", cursor: "pointer" }}>&#8594;</button>
+          <button onClick={e => { e.stopPropagation(); setLightboxIdx(i => (i - 1 + galleryFallbacks.length) % galleryFallbacks.length); }} style={{ position: "absolute", left: 20, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", fontSize: "1.2rem", cursor: "pointer" }}>&#8592;</button>
+          <img src={galleryFallbacks[lightboxIdx]} alt={`${spot.name} - galerie photo ${lightboxIdx + 1}`} style={{ maxWidth: "90vw", maxHeight: "85vh", borderRadius: "16px", objectFit: "contain" }} onClick={e => e.stopPropagation()} />
+          <button onClick={e => { e.stopPropagation(); setLightboxIdx(i => (i + 1) % galleryFallbacks.length); }} style={{ position: "absolute", right: 20, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", fontSize: "1.2rem", cursor: "pointer" }}>&#8594;</button>
           <button onClick={e => { e.stopPropagation(); setLightboxIdx(null); }} style={{ position: "absolute", top: 20, right: 20, background: "rgba(255,255,255,0.1)", border: "none", borderRadius: "50%", width: 38, height: 38, color: "#fff", fontSize: "1rem", cursor: "pointer" }}>&#10005;</button>
-          <div style={{ position: "absolute", bottom: 20, color: "rgba(255,255,255,0.6)", fontSize: "0.75rem" }}>{lightboxIdx + 1} / {gallery.length}</div>
+          <div style={{ position: "absolute", bottom: 20, color: "rgba(255,255,255,0.6)", fontSize: "0.75rem" }}>{lightboxIdx + 1} / {galleryFallbacks.length}</div>
         </div>
       )}
     </div>
