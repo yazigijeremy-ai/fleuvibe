@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { ALL_COUNTRIES as COUNTRIES_EXT, GLOBAL_PARTNERS, WORLD_ROUTES, GlobalStats } from "./data";
 import { GLOBAL_SPOTS_FLAT } from "./spots";
@@ -16,8 +17,8 @@ import PricingSection from "./components/PricingSection";
 import FinalCTASection from "./components/FinalCTASection";
 
 const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
-const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
-const WEATHER_KEY = "3a42db1ac015f3b988b8051c5f469bd7";
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
+const WEATHER_KEY = import.meta.env.VITE_WEATHER_KEY;
 const OPENAI_KEY = import.meta.env.VITE_OPENAI_KEY;
 const STRIPE_MONTHLY_URL = import.meta.env.VITE_STRIPE_MONTHLY_URL || null;
 const STRIPE_ANNUAL_URL = import.meta.env.VITE_STRIPE_ANNUAL_URL || null;
@@ -66,26 +67,7 @@ const generateExpeditionChecklist = (route) => callAI([{ role: "user", content: 
 const translateText = (text, lang) => callAI([{ role: "user", content: `Traduis ce texte en ${lang === "en" ? "anglais" : lang === "es" ? "espagnol" : "allemand"}: "${text}"\nRéponds uniquement avec la traduction.` }], 100);
 
 // ─── SUPABASE ─────────────────────────────────────────────────────────────────
-const sb = (() => {
-  const h = (t) => ({ "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": `Bearer ${t || SUPABASE_KEY}` });
-  return {
-    auth: {
-      signUp: async (e, p, n) => (await fetch(`${SUPABASE_URL}/auth/v1/signup`, { method: "POST", headers: h(), body: JSON.stringify({ email: e, password: p, data: { full_name: n } }) })).json(),
-      signIn: async (e, p) => (await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, { method: "POST", headers: h(), body: JSON.stringify({ email: e, password: p }) })).json(),
-      signOut: async (t) => fetch(`${SUPABASE_URL}/auth/v1/logout`, { method: "POST", headers: h(t) }),
-    },
-    profiles: {
-      get: async (id, t) => { const d = await (await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${id}&select=*`, { headers: h(t) })).json(); return d[0] || null; },
-      upsert: async (p, t) => fetch(`${SUPABASE_URL}/rest/v1/profiles`, { method: "POST", headers: { ...h(t), "Prefer": "resolution=merge-duplicates" }, body: JSON.stringify(p) }),
-      updateFavs: async (id, favs, t) => fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${id}`, { method: "PATCH", headers: h(t), body: JSON.stringify({ favorites: JSON.stringify(favs) }) }),
-    },
-    reviews: {
-      get: async (rid) => (await fetch(`${SUPABASE_URL}/rest/v1/reviews?route_id=eq.${rid}&select=*&order=created_at.desc`, { headers: h() })).json(),
-      add: async (r, t) => fetch(`${SUPABASE_URL}/rest/v1/reviews`, { method: "POST", headers: { ...h(t), "Prefer": "return=representation" }, body: JSON.stringify(r) }),
-      del: async (id, t) => fetch(`${SUPABASE_URL}/rest/v1/reviews?id=eq.${id}`, { method: "DELETE", headers: h(t) }),
-    },
-  };
-})();
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ─── SÉCURITÉ & VALIDATION ────────────────────────────────────────────────────
 const sanitizeHTML = (input) => {
@@ -940,14 +922,14 @@ function ReviewsSection({ spot, session, userName, allSpots }) {
   const [loadingSuggestion, setLoadingSuggestion] = useState(false);
 
   useEffect(() => { load(); }, [spot.id]);
-  const load = async () => { setLoading(true); const d = await sb.reviews.get(spot.id); setReviews(Array.isArray(d) ? d : []); setLoading(false); };
+  const load = async () => { setLoading(true); const { data } = await supabase.from('reviews').select('*').eq('route_id', spot.id).order('created_at', { ascending: false }); setReviews(Array.isArray(data) ? data : []); setLoading(false); };
   const avg = reviews.length > 0 ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null;
 
   const submit = async () => {
     if (!rating) { setErr("Choisis une note !"); return; }
     if (!comment.trim()) { setErr("Écris un commentaire !"); return; }
     setSubmitting(true); setErr("");
-    await sb.reviews.add({ route_id: spot.id, user_id: session.user.id, rating, comment: comment.trim(), user_name: userName }, session.token);
+    await supabase.from('reviews').insert({ route_id: spot.id, user_id: session.user.id, rating, comment: comment.trim(), user_name: userName });
     setRating(0); setComment(""); setShowForm(false); await load(); setSubmitting(false);
   };
 
@@ -996,7 +978,7 @@ function ReviewsSection({ spot, session, userName, allSpots }) {
                   <div style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700, color: "#fff" }}>{(r.user_name || "?")[0].toUpperCase()}</div>
                   <div><span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#c8e8d8" }}>{r.user_name || "Utilisateur"}</span><div style={{ display: "flex", alignItems: "center", gap: "5px" }}><StarRating value={r.rating} readonly /><span style={{ fontSize: "0.6rem", color: "#3a6a5a" }}>{new Date(r.created_at).toLocaleDateString("fr-BE")}</span></div></div>
                 </div>
-                {session && session.user.id === r.user_id && <button onClick={() => sb.reviews.del(r.id, session.token).then(load)} style={{ background: "none", border: "none", color: "#3a6a5a", fontSize: "0.7rem" }}>🗑️</button>}
+                {session && session.user.id === r.user_id && <button onClick={() => supabase.from('reviews').delete().eq('id', r.id).then(load)} style={{ background: "none", border: "none", color: "#3a6a5a", fontSize: "0.7rem" }}>🗑️</button>}
               </div>
               {r.comment && <p style={{ fontSize: "0.76rem", color: "#8ab8b0", lineHeight: 1.5, marginTop: "4px" }}>{r.comment}</p>}
             </div>
@@ -1610,18 +1592,21 @@ export default function FleuVibe() {
   }, []);
 
   useEffect(() => {
-    const s = localStorage.getItem("fv_session");
-    if (s) {
-      try {
-        const p = JSON.parse(s);
-        setSession(p);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setSession(session);
+      if (session) {
         if (navigator.onLine) {
-          loadProfile(p.user.id, p.token);
+          const { data: p } = await supabase.from('profiles').select('*').eq('id', session.user.id).single();
+          if (p) { setProfile(p); try { setFavorites(JSON.parse(p.favorites || "[]")); } catch { setFavorites([]); } }
         } else {
           idb.get('fv_favorites').then(cached => { if (Array.isArray(cached)) setFavorites(cached); });
         }
-      } catch {}
-    }
+      } else {
+        setProfile(null);
+        setFavorites([]);
+      }
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   const addXP = (amount) => {
@@ -1652,23 +1637,20 @@ export default function FleuVibe() {
 
   const earnedBadges = Object.values(BADGES_DEF).filter(b => b.condition(userStats));
 
-  const loadProfile = async (id, t) => { const p = await sb.profiles.get(id, t); if (p) { setProfile(p); try { setFavorites(JSON.parse(p.favorites || "[]")); } catch { setFavorites([]); } } };
-  const handleSignUp = async () => { setAuthLoading(true); setAuthError(""); const d = await sb.auth.signUp(authForm.email, authForm.password, authForm.fullName); if (d.error) { setAuthError(d.error.message); setAuthLoading(false); return; } if (d.access_token) { const s = { user: d.user, token: d.access_token }; setSession(s); localStorage.setItem("fv_session", JSON.stringify(s)); await sb.profiles.upsert({ id: d.user.id, full_name: authForm.fullName, username: authForm.email.split("@")[0], favorites: "[]" }, d.access_token); await loadProfile(d.user.id, d.access_token); setShowAuth(false); setAuthForm({ email: "", password: "", fullName: "" }); addXP(50); } else { setAuthError("Vérifie ton email !"); } setAuthLoading(false); };
+  const loadProfile = async (id) => { const { data: p } = await supabase.from('profiles').select('*').eq('id', id).single(); if (p) { setProfile(p); try { setFavorites(JSON.parse(p.favorites || "[]")); } catch { setFavorites([]); } } };
+  const handleSignUp = async () => { setAuthLoading(true); setAuthError(""); const { data, error } = await supabase.auth.signUp({ email: authForm.email, password: authForm.password, options: { data: { full_name: authForm.fullName } } }); if (error) { setAuthError(error.message); setAuthLoading(false); return; } if (data.session) { await supabase.from('profiles').upsert({ id: data.user.id, full_name: authForm.fullName, username: authForm.email.split("@")[0], favorites: "[]" }, { onConflict: 'id' }); setShowAuth(false); setAuthForm({ email: "", password: "", fullName: "" }); addXP(50); } else { setAuthError("Vérifie ton email !"); } setAuthLoading(false); };
   const handleSignIn = async () => {
     const rl = rateLimiters.auth.check(authForm.email || 'anon');
     if (!rl.allowed) { setAuthError(rl.reason); return; }
     setAuthLoading(true); setAuthError("");
-    const d = await sb.auth.signIn(authForm.email, authForm.password);
-    if (d.error) { setAuthError(d.error.message); setAuthLoading(false); logger.warn('Sign-in failed', { email: authForm.email }); return; }
-    const s = { user: d.user, token: d.access_token };
-    setSession(s); localStorage.setItem("fv_session", JSON.stringify(s));
-    await loadProfile(d.user.id, d.access_token);
+    const { error } = await supabase.auth.signInWithPassword({ email: authForm.email, password: authForm.password });
+    if (error) { setAuthError(error.message); setAuthLoading(false); logger.warn('Sign-in failed', { email: authForm.email }); return; }
     setShowAuth(false); setAuthForm({ email: "", password: "", fullName: "" });
     setAuthLoading(false);
     logger.metric('user_signin', 1);
     window._gtag?.('event', 'login', { method: 'email' });
   };
-  const handleSignOut = async () => { if (session) await sb.auth.signOut(session.token); setSession(null); setProfile(null); setFavorites([]); setIsPremium(false); localStorage.removeItem("fv_session"); setShowProfile(false); };
+  const handleSignOut = async () => { await supabase.auth.signOut(); setIsPremium(false); setShowProfile(false); };
   const toggleFav = async (id) => {
     if (!session) { setShowAuth(true); return; }
     const n = favorites.includes(id) ? favorites.filter(f => f !== id) : [...favorites, id];
@@ -1676,7 +1658,7 @@ export default function FleuVibe() {
     if (!favorites.includes(id)) addXP(10);
     trackEvent(favorites.includes(id) ? 'unfav' : 'fav', { spotId: id });
     idb.set('fv_favorites', n);
-    if (isOnline) await sb.profiles.updateFavs(session.user.id, n, session.token);
+    if (isOnline) await supabase.from('profiles').update({ favorites: JSON.stringify(n) }).eq('id', session.user.id);
   };
 
   const handleAISearch = async () => {
