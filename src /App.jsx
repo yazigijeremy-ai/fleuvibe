@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 
 const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
-const WEATHER_KEY = "3a42db1ac015f3b988b8051c5f469bd7";
 
 const supabase = (() => {
   const h = (token) => ({ "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": `Bearer ${token || SUPABASE_KEY}` });
@@ -27,19 +26,40 @@ const supabase = (() => {
 
 const fetchWeather = async (lat, lon) => {
   try {
-    const d = await (await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${WEATHER_KEY}&units=metric&lang=fr`)).json();
-    if (d.cod !== 200) return null;
-    const windKmh = Math.round(d.wind.speed * 3.6);
-    const rain = d.rain?.["1h"] || 0;
-    const condition = d.weather[0].main;
-    let navStatus="good", navLabel="Conditions idéales", navColor="#1a9e6e";
-    if (windKmh>40||rain>5) { navStatus="bad"; navLabel="Déconseillé"; navColor="#dc2626"; }
-    else if (windKmh>25||rain>2||condition==="Thunderstorm") { navStatus="medium"; navLabel="Conditions difficiles"; navColor="#f59e0b"; }
-    else if (condition==="Rain"||condition==="Drizzle") { navStatus="medium"; navLabel="Navigable avec prudence"; navColor="#f59e0b"; }
-    const icon = {Clear:"☀️",Clouds:"⛅",Rain:"🌧️",Drizzle:"🌦️",Thunderstorm:"⛈️",Snow:"❄️",Mist:"🌫️",Fog:"🌫️"}[condition]||"🌤️";
-    return { temp:Math.round(d.main.temp), description:d.weather[0].description, windKmh, rain, icon, navStatus, navLabel, navColor };
+    const res = await fetch(
+      `${SUPABASE_URL}/functions/v1/get-weather?lat=${lat}&lon=${lon}`,
+      { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
+    );
+    if (!res.ok) return null;
+    return await res.json();
   } catch { return null; }
 };
+
+function useMobile() {
+  const [w, setW] = useState(() => (typeof window !== "undefined" ? window.innerWidth : 1024));
+  useEffect(() => {
+    const fn = () => setW(window.innerWidth);
+    window.addEventListener("resize", fn);
+    return () => window.removeEventListener("resize", fn);
+  }, []);
+  return w < 480;
+}
+
+function useInfiniteList(items, resetKey, pageSize = 20) {
+  const [count, setCount] = useState(pageSize);
+  const loaderRef = useRef(null);
+  useEffect(() => { setCount(pageSize); }, [resetKey]);
+  useEffect(() => {
+    const el = loaderRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) setCount(c => Math.min(c + pageSize, items.length));
+    }, { rootMargin: "300px" });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [count, items.length, pageSize]);
+  return { visible: items.slice(0, count), hasMore: count < items.length, loaderRef };
+}
 
 const CONTINENTS = {
   ALL:{name:"Monde entier",flag:"🌍"}, EU:{name:"Europe",flag:"🇪🇺"}, AM:{name:"Amériques",flag:"🌎"},
@@ -230,6 +250,31 @@ function WeatherBadge({ coords, small=false }) {
       <div style={{display:"flex",gap:"12px",flexWrap:"wrap"}}>
         <span style={{fontSize:"0.7rem",color:"#4a7a6a"}}>💨 <strong style={{color:"#8ab8b0"}}>{w.windKmh} km/h</strong></span>
         <span style={{fontSize:"0.7rem",color:"#4a7a6a"}}>🌧️ <strong style={{color:"#8ab8b0"}}>{w.rain} mm/h</strong></span>
+      </div>
+    </div>
+  );
+}
+
+function SkeletonCard() {
+  return (
+    <div style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:"13px",overflow:"hidden"}}>
+      <div style={{height:"2.5px",background:"rgba(255,255,255,0.06)"}}/>
+      <div style={{padding:"12px 13px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"8px"}}>
+          <div style={{flex:1}}>
+            <div className="skel" style={{height:"14px",width:"60%",borderRadius:"6px",marginBottom:"6px"}}/>
+            <div className="skel" style={{height:"11px",width:"40%",borderRadius:"5px"}}/>
+          </div>
+          <div className="skel" style={{height:"22px",width:"60px",borderRadius:"8px",marginLeft:"10px"}}/>
+        </div>
+        <div style={{display:"flex",gap:"11px",marginBottom:"8px"}}>
+          <div className="skel" style={{height:"11px",width:"55px",borderRadius:"5px"}}/>
+          <div className="skel" style={{height:"11px",width:"45px",borderRadius:"5px"}}/>
+        </div>
+        <div style={{display:"flex",gap:"4px"}}>
+          <div className="skel" style={{height:"20px",width:"48px",borderRadius:"8px"}}/>
+          <div className="skel" style={{height:"20px",width:"52px",borderRadius:"8px"}}/>
+        </div>
       </div>
     </div>
   );
@@ -440,6 +485,7 @@ export default function FleuVibe() {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const layersRef = useRef([]);
+  const isMobile = useMobile();
 
   useEffect(()=>{setTimeout(()=>setLoaded(true),100);},[]);
   useEffect(()=>{
@@ -460,12 +506,12 @@ export default function FleuVibe() {
     if(search&&!r.name.toLowerCase().includes(search.toLowerCase())&&!r.river.toLowerCase().includes(search.toLowerCase())&&!COUNTRIES[r.country]?.name.toLowerCase().includes(search.toLowerCase()))return false;
     return true;
   });
+  const { visible: visibleRoutes, hasMore, loaderRef } = useInfiniteList(filteredRoutes, `${waterType}-${continent}-${search}-${page}`);
 
   useEffect(()=>{
     if(page!=="explore"||view!=="map")return;
     if(mapInstanceRef.current){updateMap();return;}
-    const l=document.createElement("link");l.rel="stylesheet";l.href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";document.head.appendChild(l);
-    const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";s.onload=initMap;document.head.appendChild(s);
+    if(window.L){initMap();}
   },[page,view]);
   useEffect(()=>{if(mapInstanceRef.current)updateMap();},[filteredRoutes,selectedRoute]);
 
@@ -558,6 +604,9 @@ export default function FleuVibe() {
         input::placeholder,textarea::placeholder{color:#3a6a5a}
         input:focus,textarea:focus,select:focus{border-color:rgba(26,158,110,0.55)!important;outline:none}
         select option{background:#0d2240}
+        .filter-pills{-ms-overflow-style:none;scrollbar-width:none}.filter-pills::-webkit-scrollbar{display:none}
+        @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        .skel{background:linear-gradient(90deg,rgba(255,255,255,0.05) 25%,rgba(255,255,255,0.1) 50%,rgba(255,255,255,0.05) 75%);background-size:200% 100%;animation:shimmer 1.5s ease-in-out infinite}
       `}</style>
 
       <div style={{position:"fixed",bottom:0,left:0,width:"100%",height:"130px",overflow:"hidden",opacity:0.07,pointerEvents:"none",zIndex:0}}>
@@ -617,20 +666,29 @@ export default function FleuVibe() {
         {page==="explore"&&(
           <div>
             {/* Water type */}
-            <div style={{display:"flex",gap:"5px",flexWrap:"wrap",justifyContent:"center",marginBottom:"9px"}}>
+            <div className="filter-pills" style={{display:"flex",gap:"5px",overflowX:"auto",flexWrap:"nowrap",marginBottom:"9px",WebkitOverflowScrolling:"touch"}}>
               {Object.entries(WATER_TYPES).map(([code,wt])=>{
                 const count=code==="ALL"?routes.length:routes.filter(r=>r.type===code).length;
-                return <button key={code} className="btn" onClick={()=>setWaterType(code)} style={{padding:"5px 11px",borderRadius:"9px",background:waterType===code?`${wt.color}20`:"rgba(255,255,255,0.03)",border:`1px solid ${waterType===code?wt.color:"rgba(255,255,255,0.07)"}`,color:waterType===code?wt.color:"#4a7a6a",fontSize:"0.73rem",fontWeight:600}}>{wt.icon} {wt.name} ({count})</button>;
+                return <button key={code} className="btn" onClick={()=>setWaterType(code)} style={{padding:"5px 11px",borderRadius:"9px",background:waterType===code?`${wt.color}20`:"rgba(255,255,255,0.03)",border:`1px solid ${waterType===code?wt.color:"rgba(255,255,255,0.07)"}`,color:waterType===code?wt.color:"#4a7a6a",fontSize:"0.73rem",fontWeight:600,whiteSpace:"nowrap",flexShrink:0}}>{wt.icon} {wt.name} ({count})</button>;
               })}
             </div>
 
             {/* Continent */}
-            <div style={{display:"flex",gap:"4px",flexWrap:"wrap",justifyContent:"center",marginBottom:"10px"}}>
-              {Object.entries(CONTINENTS).map(([code,c])=>{
-                const count=code==="ALL"?filteredRoutes.length:routes.filter(r=>COUNTRIES[r.country]?.continent===code&&(waterType==="ALL"||r.type===waterType)).length;
-                return <button key={code} className="btn" onClick={()=>setContinent(code)} style={{padding:"4px 9px",borderRadius:"8px",background:continent===code?"rgba(26,158,110,0.18)":"rgba(255,255,255,0.02)",border:`1px solid ${continent===code?"#1a9e6e":"rgba(255,255,255,0.06)"}`,color:continent===code?"#a8edcf":"#4a7a6a",fontSize:"0.69rem",fontWeight:600}}>{c.flag} {c.name} ({count})</button>;
-              })}
-            </div>
+            {isMobile?(
+              <select value={continent} onChange={e=>setContinent(e.target.value)} style={{width:"100%",padding:"8px 12px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(26,158,110,0.25)",borderRadius:"10px",color:"#e8f4f0",fontSize:"0.83rem",marginBottom:"10px"}}>
+                {Object.entries(CONTINENTS).map(([code,c])=>{
+                  const count=code==="ALL"?filteredRoutes.length:routes.filter(r=>COUNTRIES[r.country]?.continent===code&&(waterType==="ALL"||r.type===waterType)).length;
+                  return <option key={code} value={code}>{c.flag} {c.name} ({count})</option>;
+                })}
+              </select>
+            ):(
+              <div style={{display:"flex",gap:"4px",flexWrap:"wrap",justifyContent:"center",marginBottom:"10px"}}>
+                {Object.entries(CONTINENTS).map(([code,c])=>{
+                  const count=code==="ALL"?filteredRoutes.length:routes.filter(r=>COUNTRIES[r.country]?.continent===code&&(waterType==="ALL"||r.type===waterType)).length;
+                  return <button key={code} className="btn" onClick={()=>setContinent(code)} style={{padding:"4px 9px",borderRadius:"8px",background:continent===code?"rgba(26,158,110,0.18)":"rgba(255,255,255,0.02)",border:`1px solid ${continent===code?"#1a9e6e":"rgba(255,255,255,0.06)"}`,color:continent===code?"#a8edcf":"#4a7a6a",fontSize:"0.69rem",fontWeight:600}}>{c.flag} {c.name} ({count})</button>;
+                })}
+              </div>
+            )}
 
             <div style={{display:"flex",gap:"7px",marginBottom:"10px"}}>
               <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍  Rechercher..." style={{...inp,flex:1}}/>
@@ -661,7 +719,12 @@ export default function FleuVibe() {
             )}
             {view==="list"&&(
               <div style={{display:"flex",flexDirection:"column",gap:"8px"}}>
-                {filteredRoutes.length===0?<div style={{textAlign:"center",padding:"40px",color:"#3a6a5a"}}><div style={{fontSize:"2.5rem",marginBottom:"10px"}}>🌊</div><p style={{marginBottom:"12px"}}>Aucun spot trouvé.</p><button className="btn" onClick={()=>setShowSubmit(true)} style={{padding:"8px 16px",background:"linear-gradient(135deg,#1a9e6e,#0891b2)",border:"none",borderRadius:"9px",color:"#fff",fontWeight:700,fontSize:"0.8rem"}}>➕ Ajouter le premier</button></div>:filteredRoutes.map((r,i)=><RouteCard key={r.id} route={r} i={i}/>)}
+                {!loaded
+                  ? Array.from({length:5}).map((_,i)=><SkeletonCard key={i}/>)
+                  : filteredRoutes.length===0
+                    ? <div style={{textAlign:"center",padding:"40px",color:"#3a6a5a"}}><div style={{fontSize:"2.5rem",marginBottom:"10px"}}>🌊</div><p style={{marginBottom:"12px"}}>Aucun spot trouvé.</p><button className="btn" onClick={()=>setShowSubmit(true)} style={{padding:"8px 16px",background:"linear-gradient(135deg,#1a9e6e,#0891b2)",border:"none",borderRadius:"9px",color:"#fff",fontWeight:700,fontSize:"0.8rem"}}>➕ Ajouter le premier</button></div>
+                    : <>{visibleRoutes.map((r,i)=><RouteCard key={r.id} route={r} i={i}/>)}{hasMore&&<div ref={loaderRef} style={{textAlign:"center",padding:"16px",color:"#2a5a4a",fontSize:"0.72rem"}}>⏳ Chargement…</div>}</>
+                }
               </div>
             )}
           </div>
