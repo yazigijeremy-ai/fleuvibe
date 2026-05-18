@@ -9,10 +9,13 @@
     "preview": "vite preview",
     "lint": "echo 'Lint: no errors'",
     "backup": "node scripts/backup.js",
-    "health": "node scripts/health-check.js"
+    "health": "node scripts/health-check.js",
+    "seed": "node --input-type=module scripts/seed-spots.js"
   },
+  "type": "module",
   "dependencies": {
     "@stripe/stripe-js": "^9.4.0",
+    "@supabase/supabase-js": "^2.105.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "stripe": "^22.1.1",
@@ -20,6 +23,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
+    "dotenv": "^17.4.2",
     "vite": "^4.4.0"
   }
 }
