@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 
 const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
 const SUPABASE_KEY = "sb_publishable_L4n6vcDAs6Q2ujgsZqCKTw_mNRBX0pA";
-const WEATHER_KEY = "3a42db1ac015f3b988b8051c5f469bd7";
 
 const supabase = (() => {
   const h = (token) => ({ "Content-Type": "application/json", "apikey": SUPABASE_KEY, "Authorization": `Bearer ${token || SUPABASE_KEY}` });
@@ -27,17 +26,12 @@ const supabase = (() => {
 
 const fetchWeather = async (lat, lon) => {
   try {
-    const d = await (await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${WEATHER_KEY}&units=metric&lang=fr`)).json();
-    if (d.cod !== 200) return null;
-    const windKmh = Math.round(d.wind.speed * 3.6);
-    const rain = d.rain?.["1h"] || 0;
-    const condition = d.weather[0].main;
-    let navStatus="good", navLabel="Conditions idéales", navColor="#1a9e6e";
-    if (windKmh>40||rain>5) { navStatus="bad"; navLabel="Déconseillé"; navColor="#dc2626"; }
-    else if (windKmh>25||rain>2||condition==="Thunderstorm") { navStatus="medium"; navLabel="Conditions difficiles"; navColor="#f59e0b"; }
-    else if (condition==="Rain"||condition==="Drizzle") { navStatus="medium"; navLabel="Navigable avec prudence"; navColor="#f59e0b"; }
-    const icon = {Clear:"☀️",Clouds:"⛅",Rain:"🌧️",Drizzle:"🌦️",Thunderstorm:"⛈️",Snow:"❄️",Mist:"🌫️",Fog:"🌫️"}[condition]||"🌤️";
-    return { temp:Math.round(d.main.temp), description:d.weather[0].description, windKmh, rain, icon, navStatus, navLabel, navColor };
+    const res = await fetch(
+      `${SUPABASE_URL}/functions/v1/get-weather?lat=${lat}&lon=${lon}`,
+      { headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` } }
+    );
+    if (!res.ok) return null;
+    return await res.json();
   } catch { return null; }
 };
 
