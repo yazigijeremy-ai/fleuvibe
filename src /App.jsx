@@ -21,6 +21,13 @@ const supabase = (() => {
       add: async (r, t) => fetch(`${SUPABASE_URL}/rest/v1/reviews`, { method:"POST", headers:{...h(t),"Prefer":"return=representation"}, body:JSON.stringify(r) }),
       delete: async (id, t) => fetch(`${SUPABASE_URL}/rest/v1/reviews?id=eq.${id}`, { method:"DELETE", headers:h(t) }),
     },
+    spots: {
+      list: async () => { const d=await(await fetch(`${SUPABASE_URL}/rest/v1/spots?select=id,data&order=id.asc`,{headers:h()})).json(); return Array.isArray(d)?d.map(row=>({...row.data,id:row.id,_source:"db"})):[]; },
+      insert: async (spot,t) => { const {id:_,_source:__,created_at:___,...clean}=spot; const d=await(await fetch(`${SUPABASE_URL}/rest/v1/spots`,{method:"POST",headers:{...h(t),"Prefer":"return=representation"},body:JSON.stringify({data:clean})})).json(); const row=Array.isArray(d)?d[0]:d; return row?.id?{...row.data,id:row.id,_source:"db"}:null; },
+      insertBatch: async (spots,t) => { const d=await(await fetch(`${SUPABASE_URL}/rest/v1/spots`,{method:"POST",headers:{...h(t),"Prefer":"return=representation"},body:JSON.stringify(spots.map(({id:_,_source:__,created_at:___,...s})=>({data:s})))})).json(); return Array.isArray(d)?d.map(row=>({...row.data,id:row.id,_source:"db"})):[]; },
+      update: async (id,spot,t) => { const {id:_,_source:__,created_at:___,...clean}=spot; return fetch(`${SUPABASE_URL}/rest/v1/spots?id=eq.${id}`,{method:"PATCH",headers:{...h(t)},body:JSON.stringify({data:clean})}); },
+      delete: async (id,t) => fetch(`${SUPABASE_URL}/rest/v1/spots?id=eq.${id}`,{method:"DELETE",headers:h(t)}),
+    },
   };
 })();
 
@@ -228,7 +235,7 @@ const BASE_ROUTES = [
   {id:76,type:"SEA",country:"PF",name:"Tahiti · Lagon SUP",river:"Océan Pacifique",region:"Polynésie française",distance:"10 km",duration:"2h",difficulty:"Facile",activities:["SUP","Kayak","Plongée","Baignade"],description:"SUP dans le lagon de Tahiti. Eaux chaudes transparentes et raies manta.",color:"#7c3aed",emoji:"🌺",open:true,coords:[-17.650,-149.433],path:[[-17.640,-149.445],[-17.650,-149.433],[-17.663,-149.420]]},
 ];
 
-const EMPTY_FORM = { name:"", river:"", country:"BE", region:"", distance:"", duration:"", difficulty:"Facile", activities:[], description:"", coords:"", emoji:"🛶", type:"RIVER" };
+const EMPTY_FORM = { name:"", river:"", country:"BE", region:"", distance:"", duration:"", difficulty:"Facile", activities:[], description:"", coords:"", emoji:"🛶", type:"RIVER", color:"#1a9e6e" };
 
 // COMPONENTS
 function WeatherBadge({ coords, small=false }) {
@@ -392,17 +399,46 @@ function BookingModal({ provider, onClose }) {
   );
 }
 
-function SubmitModal({ onClose, onAdd, session, showAuth }) {
-  const [form, setForm] = useState(EMPTY_FORM);
+function SubmitModal({ onClose, onAdd, session, showAuth, adminMode=false, editRoute=null }) {
+  const initForm = editRoute ? {
+    name:editRoute.name||"", river:editRoute.river||"", country:editRoute.country||"BE",
+    region:editRoute.region||"", distance:editRoute.distance||"", duration:editRoute.duration||"",
+    difficulty:editRoute.difficulty||"Facile", activities:editRoute.activities||[],
+    description:editRoute.description||"",
+    coords:Array.isArray(editRoute.coords)?editRoute.coords.join(", "):(editRoute.coords||""),
+    emoji:editRoute.emoji||"🛶", type:editRoute.type||"RIVER", color:editRoute.color||"#1a9e6e",
+  } : EMPTY_FORM;
+  const [form, setForm] = useState(initForm);
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const f = (k,v) => setForm(x=>({...x,[k]:v}));
-  const submit = () => {
+  const submit = async () => {
     if (!form.name||!form.river) return;
-    if (!session) { showAuth(); return; }
-    const c = form.coords.split(",").map(s=>parseFloat(s.trim()));
-    const newSpot = { ...form, id:Date.now(), open:true, color:"#1a9e6e", verified:false, coords:c.length===2&&!isNaN(c[0])?c:[0,0], path:c.length===2?[[c[0]-0.05,c[1]-0.05],c,[c[0]+0.05,c[1]+0.05]]:[], activities:form.activities.length?form.activities:["Kayak"], tags:["Communauté"] };
-    onAdd(newSpot);
-    setSubmitted(true);
+    if (!adminMode&&!session) { showAuth(); return; }
+    setSaving(true); setError("");
+    const raw = typeof form.coords==="string"?form.coords:form.coords.join(",");
+    const c = raw.split(",").map(s=>parseFloat(s.trim()));
+    const ok = c.length===2&&!isNaN(c[0])&&!isNaN(c[1]);
+    const data = {
+      type:form.type, country:form.country, name:form.name, river:form.river,
+      region:form.region||"", distance:form.distance||"", duration:form.duration||"",
+      difficulty:form.difficulty, activities:form.activities.length?form.activities:["Kayak"],
+      description:form.description||"", coords:ok?c:[0,0],
+      path:ok?(editRoute?.path||[[c[0]-0.05,c[1]-0.05],c,[c[0]+0.05,c[1]+0.05]]):[],
+      emoji:form.emoji||"🛶", color:form.color||"#1a9e6e",
+    };
+    if (adminMode&&editRoute) {
+      await supabase.spots.update(editRoute.id, {...editRoute,...data}, session.token);
+      onAdd({...editRoute,...data});
+    } else if (adminMode) {
+      const saved = await supabase.spots.insert({...data,open:true,verified:true}, session.token);
+      if (!saved?.id) { setError("Erreur lors de l'insertion en base de données."); setSaving(false); return; }
+      onAdd(saved);
+    } else {
+      onAdd({...data, id:Date.now(), open:true, verified:false, tags:["Communauté"]});
+    }
+    setSaving(false); setSubmitted(true);
     setTimeout(()=>{setSubmitted(false);onClose();},2500);
   };
   const inp = {width:"100%",padding:"9px 12px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(26,158,110,0.2)",borderRadius:"9px",color:"#e8f4f0",fontSize:"0.83rem",outline:"none"};
@@ -411,14 +447,15 @@ function SubmitModal({ onClose, onAdd, session, showAuth }) {
     <div className="modal-bg" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
       <div style={{background:"linear-gradient(160deg,#0d2240,#0a3d2e)",border:"1px solid rgba(26,158,110,0.28)",borderRadius:"18px",padding:"20px",maxWidth:"480px",width:"100%",maxHeight:"88vh",overflowY:"auto",animation:"pop 0.25s ease",boxShadow:"0 20px 60px rgba(0,0,0,0.55)"}}>
         {submitted ? (
-          <div style={{textAlign:"center",padding:"28px 0"}}><div style={{fontSize:"2.8rem",marginBottom:"10px"}}>🎉</div><h3 style={{color:"#a8edcf",fontSize:"1.1rem",marginBottom:"6px"}}>Spot ajouté !</h3><p style={{color:"#5a8a78",fontSize:"0.84rem"}}>Merci pour ta contribution à FleuVibe !</p></div>
+          <div style={{textAlign:"center",padding:"28px 0"}}><div style={{fontSize:"2.8rem",marginBottom:"10px"}}>🎉</div><h3 style={{color:"#a8edcf",fontSize:"1.1rem",marginBottom:"6px"}}>{editRoute?"Spot modifié !":"Spot ajouté !"}</h3><p style={{color:"#5a8a78",fontSize:"0.84rem"}}>{adminMode?"Changements enregistrés en base de données.":"Merci pour ta contribution à FleuVibe !"}</p></div>
         ) : (
           <>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"16px"}}>
-              <h2 style={{fontSize:"1rem",fontWeight:700,color:"#daf0e8"}}>➕ Ajouter un spot</h2>
+              <h2 style={{fontSize:"1rem",fontWeight:700,color:"#daf0e8"}}>{editRoute?"✏️ Modifier le spot":adminMode?"➕ Nouveau spot":"➕ Ajouter un spot"}</h2>
               <button onClick={onClose} style={{background:"rgba(255,255,255,0.06)",border:"none",color:"#5a8a78",borderRadius:"7px",padding:"4px 8px",cursor:"pointer"}}>✕</button>
             </div>
-            {!session&&<div style={{padding:"9px 12px",background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.22)",borderRadius:"9px",color:"#fbbf24",fontSize:"0.78rem",marginBottom:"12px"}}>🔐 Tu devras être connecté pour soumettre un spot.</div>}
+            {!adminMode&&!session&&<div style={{padding:"9px 12px",background:"rgba(245,158,11,0.1)",border:"1px solid rgba(245,158,11,0.22)",borderRadius:"9px",color:"#fbbf24",fontSize:"0.78rem",marginBottom:"12px"}}>🔐 Tu devras être connecté pour soumettre un spot.</div>}
+            {error&&<div style={{padding:"8px 11px",background:"rgba(220,38,38,0.1)",border:"1px solid rgba(220,38,38,0.22)",borderRadius:"8px",color:"#f87171",fontSize:"0.78rem",marginBottom:"10px"}}>{error}</div>}
             <div style={{display:"flex",flexDirection:"column",gap:"10px"}}>
               <div>
                 <label style={lbl}>Type de plan d'eau</label>
@@ -452,11 +489,125 @@ function SubmitModal({ onClose, onAdd, session, showAuth }) {
                   {["Kayak","Canoë","SUP","Rafting","Surf","Voile","Kitesurf","Plongée","Baignade","Camping","Pêche"].map(a=>{const sel=form.activities.includes(a);return<button key={a} onClick={()=>f("activities",sel?form.activities.filter(x=>x!==a):[...form.activities,a])} style={{padding:"4px 9px",borderRadius:"8px",border:`1px solid ${sel?"#1a9e6e":"rgba(255,255,255,0.07)"}`,background:sel?"rgba(26,158,110,0.16)":"rgba(255,255,255,0.02)",color:sel?"#a8edcf":"#4a7a6a",fontSize:"0.71rem",fontWeight:500,cursor:"pointer"}}>{a}</button>;})}
                 </div>
               </div>
-              <button onClick={submit} style={{padding:"10px",background:"linear-gradient(135deg,#1a9e6e,#0891b2)",border:"none",borderRadius:"10px",color:"#fff",fontWeight:700,fontSize:"0.86rem",cursor:"pointer",boxShadow:"0 3px 12px rgba(26,158,110,0.25)",marginTop:"3px"}}>🌊 Soumettre le spot</button>
+              {adminMode&&(
+                <div style={{display:"flex",gap:"8px"}}>
+                  <div style={{flex:"0 0 80px"}}>
+                    <label style={lbl}>Emoji</label>
+                    <input value={form.emoji} onChange={e=>f("emoji",e.target.value)} style={{...inp,fontSize:"1.2rem",textAlign:"center"}}/>
+                  </div>
+                  <div style={{flex:1}}>
+                    <label style={lbl}>Couleur</label>
+                    <div style={{display:"flex",gap:"6px",alignItems:"center"}}>
+                      <input type="color" value={form.color||"#1a9e6e"} onChange={e=>f("color",e.target.value)} style={{width:"40px",height:"38px",padding:"3px",borderRadius:"8px",border:"1px solid rgba(26,158,110,0.25)",background:"none",cursor:"pointer",flexShrink:0}}/>
+                      <input value={form.color||"#1a9e6e"} onChange={e=>f("color",e.target.value)} style={inp} placeholder="#1a9e6e"/>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <button onClick={submit} disabled={saving} style={{padding:"10px",background:"linear-gradient(135deg,#1a9e6e,#0891b2)",border:"none",borderRadius:"10px",color:"#fff",fontWeight:700,fontSize:"0.86rem",cursor:"pointer",boxShadow:"0 3px 12px rgba(26,158,110,0.25)",marginTop:"3px",opacity:saving?0.7:1}}>
+                {saving?"⏳ Enregistrement…":editRoute?"✅ Enregistrer les modifications":"🌊 Soumettre le spot"}
+              </button>
             </div>
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+function AdminPanel({ routes, session, setRoutes }) {
+  const [search, setSearch] = useState("");
+  const [countryFilter, setCountryFilter] = useState("ALL");
+  const [editing, setEditing] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [busy, setBusy] = useState({});
+  const [seeding, setSeeding] = useState(false);
+  const hasDbSpots = routes.some(r=>r._source==="db");
+  const countryOptions = [...new Set(routes.map(r=>r.country))].sort();
+  const filtered = routes.filter(r=>
+    (countryFilter==="ALL"||r.country===countryFilter)&&
+    (!search||r.name.toLowerCase().includes(search.toLowerCase())||r.river.toLowerCase().includes(search.toLowerCase()))
+  );
+  const handleSeed = async () => {
+    if (!confirm(`Migrer ${routes.length} spots vers la base de données ?`)) return;
+    setSeeding(true);
+    const result = await supabase.spots.insertBatch(routes, session.token);
+    if (Array.isArray(result)&&result[0]?.id) setRoutes(result);
+    setSeeding(false);
+  };
+  const handleToggle = async (route) => {
+    setBusy(b=>({...b,[route.id]:true}));
+    await supabase.spots.update(route.id, {...route,open:!route.open}, session.token);
+    setRoutes(rs=>rs.map(r=>r.id===route.id?{...r,open:!r.open}:r));
+    setBusy(b=>({...b,[route.id]:false}));
+  };
+  const handleDelete = async (route) => {
+    if (!confirm(`Supprimer "${route.name}" ?`)) return;
+    setBusy(b=>({...b,[route.id]:true}));
+    await supabase.spots.delete(route.id, session.token);
+    setRoutes(rs=>rs.filter(r=>r.id!==route.id));
+    setBusy(b=>({...b,[route.id]:false}));
+  };
+  const btnBase = {fontSize:"0.67rem",fontWeight:700,borderRadius:"6px",padding:"3px 8px"};
+  return (
+    <div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"14px",flexWrap:"wrap",gap:"8px"}}>
+        <div>
+          <h2 style={{fontSize:"1.05rem",fontWeight:700,color:"#a8edcf",marginBottom:"2px"}}>⚙️ Admin · Spots</h2>
+          <p style={{color:"#3a6a5a",fontSize:"0.72rem"}}>{routes.length} spots au total · {filtered.length} affichés</p>
+        </div>
+        <button className="btn" onClick={()=>setShowAdd(true)} style={{padding:"8px 14px",background:"linear-gradient(135deg,#1a9e6e,#0891b2)",borderRadius:"9px",color:"#fff",fontWeight:700,fontSize:"0.8rem"}}>➕ Nouveau spot</button>
+      </div>
+      {!hasDbSpots&&(
+        <div style={{padding:"12px 14px",background:"rgba(245,158,11,0.07)",border:"1px solid rgba(245,158,11,0.22)",borderRadius:"10px",marginBottom:"14px",display:"flex",justifyContent:"space-between",alignItems:"center",gap:"10px",flexWrap:"wrap"}}>
+          <div>
+            <p style={{fontSize:"0.8rem",color:"#fbbf24",fontWeight:600,marginBottom:"2px"}}>⚠️ Spots non persistés en BD</p>
+            <p style={{fontSize:"0.72rem",color:"#917030"}}>Migre les spots hardcodés vers Supabase pour pouvoir les éditer et les supprimer.</p>
+          </div>
+          <button className="btn" onClick={handleSeed} disabled={seeding} style={{padding:"7px 13px",background:"rgba(245,158,11,0.15)",border:"1px solid rgba(245,158,11,0.38)",borderRadius:"8px",color:"#fbbf24",fontWeight:700,fontSize:"0.78rem",whiteSpace:"nowrap"}}>
+            {seeding?"⏳ Migration…":`📥 Migrer ${routes.length} spots`}
+          </button>
+        </div>
+      )}
+      <div style={{display:"flex",gap:"7px",marginBottom:"12px",flexWrap:"wrap"}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="🔍 Rechercher un spot…" style={{flex:1,minWidth:"160px",padding:"8px 12px",background:"rgba(255,255,255,0.06)",border:"1px solid rgba(26,158,110,0.25)",borderRadius:"9px",color:"#e8f4f0",fontSize:"0.83rem",outline:"none"}}/>
+        <select value={countryFilter} onChange={e=>setCountryFilter(e.target.value)} style={{padding:"8px 12px",background:"rgba(13,34,64,0.95)",border:"1px solid rgba(26,158,110,0.25)",borderRadius:"9px",color:"#e8f4f0",fontSize:"0.83rem"}}>
+          <option value="ALL">🌍 Tous ({routes.length})</option>
+          {countryOptions.map(c=><option key={c} value={c}>{COUNTRIES[c]?.flag} {COUNTRIES[c]?.name||c}</option>)}
+        </select>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:"5px"}}>
+        {filtered.map(route=>{
+          const isBusy=!!busy[route.id], isDb=route._source==="db";
+          const tc=WATER_TYPES[route.type]?.color||"#1a9e6e";
+          return (
+            <div key={route.id} style={{display:"flex",alignItems:"center",gap:"8px",padding:"9px 12px",background:"rgba(255,255,255,0.03)",border:`1px solid ${isDb?"rgba(26,158,110,0.1)":"rgba(255,255,255,0.05)"}`,borderRadius:"10px",flexWrap:"wrap"}}>
+              <span style={{fontSize:"1.05rem",flexShrink:0}}>{route.emoji}</span>
+              <div style={{flex:1,minWidth:"140px"}}>
+                <div style={{fontSize:"0.8rem",fontWeight:600,color:"#daf0e8"}}>{route.name}</div>
+                <div style={{fontSize:"0.65rem",color:"#3a6a5a"}}>{COUNTRIES[route.country]?.flag} {COUNTRIES[route.country]?.name||route.country} · <span style={{color:tc}}>{WATER_TYPES[route.type]?.icon}</span> · {route.difficulty}</div>
+              </div>
+              <div style={{display:"flex",gap:"5px",alignItems:"center",flexWrap:"wrap",justifyContent:"flex-end"}}>
+                <button className="btn" onClick={()=>isDb&&handleToggle(route)} disabled={isBusy||!isDb} title={!isDb?"Migre vers la BD pour activer":""}
+                  style={{...btnBase,background:route.open?"rgba(26,158,110,0.15)":"rgba(220,38,38,0.12)",border:`1px solid ${route.open?"rgba(26,158,110,0.28)":"rgba(220,38,38,0.28)"}`,color:route.open?"#6ee7b7":"#f87171",opacity:(!isDb||isBusy)?0.4:1}}>
+                  {isBusy?"⏳":route.open?"✅ Ouvert":"🚫 Fermé"}
+                </button>
+                <button className="btn" onClick={()=>isDb&&setEditing(route)} disabled={!isDb} title={!isDb?"Migre vers la BD pour activer":""}
+                  style={{...btnBase,background:"rgba(59,130,246,0.1)",border:"1px solid rgba(59,130,246,0.22)",color:"#93c5fd",opacity:isDb?1:0.35}}>
+                  ✏️ Edit
+                </button>
+                <button className="btn" onClick={()=>isDb&&handleDelete(route)} disabled={isBusy||!isDb} title={!isDb?"Migre vers la BD pour activer":""}
+                  style={{...btnBase,background:"rgba(220,38,38,0.08)",border:"1px solid rgba(220,38,38,0.2)",color:"#f87171",opacity:(isBusy||!isDb)?0.35:1}}>
+                  🗑️
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        {filtered.length===0&&<div style={{textAlign:"center",padding:"30px",color:"#3a6a5a"}}>Aucun spot correspondant.</div>}
+      </div>
+      {showAdd&&<SubmitModal adminMode onClose={()=>setShowAdd(false)} onAdd={r=>{setRoutes(rs=>[...rs,r]);setShowAdd(false);}} session={session}/>}
+      {editing&&<SubmitModal adminMode editRoute={editing} onClose={()=>setEditing(null)} onAdd={r=>{setRoutes(rs=>rs.map(x=>x.id===r.id?r:x));setEditing(null);}} session={session}/>}
     </div>
   );
 }
@@ -491,6 +642,11 @@ export default function FleuVibe() {
   useEffect(()=>{
     const s = localStorage.getItem("fleuvibe_session");
     if(s){try{const p=JSON.parse(s);setSession(p);loadProfile(p.user.id,p.token);}catch{}}
+  },[]);
+  useEffect(()=>{
+    supabase.spots.list().then(dbSpots=>{
+      if(dbSpots.length>0) setRoutes(dbSpots);
+    });
   },[]);
 
   const loadProfile = async(id,t)=>{const p=await supabase.profiles.get(id,t);if(p){setProfile(p);try{setFavorites(JSON.parse(p.favorites||"[]"));}catch{setFavorites([]);}}};
@@ -657,7 +813,7 @@ export default function FleuVibe() {
 
         {/* NAV */}
         <div className={`fade-in ${loaded?"loaded":""}`} style={{transitionDelay:"0.06s",display:"flex",gap:"4px",marginBottom:"14px",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:"13px",padding:"4px",flexWrap:"wrap"}}>
-          {[["explore","🗺️ Explorer"],["providers","🛶 Prestataires"],["tourism","⭐ Destinations"],["weather","🌤️ Météo"],["favorites",`❤️${favorites.length>0?` (${favorites.length})`:""}`]].map(([id,label])=>(
+          {[["explore","🗺️ Explorer"],["providers","🛶 Prestataires"],["tourism","⭐ Destinations"],["weather","🌤️ Météo"],["favorites",`❤️${favorites.length>0?` (${favorites.length})`:""}`],...(profile?.is_admin?[["admin","⚙️ Admin"]]:[])].map(([id,label])=>(
             <button key={id} className="btn" onClick={()=>{setPage(id);setSearch("");}} style={{flex:1,minWidth:"65px",padding:"8px 5px",borderRadius:"9px",background:page===id?"rgba(26,158,110,0.22)":"transparent",border:page===id?"1px solid rgba(26,158,110,0.4)":"1px solid transparent",color:page===id?"#a8edcf":"#4a7a6a",fontSize:"0.73rem",fontWeight:page===id?700:500}}>{label}</button>
           ))}
         </div>
@@ -836,6 +992,13 @@ export default function FleuVibe() {
             {session&&favorites.length===0&&<div style={{textAlign:"center",padding:"50px 20px"}}><div style={{fontSize:"3rem",marginBottom:"12px"}}>🏞️</div><h3 style={{color:"#a8edcf",marginBottom:"8px"}}>Aucun favori</h3><button className="btn" onClick={()=>setPage("explore")} style={{padding:"9px 20px",background:"rgba(26,158,110,0.15)",border:"1px solid rgba(26,158,110,0.3)",borderRadius:"10px",color:"#a8edcf",fontWeight:600,fontSize:"0.83rem"}}>🗺️ Explorer</button></div>}
             {session&&favorites.length>0&&<div style={{display:"flex",flexDirection:"column",gap:"8px"}}>{routes.filter(r=>favorites.includes(r.id)).map((r,i)=><RouteCard key={r.id} route={r} i={i}/>)}</div>}
           </div>
+        )}
+
+        {/* ADMIN */}
+        {page==="admin"&&(
+          profile?.is_admin
+            ? <AdminPanel routes={routes} session={session} setRoutes={setRoutes}/>
+            : <div style={{textAlign:"center",padding:"50px 20px"}}><div style={{fontSize:"3rem",marginBottom:"12px"}}>🔒</div><h3 style={{color:"#f87171",marginBottom:"8px",fontSize:"1rem"}}>Accès refusé</h3><p style={{color:"#3a6a5a",fontSize:"0.8rem"}}>Seuls les administrateurs peuvent accéder à cette page.</p></div>
         )}
 
         <div style={{textAlign:"center",marginTop:"24px",paddingTop:"12px",borderTop:"1px solid rgba(255,255,255,0.04)",color:"#1a4a3a",fontSize:"0.67rem"}}>
