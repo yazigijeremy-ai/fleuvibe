@@ -16,7 +16,7 @@ import TestimonialsSection from "./components/TestimonialsSection";
 import PricingSection from "./components/PricingSection";
 import FinalCTASection from "./components/FinalCTASection";
 
-const SUPABASE_URL = "https://mdfzrqehdhvvhrqvinpo.supabase.co";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_KEY;
 const WEATHER_KEY = import.meta.env.VITE_WEATHER_KEY;
 const OPENAI_KEY = import.meta.env.VITE_OPENAI_KEY;
