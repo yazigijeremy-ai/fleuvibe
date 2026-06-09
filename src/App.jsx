@@ -1646,7 +1646,32 @@ export default function FleuVibe() {
       }
       const from = (dbPage - 1) * SPOTS_PER_PAGE;
       const { data, count } = await query.range(from, from + SPOTS_PER_PAGE - 1).order("id");
-      if (!cancelled) { setDbSpots(data || []); setDbTotal(count || 0); setDbLoading(false); }
+      if (!cancelled) {
+        if (data?.length) {
+          setDbSpots(data);
+          setDbTotal(count || 0);
+        } else {
+          // Supabase DB vide — fallback sur les données locales avec les mêmes filtres
+          let local = spots;
+          if (page === "expeditions") {
+            local = local.filter(s => /jour|semaine/i.test(s.duration || ""));
+          } else if (aiSearchActive && aiFilters) {
+            if (aiFilters.type)               local = local.filter(s => s.type === aiFilters.type);
+            if (aiFilters.difficulty)         local = local.filter(s => s.difficulty === aiFilters.difficulty);
+            if (aiFilters.countries?.length)  local = local.filter(s => aiFilters.countries.includes(s.country));
+            if (aiFilters.activities?.length) local = local.filter(s => aiFilters.activities.some(a => s.activities?.includes(a)));
+          } else {
+            if (selType !== "ALL")      local = local.filter(s => s.type === selType);
+            if (selDiff !== "ALL")      local = local.filter(s => s.difficulty === selDiff);
+            if (selContinent !== "ALL") local = local.filter(s => (s.continent ?? COUNTRIES_EXT[s.country]?.continent) === selContinent);
+            if (search)                 local = local.filter(s => [s.name, s.river, s.region].some(f => f?.toLowerCase().includes(search.toLowerCase())));
+          }
+          const from = (dbPage - 1) * SPOTS_PER_PAGE;
+          setDbSpots(local.slice(from, from + SPOTS_PER_PAGE));
+          setDbTotal(local.length);
+        }
+        setDbLoading(false);
+      }
     };
     run();
     return () => { cancelled = true; };
