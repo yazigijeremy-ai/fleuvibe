@@ -255,7 +255,7 @@ function ProofBar() {
   const stats = [
     { val: '2,000+', label: 'Active explorers' },
     { val: '150+',   label: 'Verified routes' },
-    { val: '12',     label: 'Countries covered' },
+    { val: '50+',    label: 'Certified guides' },
     { val: '98%',    label: 'Satisfaction rate' },
     { val: '4.9 ★',  label: 'Average rating' },
   ]
@@ -515,12 +515,12 @@ function TestimonialsSection() {
       role: 'Kayaker · 6 years',
       avatar: 'AM',
       stars: 5,
-      country: '🇫🇷',
+      country: '🇬🇧',
     },
     {
-      quote: "As a guide, I love how FleuVibe handles bookings. My clients come prepared, the payment is seamless, and I get more visibility.",
+      quote: "As a guide, FleuVibe transformed my business. Clients arrive prepared, payment is seamless, and my visibility doubled in 3 months.",
       name: 'Thomas R.',
-      role: 'Certified Guide · Ardèche',
+      role: 'Certified Kayak Guide',
       avatar: 'TR',
       stars: 5,
       country: '🇫🇷',
@@ -616,6 +616,7 @@ function PricingSection() {
       name: 'Paddler',
       price: '€4.99',
       period: '/month',
+      savings: 'or €39.99/yr — 2 months free',
       desc: 'For serious paddlers who want the full experience.',
       features: [
         'Everything in Explorer',
@@ -665,7 +666,7 @@ function PricingSection() {
         </div>
 
         <div className="mt-14 grid items-start gap-8 lg:grid-cols-3">
-          {plans.map(({ name, price, period, desc, features, cta, ctaHref, ctaStyle, popular }) => (
+          {plans.map(({ name, price, period, savings, desc, features, cta, ctaHref, ctaStyle, popular }) => (
             <div
               key={name}
               className={`relative rounded-2xl p-8 ${popular ? 'border-2 border-teal-500/50 bg-slate-900' : 'border border-white/[0.07] bg-slate-900/50'}`}
@@ -685,6 +686,7 @@ function PricingSection() {
                   {period !== 'forever' && <span className="text-sm text-slate-400">{period}</span>}
                 </div>
                 {period === 'forever' && <p className="text-xs text-slate-500">forever</p>}
+                {savings && <p className="mt-1 text-xs text-teal-400/80">{savings}</p>}
                 <p className="mt-2 text-sm text-slate-400">{desc}</p>
               </div>
 
@@ -709,7 +711,7 @@ function PricingSection() {
         </div>
 
         <p className="mt-8 text-center text-sm text-slate-500">
-          All plans include a 14-day free trial · No credit card required · Cancel anytime
+          Paddler plan includes a 14-day free trial · No credit card required · Cancel anytime
         </p>
       </div>
     </section>
