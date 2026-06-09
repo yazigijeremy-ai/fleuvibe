@@ -1887,7 +1887,7 @@ export default function FleuVibe() {
           <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ marginBottom: "20px", marginTop: "32px", transitionDelay: "0.05s" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "16px" }}>
               <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#1a2e28" }}>🔥 Spots populaires</h2>
-              <span style={{ color: "#1a9e6e", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Voir tout →</span>
+              <button onClick={() => { setSearch(""); clearAISearch(); }} style={{ color: "#1a9e6e", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", background: "none", border: "none", padding: 0 }}>Voir tout →</button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
               {spots.filter(s => s.popular).slice(0, 3).map(s => (

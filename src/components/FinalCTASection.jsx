@@ -22,7 +22,7 @@ export default function FinalCTASection({ setShowAuth }) {
         </h2>
 
         <p style={{ color: "rgba(255,255,255,0.55)", fontSize: "1rem", lineHeight: 1.65, marginBottom: "36px", maxWidth: "460px", margin: "0 auto 36px" }}>
-          Rejoins 1 200+ pagayeurs qui planifient leurs sorties avec les vraies conditions du jour. Gratuit, en 30 secondes.
+          Rejoins 2 000+ pagayeurs qui planifient leurs sorties avec les vraies conditions du jour. Gratuit, en 30 secondes.
         </p>
 
         {/* CTAs */}

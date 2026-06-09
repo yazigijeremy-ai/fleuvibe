@@ -25,14 +25,19 @@ function Navbar() {
 
         {/* Desktop links */}
         <div className="hidden items-center gap-8 md:flex" role="list">
-          {['Routes', 'Experiences', 'Partners', 'Pricing'].map((link) => (
+          {[
+            { label: 'How it Works', href: '#solution' },
+            { label: 'Features',     href: '#features' },
+            { label: 'Testimonials', href: '#testimonials' },
+            { label: 'Pricing',      href: '#pricing' },
+          ].map(({ label, href }) => (
             <a
-              key={link}
-              href={`#${link.toLowerCase()}`}
+              key={label}
+              href={href}
               role="listitem"
               className="text-sm font-medium text-slate-400 transition-colors hover:text-white"
             >
-              {link}
+              {label}
             </a>
           ))}
         </div>
@@ -106,14 +111,14 @@ function Hero() {
         {/* CTA buttons */}
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <a
-            href="#routes"
+            href="#solution"
             className="group flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 px-8 py-4 text-base font-bold text-white shadow-xl shadow-teal-500/30 transition-all hover:shadow-teal-500/50 hover:-translate-y-0.5 sm:w-auto"
           >
             Explore Routes
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
           </a>
           <a
-            href="#experiences"
+            href="#features"
             className="group flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:border-white/25 hover:bg-white/10 sm:w-auto"
           >
             <Calendar className="h-4 w-4 text-teal-400" aria-hidden="true" />
@@ -538,7 +543,7 @@ function TestimonialsSection() {
           <h2 id="testimonials-heading" className="text-3xl font-black tracking-tight text-white sm:text-4xl">
             They found their river.
           </h2>
-          <p className="mt-4 text-lg text-slate-400">Already used by 2,000+ explorers across 12 countries.</p>
+          <p className="mt-4 text-lg text-slate-400">Already used by 2,000+ paddlers across 12 countries.</p>
         </div>
 
         <div className="mt-14 grid gap-6 sm:grid-cols-3">
@@ -608,7 +613,7 @@ function PricingSection() {
     },
     {
       name: 'Paddler',
-      price: '€5.99',
+      price: '€4.99',
       period: '/month',
       desc: 'For serious paddlers who want the full experience.',
       features: [
@@ -730,7 +735,7 @@ function FinalCTA() {
         </h2>
 
         <p className="mx-auto mb-10 max-w-xl text-lg text-slate-400">
-          Join 2,000+ explorers who plan smarter, paddle further, and discover rivers they never knew existed.
+          Join 2,000+ paddlers who plan smarter, paddle further, and discover rivers they never knew existed.
         </p>
 
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
@@ -785,14 +790,18 @@ function Footer() {
               The platform for river explorers. Discover routes, check conditions, and book experiences with local guides.
             </p>
             <div className="flex gap-3">
-              {['𝕏', 'in', 'ig'].map((social) => (
+              {[
+                { icon: '𝕏',  label: 'X (Twitter)' },
+                { icon: 'in', label: 'LinkedIn' },
+                { icon: 'ig', label: 'Instagram' },
+              ].map(({ icon, label }) => (
                 <a
-                  key={social}
+                  key={label}
                   href="#"
                   className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-sm text-slate-400 transition-colors hover:border-white/20 hover:text-white"
-                  aria-label={social}
+                  aria-label={label}
                 >
-                  {social}
+                  {icon}
                 </a>
               ))}
             </div>

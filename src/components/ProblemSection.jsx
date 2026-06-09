@@ -34,7 +34,7 @@ export default function ProblemSection() {
             <br />c'est encore trop compliqué.
           </h2>
           <p style={{ color: "#6a8a80", fontSize: "1rem", maxWidth: "460px", margin: "0 auto", lineHeight: 1.6 }}>
-            Même les pagayeurs expérimentés perdent du temps à agrégrer météo, niveau, accès et retours terrain.
+            Même les pagayeurs expérimentés perdent du temps à agréger météo, niveau, accès et retours terrain.
           </p>
         </div>
 

@@ -23,7 +23,7 @@ export default function HeroSection({ spots, search, setSearch, handleAISearch, 
         {/* Eyebrow pill */}
         <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", padding: "7px 20px", background: "rgba(255,255,255,0.1)", backdropFilter: "blur(16px)", border: "1px solid rgba(255,255,255,0.18)", borderRadius: "40px", marginBottom: "32px", fontSize: "0.75rem", color: "rgba(255,255,255,0.9)", fontWeight: 600, letterSpacing: "0.2px" }}>
           <span style={{ width: 7, height: 7, background: "#4ade80", borderRadius: "50%", flexShrink: 0, boxShadow: "0 0 8px #4ade80" }} aria-hidden="true" />
-          Saison 2026 — {spots.length}+ spots vérifiés en Europe
+          Saison 2026 — {spots.length}+ spots vérifiés dans le monde
         </div>
 
         {/* H1 */}
@@ -74,7 +74,7 @@ export default function HeroSection({ spots, search, setSearch, handleAISearch, 
           {["🛶 Kayak rivière", "🏄 Paddle lac", "🌊 Rafting sportif", "⛵ Voile côtière"].map(pill => (
             <button
               key={pill}
-              onClick={() => { setSearch(pill.slice(3)); handleAISearch(); }}
+              onClick={() => { setSearch(pill.split(' ').slice(1).join(' ')); handleAISearch(); }}
               style={{ padding: "7px 16px", background: "rgba(255,255,255,0.12)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.22)", borderRadius: "40px", color: "rgba(255,255,255,0.85)", fontSize: "0.78rem", fontWeight: 500 }}
             >
               {pill}
@@ -102,7 +102,7 @@ export default function HeroSection({ spots, search, setSearch, handleAISearch, 
 
         {/* Micro social proof */}
         <p style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.42)", letterSpacing: "0.3px" }}>
-          <strong style={{ color: "rgba(255,255,255,0.65)" }}>1 200+ pagayeurs</strong> ont planifié leur sortie ici · Gratuit, sans carte bancaire
+          <strong style={{ color: "rgba(255,255,255,0.65)" }}>2 000+ pagayeurs</strong> ont planifié leur sortie ici · Gratuit, sans carte bancaire
         </p>
       </div>
 
