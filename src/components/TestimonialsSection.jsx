@@ -9,7 +9,7 @@ const TESTIMONIALS = [
   {
     quote: "La météo en temps réel sur chaque spot, c'est un game changer absolu. Avant je me prenais des mauvaises surprises une fois sur trois. Depuis FleuVibe, plus jamais.",
     name: "Marie T.",
-    role: "Paddeuse · Niveau intermédiaire",
+    role: "Pagayeuse · Niveau intermédiaire",
     avatar: "👩‍🦱",
     stars: 5,
   },

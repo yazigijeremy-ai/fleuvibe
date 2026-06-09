@@ -98,7 +98,7 @@ export default function PricingSection({ setShowAuth, setShowPremium }) {
         Tarifs transparents
       </p>
       <h2 id="pricing-heading" style={{ fontSize: "clamp(1.6rem,4vw,2.4rem)", fontWeight: 900, color: "#1a2e28", marginBottom: "8px", letterSpacing: "-0.5px" }}>
-        Commence gratis. Passe au niveau suivant.
+        Commence gratuitement. Passe au niveau suivant.
       </h2>
       <p style={{ color: "#6a8a80", fontSize: "0.95rem", maxWidth: "440px", margin: "0 auto 52px", lineHeight: 1.6 }}>
         Le plan gratuit couvre déjà 90% des besoins. Le Premium t'emmène là où les autres ne vont pas.
@@ -117,7 +117,7 @@ export default function PricingSection({ setShowAuth, setShowPremium }) {
         />
         <PlanCard
           tag="Pour progresser"
-          name="Navigateur"
+          name="Aventurier"
           price="4,99€"
           period="/mois"
           subline="ou 39,99€/an — 2 mois offerts"

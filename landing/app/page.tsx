@@ -25,25 +25,30 @@ function Navbar() {
 
         {/* Desktop links */}
         <div className="hidden items-center gap-8 md:flex" role="list">
-          {['Routes', 'Experiences', 'Partners', 'Pricing'].map((link) => (
+          {[
+            { label: 'How it Works', href: '#solution' },
+            { label: 'Features',     href: '#features' },
+            { label: 'Testimonials', href: '#testimonials' },
+            { label: 'Pricing',      href: '#pricing' },
+          ].map(({ label, href }) => (
             <a
-              key={link}
-              href={`#${link.toLowerCase()}`}
+              key={label}
+              href={href}
               role="listitem"
               className="text-sm font-medium text-slate-400 transition-colors hover:text-white"
             >
-              {link}
+              {label}
             </a>
           ))}
         </div>
 
         {/* CTAs */}
         <div className="flex items-center gap-3">
-          <a href="#" className="hidden text-sm font-medium text-slate-400 transition-colors hover:text-white md:inline">
+          <a href="https://fleuvibe-8am5.vercel.app" className="hidden text-sm font-medium text-slate-400 transition-colors hover:text-white md:inline">
             Sign in
           </a>
           <a
-            href="#"
+            href="https://fleuvibe-8am5.vercel.app"
             className="group flex items-center gap-1.5 rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-all hover:shadow-teal-500/40 hover:-translate-y-px"
           >
             Get Started
@@ -106,14 +111,14 @@ function Hero() {
         {/* CTA buttons */}
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <a
-            href="#routes"
+            href="#solution"
             className="group flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 px-8 py-4 text-base font-bold text-white shadow-xl shadow-teal-500/30 transition-all hover:shadow-teal-500/50 hover:-translate-y-0.5 sm:w-auto"
           >
             Explore Routes
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
           </a>
           <a
-            href="#experiences"
+            href="#features"
             className="group flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-8 py-4 text-base font-semibold text-white backdrop-blur-sm transition-all hover:border-white/25 hover:bg-white/10 sm:w-auto"
           >
             <Calendar className="h-4 w-4 text-teal-400" aria-hidden="true" />
@@ -250,7 +255,7 @@ function ProofBar() {
   const stats = [
     { val: '2,000+', label: 'Active explorers' },
     { val: '150+',   label: 'Verified routes' },
-    { val: '12',     label: 'Countries covered' },
+    { val: '50+',    label: 'Certified guides' },
     { val: '98%',    label: 'Satisfaction rate' },
     { val: '4.9 ★',  label: 'Average rating' },
   ]
@@ -510,12 +515,12 @@ function TestimonialsSection() {
       role: 'Kayaker · 6 years',
       avatar: 'AM',
       stars: 5,
-      country: '🇫🇷',
+      country: '🇬🇧',
     },
     {
-      quote: "As a guide, I love how FleuVibe handles bookings. My clients come prepared, the payment is seamless, and I get more visibility.",
+      quote: "As a guide, FleuVibe transformed my business. Clients arrive prepared, payment is seamless, and my visibility doubled in 3 months.",
       name: 'Thomas R.',
-      role: 'Certified Guide · Ardèche',
+      role: 'Certified Kayak Guide',
       avatar: 'TR',
       stars: 5,
       country: '🇫🇷',
@@ -538,7 +543,7 @@ function TestimonialsSection() {
           <h2 id="testimonials-heading" className="text-3xl font-black tracking-tight text-white sm:text-4xl">
             They found their river.
           </h2>
-          <p className="mt-4 text-lg text-slate-400">Already used by 2,000+ explorers across 12 countries.</p>
+          <p className="mt-4 text-lg text-slate-400">Already used by 2,000+ paddlers across 12 countries.</p>
         </div>
 
         <div className="mt-14 grid gap-6 sm:grid-cols-3">
@@ -603,13 +608,15 @@ function PricingSection() {
         'Mobile app access',
       ],
       cta: 'Start exploring',
+      ctaHref: 'https://fleuvibe-8am5.vercel.app',
       ctaStyle: 'bg-slate-800 text-white hover:bg-slate-700 border border-white/10',
       popular: false,
     },
     {
       name: 'Paddler',
-      price: '€5.99',
+      price: '€4.99',
       period: '/month',
+      savings: 'or €39.99/yr — 2 months free',
       desc: 'For serious paddlers who want the full experience.',
       features: [
         'Everything in Explorer',
@@ -621,6 +628,7 @@ function PricingSection() {
         'Monthly new route drops',
       ],
       cta: 'Start free trial →',
+      ctaHref: 'https://fleuvibe-8am5.vercel.app',
       ctaStyle: 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-500/25 hover:shadow-teal-500/50',
       popular: true,
     },
@@ -637,6 +645,7 @@ function PricingSection() {
         'Dedicated account manager',
       ],
       cta: 'Get in touch',
+      ctaHref: 'mailto:partners@fleuvibe.com',
       ctaStyle: 'bg-slate-800 text-white hover:bg-slate-700 border border-white/10',
       popular: false,
     },
@@ -657,7 +666,7 @@ function PricingSection() {
         </div>
 
         <div className="mt-14 grid items-start gap-8 lg:grid-cols-3">
-          {plans.map(({ name, price, period, desc, features, cta, ctaStyle, popular }) => (
+          {plans.map(({ name, price, period, savings, desc, features, cta, ctaHref, ctaStyle, popular }) => (
             <div
               key={name}
               className={`relative rounded-2xl p-8 ${popular ? 'border-2 border-teal-500/50 bg-slate-900' : 'border border-white/[0.07] bg-slate-900/50'}`}
@@ -677,6 +686,7 @@ function PricingSection() {
                   {period !== 'forever' && <span className="text-sm text-slate-400">{period}</span>}
                 </div>
                 {period === 'forever' && <p className="text-xs text-slate-500">forever</p>}
+                {savings && <p className="mt-1 text-xs text-teal-400/80">{savings}</p>}
                 <p className="mt-2 text-sm text-slate-400">{desc}</p>
               </div>
 
@@ -689,18 +699,19 @@ function PricingSection() {
                 ))}
               </ul>
 
-              <button
-                className={`w-full rounded-xl px-6 py-3.5 text-sm font-bold transition-all hover:-translate-y-0.5 ${ctaStyle}`}
+              <a
+                href={ctaHref}
+                className={`block w-full rounded-xl px-6 py-3.5 text-center text-sm font-bold transition-all hover:-translate-y-0.5 ${ctaStyle}`}
                 aria-label={`${cta} — ${name} plan`}
               >
                 {cta}
-              </button>
+              </a>
             </div>
           ))}
         </div>
 
         <p className="mt-8 text-center text-sm text-slate-500">
-          All plans include a 14-day free trial · No credit card required · Cancel anytime
+          Paddler plan includes a 14-day free trial · No credit card required · Cancel anytime
         </p>
       </div>
     </section>
@@ -730,19 +741,19 @@ function FinalCTA() {
         </h2>
 
         <p className="mx-auto mb-10 max-w-xl text-lg text-slate-400">
-          Join 2,000+ explorers who plan smarter, paddle further, and discover rivers they never knew existed.
+          Join 2,000+ paddlers who plan smarter, paddle further, and discover rivers they never knew existed.
         </p>
 
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <a
-            href="#"
+            href="https://fleuvibe-8am5.vercel.app"
             className="group flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 px-10 py-4 text-base font-bold text-white shadow-2xl shadow-teal-500/30 transition-all hover:shadow-teal-500/50 hover:-translate-y-0.5 sm:w-auto"
           >
             Start exploring for free
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
           </a>
           <a
-            href="#"
+            href="#solution"
             className="flex w-full items-center justify-center gap-2 rounded-full border border-white/15 px-8 py-4 text-base font-medium text-slate-300 transition-all hover:border-white/25 hover:text-white sm:w-auto"
           >
             <PlayCircle className="h-4 w-4 text-teal-400" aria-hidden="true" />
@@ -785,14 +796,18 @@ function Footer() {
               The platform for river explorers. Discover routes, check conditions, and book experiences with local guides.
             </p>
             <div className="flex gap-3">
-              {['𝕏', 'in', 'ig'].map((social) => (
+              {[
+                { icon: '𝕏',  label: 'X (Twitter)' },
+                { icon: 'in', label: 'LinkedIn' },
+                { icon: 'ig', label: 'Instagram' },
+              ].map(({ icon, label }) => (
                 <a
-                  key={social}
+                  key={label}
                   href="#"
                   className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-sm text-slate-400 transition-colors hover:border-white/20 hover:text-white"
-                  aria-label={social}
+                  aria-label={label}
                 >
-                  {social}
+                  {icon}
                 </a>
               ))}
             </div>
