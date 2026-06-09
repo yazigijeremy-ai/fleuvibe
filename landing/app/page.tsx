@@ -44,11 +44,11 @@ function Navbar() {
 
         {/* CTAs */}
         <div className="flex items-center gap-3">
-          <a href="#" className="hidden text-sm font-medium text-slate-400 transition-colors hover:text-white md:inline">
+          <a href="https://fleuvibe-8am5.vercel.app" className="hidden text-sm font-medium text-slate-400 transition-colors hover:text-white md:inline">
             Sign in
           </a>
           <a
-            href="#"
+            href="https://fleuvibe-8am5.vercel.app"
             className="group flex items-center gap-1.5 rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-teal-500/20 transition-all hover:shadow-teal-500/40 hover:-translate-y-px"
           >
             Get Started
@@ -608,6 +608,7 @@ function PricingSection() {
         'Mobile app access',
       ],
       cta: 'Start exploring',
+      ctaHref: 'https://fleuvibe-8am5.vercel.app',
       ctaStyle: 'bg-slate-800 text-white hover:bg-slate-700 border border-white/10',
       popular: false,
     },
@@ -626,6 +627,7 @@ function PricingSection() {
         'Monthly new route drops',
       ],
       cta: 'Start free trial →',
+      ctaHref: 'https://fleuvibe-8am5.vercel.app',
       ctaStyle: 'bg-gradient-to-r from-teal-500 to-cyan-500 text-white shadow-lg shadow-teal-500/25 hover:shadow-teal-500/50',
       popular: true,
     },
@@ -642,6 +644,7 @@ function PricingSection() {
         'Dedicated account manager',
       ],
       cta: 'Get in touch',
+      ctaHref: 'mailto:partners@fleuvibe.com',
       ctaStyle: 'bg-slate-800 text-white hover:bg-slate-700 border border-white/10',
       popular: false,
     },
@@ -662,7 +665,7 @@ function PricingSection() {
         </div>
 
         <div className="mt-14 grid items-start gap-8 lg:grid-cols-3">
-          {plans.map(({ name, price, period, desc, features, cta, ctaStyle, popular }) => (
+          {plans.map(({ name, price, period, desc, features, cta, ctaHref, ctaStyle, popular }) => (
             <div
               key={name}
               className={`relative rounded-2xl p-8 ${popular ? 'border-2 border-teal-500/50 bg-slate-900' : 'border border-white/[0.07] bg-slate-900/50'}`}
@@ -694,12 +697,13 @@ function PricingSection() {
                 ))}
               </ul>
 
-              <button
-                className={`w-full rounded-xl px-6 py-3.5 text-sm font-bold transition-all hover:-translate-y-0.5 ${ctaStyle}`}
+              <a
+                href={ctaHref}
+                className={`block w-full rounded-xl px-6 py-3.5 text-center text-sm font-bold transition-all hover:-translate-y-0.5 ${ctaStyle}`}
                 aria-label={`${cta} — ${name} plan`}
               >
                 {cta}
-              </button>
+              </a>
             </div>
           ))}
         </div>
@@ -740,14 +744,14 @@ function FinalCTA() {
 
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <a
-            href="#"
+            href="https://fleuvibe-8am5.vercel.app"
             className="group flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 px-10 py-4 text-base font-bold text-white shadow-2xl shadow-teal-500/30 transition-all hover:shadow-teal-500/50 hover:-translate-y-0.5 sm:w-auto"
           >
             Start exploring for free
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
           </a>
           <a
-            href="#"
+            href="#solution"
             className="flex w-full items-center justify-center gap-2 rounded-full border border-white/15 px-8 py-4 text-base font-medium text-slate-300 transition-all hover:border-white/25 hover:text-white sm:w-auto"
           >
             <PlayCircle className="h-4 w-4 text-teal-400" aria-hidden="true" />

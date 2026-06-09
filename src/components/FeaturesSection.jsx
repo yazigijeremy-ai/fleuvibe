@@ -16,7 +16,7 @@ const FEATURES = [
   {
     icon: "🗺️",
     title: "Carte interactive",
-    desc: "40+ spots vérifiés sur carte. Filtre par type (rivière, lac, mer), difficulté, activité et pays d'un seul geste.",
+    desc: "150+ spots vérifiés sur carte. Filtre par type (rivière, lac, mer), difficulté, activité et pays d'un seul geste.",
     tag: "Gratuit",
     tagColor: "#1a9e6e",
   },

@@ -1781,8 +1781,8 @@ export default function FleuVibe() {
         .pop-img-wrap img{transition:transform 0.5s ease}.pop-img-wrap:hover img{transform:scale(1.05)}
         @keyframes slowZoom{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
         @keyframes skeletonPulse{0%,100%{opacity:0.4}50%{opacity:0.8}}
-        .img-skeleton{background:linear-gradient(90deg,#e8f0ed 0%,#f5f8f7 50%,#e8f0ed 100%);background-size:200% 100%;animation:shimmer 1.5s ease-in-out infinite}
-        @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+        .img-skeleton{background:linear-gradient(90deg,#e8f0ed 0%,#f5f8f7 50%,#e8f0ed 100%);background-size:200% 100%;animation:skeletonShimmer 1.5s ease-in-out infinite}
+        @keyframes skeletonShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
         /* ── SPOT CARD REDESIGN ───────────────────────────────── */
         .fv-spot-card{background:#ffffff;border-radius:16px;border:1px solid rgba(0,0,0,0.08);overflow:hidden;cursor:pointer;transition:transform 0.2s ease,box-shadow 0.2s ease;position:relative}
