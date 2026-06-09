@@ -335,7 +335,17 @@ const SPOTS = [
   { id: 40, type: "LAKE", country: "PE", name: "Lac Titicaca · Uros", river: "Lac Titicaca", region: "Puno", distance: "20 km", duration: "1 journée", difficulty: "Facile", activities: ["Kayak", "Bateau traditionnel"], description: "Le plus haut lac navigable du monde à 3800m.", color: "#0891b2", emoji: "🌄", open: true, coords: [-15.840, -69.330], camping: false, waterPoints: true },
 ];
 
-const SPOTS_WORLD = [...SPOTS, ...WORLD_ROUTES, ...GLOBAL_SPOTS_FLAT];
+const _dedupCoords = arr => {
+  const seen = new Set();
+  return arr.filter(s => {
+    if (!s.coords) return true;
+    const key = `${Math.round(s.coords[0] * 10)},${Math.round(s.coords[1] * 10)}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+const SPOTS_WORLD = _dedupCoords([...SPOTS, ...WORLD_ROUTES, ...GLOBAL_SPOTS_FLAT]);
 const ALL_PROVIDERS = [...PROVIDERS, ...GLOBAL_PARTNERS];
 
 // ─── ADMIN DASHBOARD ─────────────────────────────────────────────────────────
