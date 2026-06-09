@@ -1902,7 +1902,13 @@ export default function FleuVibe() {
                     />
                     <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)" }} />
                     {s.rating && <div style={{ position: "absolute", top: 10, left: 10, padding: "3px 8px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", borderRadius: "20px", fontSize: "0.65rem", color: "#fff", fontWeight: 600 }}>⭐ {s.rating.toFixed(1)}</div>}
-                    <div style={{ position: "absolute", top: 10, right: 10, background: "#fff", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.85rem" }}>🤍</div>
+                    <button
+                      onClick={e => { e.stopPropagation(); toggleFav(s.id); }}
+                      aria-label={favorites.includes(s.id) ? "Retirer des favoris" : "Ajouter aux favoris"}
+                      style={{ position: "absolute", top: 10, right: 10, background: "#fff", border: "none", borderRadius: "50%", width: 28, height: 28, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.85rem", cursor: "pointer" }}
+                    >
+                      {favorites.includes(s.id) ? "❤️" : "🤍"}
+                    </button>
                   </div>
                   <div style={{ padding: "12px 14px" }}>
                     <p style={{ fontSize: "0.88rem", fontWeight: 700, color: "#1a2e28", marginBottom: "3px" }}>{s.name.split("·")[0].trim()}</p>
@@ -2416,10 +2422,6 @@ export default function FleuVibe() {
             {/* Apparence */}
             <div style={{ marginBottom: "16px", padding: "12px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px" }}>
               <p style={{ fontSize: "0.65rem", color: "#5a8a78", fontWeight: 600, marginBottom: "10px", letterSpacing: "0.5px" }}>APPARENCE</p>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                <span style={{ fontSize: "0.72rem", color: "#8ab8b0" }}>Mode</span>
-                <button onClick={() => setDarkMode(d => !d)} style={{ padding: "5px 12px", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "20px", color: "#a8edcf", fontSize: "0.68rem", fontWeight: 600 }}>{darkMode ? "☀️ Clair" : "🌙 Sombre"}</button>
-              </div>
               <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                 {Object.entries(THEMES).map(([key, t]) => (
                   <button key={key} onClick={() => setTheme(key)} title={t.name} style={{ width: 24, height: 24, borderRadius: "50%", background: `linear-gradient(135deg,${t.primary},${t.secondary})`, border: theme === key ? "2px solid #fff" : "2px solid transparent", cursor: "pointer" }} />
@@ -2428,7 +2430,7 @@ export default function FleuVibe() {
               </div>
             </div>
             {!isPremium && <button onClick={() => { setShowProfile(false); setShowPremium(true); }} style={{ width: "100%", padding: "10px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.82rem", marginBottom: "8px", boxShadow: "0 3px 10px rgba(245,158,11,0.25)" }}>⭐ Passer Premium</button>}
-            {!isPremium && <button onClick={() => { setIsPremium(true); addXP(200); setShowProfile(false); }} style={{ width: "100%", padding: "8px", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.18)", borderRadius: "20px", color: "#a5b4fc", fontWeight: 500, fontSize: "0.72rem", marginBottom: "8px" }}>🧪 Tester Premium (dev)</button>}
+            {!isPremium && isAdmin && <button onClick={() => { setIsPremium(true); addXP(200); setShowProfile(false); }} style={{ width: "100%", padding: "8px", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.18)", borderRadius: "20px", color: "#a5b4fc", fontWeight: 500, fontSize: "0.72rem", marginBottom: "8px" }}>🧪 Tester Premium (dev)</button>}
             {isPremium && <button onClick={() => setIsPremium(false)} style={{ width: "100%", padding: "9px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.22)", borderRadius: "20px", color: "#a5b4fc", fontWeight: 600, fontSize: "0.78rem", marginBottom: "8px" }}>🤖 IA Premium Active ✓</button>}
             <button onClick={handleSignOut} style={{ width: "100%", padding: "9px", background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.18)", borderRadius: "20px", color: "#f87171", fontWeight: 600, fontSize: "0.82rem" }}>🚪 Se déconnecter</button>
           </div>
