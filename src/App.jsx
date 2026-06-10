@@ -1956,7 +1956,7 @@ export default function FleuVibe() {
         )}
 
         {/* NAV FILTER CHIPS */}
-        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.06s", background: "#fff", borderRadius: "60px", padding: "8px 16px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", display: "flex", gap: "6px", marginTop: "24px", marginBottom: "20px", flexWrap: "wrap" }}>
+        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.06s", background: "#fff", borderRadius: "60px", padding: "8px 16px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", border: "1px solid #e8f0ed", display: "flex", gap: "6px", marginTop: "24px", marginBottom: "20px", flexWrap: "wrap", overflowX: "auto" }}>
           {[["explore", "🗺️", "Explorer"], ["map", "🌍", "Carte"], ["hidden", "💎", "Pépites"], ["weather", "🌤️", "Météo"], ["favorites", "❤️", favorites.length > 0 ? `Favoris (${favorites.length})` : "Favoris"], ["tourism", "🤝", "Partenaires"]].map(([id, icon, label]) => (
             <button key={id} onClick={() => handlePageChange(id)} style={{ padding: "8px 18px", borderRadius: "40px", border: "none", fontSize: "0.82rem", fontWeight: 600, background: page === id ? "#1a9e6e" : "#f5f8f7", color: page === id ? "#fff" : "#4a6a5e", transition: "all 0.2s", cursor: "pointer" }}>
               {icon} {label}
@@ -2120,7 +2120,7 @@ export default function FleuVibe() {
         {page === "hidden" && (
           <div>
             <div style={{ textAlign: "center", marginBottom: "18px" }}>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fbbf24", marginBottom: "5px" }}>💎 Pépites Cachées</h2>
+              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#b45309", marginBottom: "5px" }}>💎 Pépites Cachées</h2>
               <p style={{ color: "#4a7a6a", fontSize: "0.8rem" }}>Spots secrets partagés par la communauté. Pas dans les guides.</p>
             </div>
             {HIDDEN_GEMS.map(gem => (
@@ -2130,23 +2130,23 @@ export default function FleuVibe() {
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
                     <span style={{ fontSize: "1.2rem" }}>{gem.emoji}</span>
                     <div>
-                      <h3 style={{ fontSize: "0.92rem", fontWeight: 700, color: "#fbbf24" }}>{gem.name} {COUNTRIES[gem.country]?.flag}</h3>
-                      <div style={{ color: "#4a7a6a", fontSize: "0.7rem" }}>📍 {gem.region} · {COUNTRIES[gem.country]?.name} · {gem.difficulty}</div>
+                      <h3 style={{ fontSize: "0.92rem", fontWeight: 700, color: "#92400e" }}>{gem.name} {COUNTRIES[gem.country]?.flag}</h3>
+                      <div style={{ color: "#6a8a80", fontSize: "0.7rem" }}>📍 {gem.region} · {COUNTRIES[gem.country]?.name} · {gem.difficulty}</div>
                     </div>
-                    <span style={{ marginLeft: "auto", padding: "2px 8px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "20px", fontSize: "0.6rem", color: "#fbbf24" }}>📅 {gem.season}</span>
+                    <span style={{ marginLeft: "auto", padding: "2px 8px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "20px", fontSize: "0.6rem", color: "#92400e" }}>📅 {gem.season}</span>
                   </div>
                   <p style={{ color: "#4a6a60", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: "8px" }}>{gem.description}</p>
                   <div style={{ padding: "8px 10px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.18)", borderRadius: "10px" }}>
-                    <p style={{ fontSize: "0.72rem", color: "#fbbf24" }}>🤫 <strong>Secret communauté :</strong> {gem.secret}</p>
+                    <p style={{ fontSize: "0.72rem", color: "#92400e" }}>🤫 <strong>Secret communauté :</strong> {gem.secret}</p>
                   </div>
                   <div style={{ display: "flex", gap: "5px", marginTop: "8px", flexWrap: "wrap" }}>
-                    {gem.activities?.map(a => <span key={a} style={{ padding: "2px 8px", background: "rgba(245,158,11,0.08)", borderRadius: "20px", fontSize: "0.65rem", color: "#fbbf24" }}>{a}</span>)}
+                    {gem.activities?.map(a => <span key={a} style={{ padding: "2px 8px", background: "rgba(245,158,11,0.1)", borderRadius: "20px", fontSize: "0.65rem", color: "#92400e" }}>{a}</span>)}
                   </div>
                 </div>
               </div>
             ))}
             <div style={{ padding: "16px", background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: "18px", textAlign: "center" }}>
-              <p style={{ color: "#fbbf24", fontSize: "0.8rem", marginBottom: "10px" }}>🌟 Tu connais un spot secret ? Partage-le avec la communauté !</p>
+              <p style={{ color: "#92400e", fontSize: "0.8rem", marginBottom: "10px" }}>🌟 Tu connais un spot secret ? Partage-le avec la communauté !</p>
               <button onClick={() => setShowSubmit(true)} style={{ padding: "8px 20px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.8rem" }}>💎 Ajouter une pépite</button>
             </div>
           </div>
@@ -2215,9 +2215,8 @@ export default function FleuVibe() {
         {/* FAVORIS */}
         {page === "favorites" && (
           <div>
-            {!session && <div style={{ padding: "50px", textAlign: "center", background: "#fff", borderRadius: "24px", border: "1px solid #e8f0ed" }}><div style={{ fontSize: "3rem", marginBottom: "12px" }}>❤️</div><h3 style={{ color: "#1a2e28", marginBottom: "8px" }}>Connecte-toi pour voir tes favoris</h3><button onClick={() => setShowAuth(true)} style={{ padding: "10px 24px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 700, fontSize: "0.85rem" }}>Se connecter</button></div>}
-            {session && favorites.length === 0 && <div style={{ padding: "50px", textAlign: "center", background: "#fff", borderRadius: "24px", border: "1px solid #e8f0ed" }}><div style={{ fontSize: "3rem", marginBottom: "12px" }}>🏞️</div><h3 style={{ color: "#1a2e28", marginBottom: "8px" }}>Aucun favori pour l'instant</h3><button onClick={() => setPage("explore")} style={{ padding: "9px 20px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 600, fontSize: "0.83rem" }}>Explorer les spots</button></div>}
-            {session && filtered.map(s => <SpotCard key={s.id} spot={s} isFav={favorites.includes(s.id)} onFav={toggleFav} onBook={setBookingSpot} session={session} userName={userName} isPremium={isPremium} onShowPremium={() => setShowPremium(true)} allSpots={spots} />)}
+            {favorites.length === 0 && <div style={{ padding: "50px", textAlign: "center", background: "#fff", borderRadius: "24px", border: "1px solid #e8f0ed" }}><div style={{ fontSize: "3rem", marginBottom: "12px" }}>🏞️</div><h3 style={{ color: "#1a2e28", marginBottom: "8px" }}>Aucun favori pour l'instant</h3><button onClick={() => setPage("explore")} style={{ padding: "9px 20px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 600, fontSize: "0.83rem" }}>Explorer les spots</button></div>}
+            {filtered.map(s => <SpotCard key={s.id} spot={s} isFav={favorites.includes(s.id)} onFav={toggleFav} onBook={setBookingSpot} session={session} userName={userName} isPremium={isPremium} onShowPremium={() => setShowPremium(true)} allSpots={spots} />)}
           </div>
         )}
 
