@@ -1957,7 +1957,7 @@ export default function FleuVibe() {
 
         {/* NAV FILTER CHIPS */}
         <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.06s", background: "#fff", borderRadius: "60px", padding: "8px 16px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", border: "1px solid #e8f0ed", display: "flex", gap: "6px", marginTop: "24px", marginBottom: "20px", flexWrap: "wrap", overflowX: "auto" }}>
-          {[["explore", "🗺️", "Explorer"], ["map", "🌍", "Carte"], ["hidden", "💎", "Pépites"], ["weather", "🌤️", "Météo"], ["favorites", "❤️", favorites.length > 0 ? `Favoris (${favorites.length})` : "Favoris"], ["tourism", "🤝", "Partenaires"]].map(([id, icon, label]) => (
+          {[["explore", "🗺️", "Explorer"], ["expeditions", "⛺", "Expéditions"], ["map", "🌍", "Carte"], ["hidden", "💎", "Pépites"], ["weather", "🌤️", "Météo"], ["favorites", "❤️", favorites.length > 0 ? `Favoris (${favorites.length})` : "Favoris"]].map(([id, icon, label]) => (
             <button key={id} onClick={() => handlePageChange(id)} style={{ padding: "8px 18px", borderRadius: "40px", border: "none", fontSize: "0.82rem", fontWeight: 600, background: page === id ? "#1a9e6e" : "#f5f8f7", color: page === id ? "#fff" : "#4a6a5e", transition: "all 0.2s", cursor: "pointer" }}>
               {icon} {label}
             </button>
