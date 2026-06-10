@@ -61,9 +61,9 @@ export default function FeaturesSection() {
           {FEATURES.map(({ icon, title, desc, tag, tagColor }) => (
             <div
               key={title}
-              style={{ background: "#f7faf9", border: "1px solid #e8f0ed", borderRadius: "20px", padding: "26px 22px", transition: "transform 0.2s,box-shadow 0.2s" }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 16px 40px rgba(0,0,0,0.08)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}
+              style={{ background: "#fff", border: "1px solid #e8f0ed", borderRadius: "20px", padding: "26px 22px", transition: "transform 0.2s,box-shadow 0.2s", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 16px 40px rgba(0,0,0,0.1)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.04)"; }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px" }}>
                 <span style={{ fontSize: "1.9rem" }}>{icon}</span>

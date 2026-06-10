@@ -47,15 +47,13 @@ export default function HowItWorksSection() {
         {/* Steps */}
         <ol
           aria-label="Comment fonctionne FleuVibe"
-          style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: "32px" }}
+          style={{ listStyle: "none", padding: 0, margin: 0, display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: "32px", position: "relative" }}
         >
-          {STEPS.map((step, i) => (
-            <li key={step.num} style={{ position: "relative" }}>
+          {/* Desktop connector line */}
+          <div aria-hidden="true" style={{ position: "absolute", top: "52px", left: "calc(16.66% + 26px)", right: "calc(16.66% + 26px)", height: "2px", background: "linear-gradient(90deg,rgba(26,158,110,0.25),rgba(8,145,178,0.25))", zIndex: 0, pointerEvents: "none" }} />
 
-              {/* Connector (desktop only via CSS) */}
-              {i < STEPS.length - 1 && (
-                <div aria-hidden="true" style={{ display: "none" }} />
-              )}
+          {STEPS.map((step, i) => (
+            <li key={step.num} style={{ position: "relative", zIndex: 1 }}>
 
               <div style={{ background: "#fff", border: "1px solid #e8f0ed", borderRadius: "24px", padding: "32px 26px", height: "100%", display: "flex", flexDirection: "column", gap: "16px", boxShadow: "0 4px 20px rgba(0,0,0,0.04)" }}>
 

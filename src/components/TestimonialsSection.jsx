@@ -3,21 +3,24 @@ const TESTIMONIALS = [
     quote: "J'ai trouvé mon spot parfait en 2 minutes chrono. J'ai tapé \"kayak calme avec vue montagne\" et l'IA m'a sorti exactement ce que je voulais. Depuis, je l'utilise avant chaque sortie.",
     name: "Alex M.",
     role: "Kayakiste · 6 ans de pratique",
-    avatar: "🧔",
+    initials: "AM",
+    gradient: "linear-gradient(135deg,#1a9e6e,#0891b2)",
     stars: 5,
   },
   {
     quote: "La météo en temps réel sur chaque spot, c'est un game changer absolu. Avant je me prenais des mauvaises surprises une fois sur trois. Depuis FleuVibe, plus jamais.",
     name: "Marie T.",
     role: "Pagayeuse · Niveau intermédiaire",
-    avatar: "👩‍🦱",
+    initials: "MT",
+    gradient: "linear-gradient(135deg,#7c3aed,#ec4899)",
     stars: 5,
   },
   {
     quote: "Je suis guide kayak et je recommande FleuVibe à tous mes clients pour préparer leurs sorties. Les spots vérifiés et les niveaux de difficulté sont honnêtes — c'est rare.",
     name: "Thomas R.",
     role: "Guide professionnel · Ardèche",
-    avatar: "🧑‍🏫",
+    initials: "TR",
+    gradient: "linear-gradient(135deg,#f59e0b,#ef4444)",
     stars: 5,
   },
 ];
@@ -52,18 +55,18 @@ export default function TestimonialsSection() {
 
         {/* Cards */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(270px,1fr))", gap: "20px", marginBottom: "52px" }}>
-          {TESTIMONIALS.map(({ quote, name, role, avatar, stars }) => (
+          {TESTIMONIALS.map(({ quote, name, role, initials, gradient, stars }) => (
             <figure
               key={name}
-              style={{ background: "#fff", border: "1px solid #e8f0ed", borderRadius: "20px", padding: "28px 24px", margin: 0, display: "flex", flexDirection: "column", gap: "18px" }}
+              style={{ background: "#fff", border: "1px solid #e8f0ed", borderRadius: "20px", padding: "28px 24px", margin: 0, display: "flex", flexDirection: "column", gap: "18px", boxShadow: "0 4px 16px rgba(0,0,0,0.04)" }}
             >
               <Stars n={stars} />
-              <blockquote style={{ margin: 0, fontSize: "0.9rem", color: "#3a5a50", lineHeight: 1.7, fontStyle: "italic" }}>
+              <blockquote style={{ margin: 0, fontSize: "0.9rem", color: "#3a5a50", lineHeight: 1.7 }}>
                 "{quote}"
               </blockquote>
               <figcaption style={{ display: "flex", alignItems: "center", gap: "12px", marginTop: "auto" }}>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "linear-gradient(135deg,rgba(26,158,110,0.15),rgba(8,145,178,0.1))", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.3rem", flexShrink: 0 }}>
-                  {avatar}
+                <div style={{ width: 42, height: 42, borderRadius: "50%", background: gradient, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.78rem", fontWeight: 800, color: "#fff", flexShrink: 0, letterSpacing: "0.5px" }}>
+                  {initials}
                 </div>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: "0.88rem", color: "#1a2e28" }}>{name}</div>

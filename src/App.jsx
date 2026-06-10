@@ -643,43 +643,46 @@ function MapView({ spots, favorites, onFav, session, onShowAuth, onBook, isPremi
 
   return (
     <div>
-      <div style={{ textAlign: "center", marginBottom: "16px" }}>
-        <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a8edcf", marginBottom: "5px" }}>🗺️ Carte mondiale</h2>
-        <p style={{ color: "#4a7a6a", fontSize: "0.8rem" }}>{spots.length} spots nautiques · {Object.keys(COUNTRIES).length} pays</p>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+        <div>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a2e28", marginBottom: "2px" }}>Carte des spots</h2>
+          <p style={{ color: "#6a8a80", fontSize: "0.8rem" }}>{spots.length} spots · {Object.keys(COUNTRIES).length} pays</p>
+        </div>
+        <div style={{ display: "flex", gap: "4px" }}>
+          {[["ALL", "Tous"], ["RIVER", "Rivières"], ["LAKE", "Lacs"], ["SEA", "Mer"]].map(([id, label]) => (
+            <button key={id} onClick={() => setMapType(id)} style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid #e0ece7", fontSize: "0.8rem", fontWeight: 600, background: mapType === id ? "#1a9e6e" : "#fff", color: mapType === id ? "#fff" : "#3a6a5e", cursor: "pointer", transition: "all 0.15s" }}>{label}</button>
+          ))}
+        </div>
       </div>
-      <div style={{ display: "flex", gap: "4px", marginBottom: "12px", justifyContent: "center", flexWrap: "wrap" }}>
-        {[["ALL", "🌍 Tous"], ["RIVER", "🏞️ Rivières"], ["LAKE", "🏔️ Lacs"], ["SEA", "🌊 Mers"]].map(([id, label]) => (
-          <button key={id} onClick={() => setMapType(id)} style={{ padding: "6px 14px", borderRadius: "20px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: mapType === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.06)", color: mapType === id ? "#fff" : "#6a9a8c", cursor: "pointer" }}>{label}</button>
-        ))}
-      </div>
-      <div ref={mapRef} style={{ height: "460px", borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(255,255,255,0.1)", marginBottom: "14px" }} />
+      <div ref={mapRef} style={{ height: "480px", borderRadius: "16px", overflow: "hidden", border: "1px solid #e0ece7", marginBottom: "16px", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }} />
       {!ready && typeof window.L === 'undefined' && (
         <div style={{ padding: "20px", textAlign: "center", color: "#5a8a78", fontSize: "0.8rem" }}>⏳ Chargement de la carte...</div>
       )}
       {selectedSpot && (
-        <div style={{ padding: "16px", background: `linear-gradient(135deg,${selectedSpot.color}08,rgba(255,255,255,0.02))`, border: `1px solid ${selectedSpot.color}30`, borderRadius: "18px", animation: "slideUp 0.3s ease" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
-            <span style={{ fontSize: "2rem" }}>{selectedSpot.emoji}</span>
-            <div style={{ flex: 1 }}>
-              <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#daf0e8" }}>{selectedSpot.name} {COUNTRIES[selectedSpot.country]?.flag}</h3>
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "3px" }}>
-                <span style={{ fontSize: "0.65rem", color: "#5a8a78" }}>{selectedSpot.region}</span>
-                <span style={{ padding: "1px 7px", background: `${diffColor[selectedSpot.difficulty]}18`, border: `1px solid ${diffColor[selectedSpot.difficulty]}30`, borderRadius: "20px", fontSize: "0.62rem", fontWeight: 600, color: diffColor[selectedSpot.difficulty] }}>{selectedSpot.difficulty}</span>
+        <div style={{ padding: "20px", background: "#fff", border: "1px solid #e0ece7", borderRadius: "16px", animation: "slideUp 0.3s ease", boxShadow: "0 4px 20px rgba(0,0,0,0.07)" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", marginBottom: "12px" }}>
+            <span style={{ fontSize: "2rem", flexShrink: 0 }}>{selectedSpot.emoji}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#1a2e28", marginBottom: "4px", lineHeight: 1.3 }}>{selectedSpot.name} <span style={{ fontWeight: 400, color: "#6a8a80" }}>{COUNTRIES[selectedSpot.country]?.flag}</span></h3>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                <span style={{ fontSize: "0.78rem", color: "#6a8a80" }}>{selectedSpot.region}</span>
+                <span style={{ padding: "2px 8px", background: `${diffColor[selectedSpot.difficulty]}15`, border: `1px solid ${diffColor[selectedSpot.difficulty]}35`, borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, color: diffColor[selectedSpot.difficulty] }}>{selectedSpot.difficulty}</span>
               </div>
             </div>
-            <button onClick={() => onFav(selectedSpot.id)} style={{ fontSize: "1.4rem", background: "none", border: "none", cursor: "pointer" }}>{favorites.includes(selectedSpot.id) ? "❤️" : "🤍"}</button>
+            <button onClick={() => onFav(selectedSpot.id)} style={{ fontSize: "1.3rem", background: "none", border: "none", cursor: "pointer", flexShrink: 0 }}>{favorites.includes(selectedSpot.id) ? "❤️" : "🤍"}</button>
           </div>
-          <p style={{ fontSize: "0.8rem", color: "#8ab8b0", lineHeight: 1.6, marginBottom: "10px" }}>{selectedSpot.description}</p>
-          <div style={{ display: "flex", gap: "12px", fontSize: "0.72rem", color: "#5a8a78", marginBottom: "10px" }}>
-            <span>📏 {selectedSpot.distance}</span>
-            <span>⏱️ {selectedSpot.duration}</span>
+          <p style={{ fontSize: "0.85rem", color: "#4a6a5e", lineHeight: 1.65, marginBottom: "12px" }}>{selectedSpot.description}</p>
+          <div style={{ display: "flex", gap: "16px", fontSize: "0.8rem", color: "#6a8a80", marginBottom: "12px" }}>
+            <span>{selectedSpot.distance}</span>
+            <span>·</span>
+            <span>{selectedSpot.duration}</span>
           </div>
-          <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "10px" }}>
-            {selectedSpot.activities.map(a => <span key={a} style={{ padding: "2px 8px", background: `${selectedSpot.color}12`, border: `1px solid ${selectedSpot.color}24`, borderRadius: "20px", fontSize: "0.65rem", color: "#8ae8cc" }}>{a}</span>)}
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "14px" }}>
+            {selectedSpot.activities.map(a => <span key={a} style={{ padding: "4px 10px", background: "#f0f5f3", border: "1px solid #d4e8e0", borderRadius: "8px", fontSize: "0.78rem", color: "#1a9e6e", fontWeight: 500 }}>{a}</span>)}
           </div>
           <div style={{ display: "flex", gap: "8px" }}>
-            <button onClick={() => onBook(selectedSpot)} style={{ padding: "7px 16px", background: `linear-gradient(135deg,${selectedSpot.color},#0891b2)`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.75rem" }}>🛶 Réserver</button>
-            <button onClick={() => setSelectedSpot(null)} style={{ padding: "7px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", color: "#5a8a78", fontSize: "0.75rem" }}>✕ Fermer</button>
+            <button onClick={() => onBook(selectedSpot)} style={{ flex: 1, padding: "10px 16px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "10px", color: "#fff", fontWeight: 700, fontSize: "0.85rem" }}>Réserver ce spot</button>
+            <button onClick={() => setSelectedSpot(null)} style={{ padding: "10px 14px", background: "#f5f8f7", border: "1px solid #e0ece7", borderRadius: "10px", color: "#6a8a80", fontSize: "0.85rem", fontWeight: 500 }}>✕</button>
           </div>
         </div>
       )}
@@ -952,54 +955,63 @@ function ReviewsSection({ spot, session, userName, allSpots }) {
   };
 
   return (
-    <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+    <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid #f0f5f3" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#a8edcf" }}>⭐ Avis</span>
-          {avg && <><span style={{ fontSize: "0.95rem", fontWeight: 800, color: "#f59e0b" }}>{avg}</span><StarRating value={Math.round(avg)} readonly /><span style={{ fontSize: "0.65rem", color: "#3a6a5a" }}>({reviews.length})</span></>}
+          <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1a2e28" }}>Avis</span>
+          {avg && <><span style={{ fontSize: "0.95rem", fontWeight: 800, color: "#f59e0b" }}>{avg}</span><StarRating value={Math.round(avg)} readonly /><span style={{ fontSize: "0.78rem", color: "#9ab0a8" }}>({reviews.length})</span></>}
         </div>
-        <div style={{ display: "flex", gap: "5px" }}>
-          {reviews.length >= 2 && <button onClick={async e => { e.stopPropagation(); setLoadingSummary(true); setSummary(await summarizeReviews(reviews)); setLoadingSummary(false); }} disabled={loadingSummary} style={{ padding: "3px 8px", background: "none", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", color: "#7ecfb0", fontSize: "0.62rem", cursor: "pointer" }}>📋 {loadingSummary ? "..." : "Résumé IA"}</button>}
-          {session && !showForm && <button onClick={() => setShowForm(true)} style={{ padding: "4px 12px", background: "rgba(26,158,110,0.12)", border: "1px solid rgba(26,158,110,0.28)", borderRadius: "20px", color: "#7ecfb0", fontSize: "0.72rem", fontWeight: 600 }}>✍️ Avis</button>}
+        <div style={{ display: "flex", gap: "6px" }}>
+          {reviews.length >= 2 && <button onClick={async e => { e.stopPropagation(); setLoadingSummary(true); setSummary(await summarizeReviews(reviews)); setLoadingSummary(false); }} disabled={loadingSummary} style={{ padding: "4px 10px", background: "#f0f9f5", border: "1px solid #d1ede3", borderRadius: "20px", color: "#1a9e6e", fontSize: "0.78rem", fontWeight: 500, cursor: "pointer" }}>📋 {loadingSummary ? "..." : "Résumé IA"}</button>}
+          {session && !showForm && <button onClick={() => setShowForm(true)} style={{ padding: "4px 12px", background: "#f0f9f5", border: "1px solid #d1ede3", borderRadius: "20px", color: "#1a9e6e", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>✍️ Avis</button>}
         </div>
       </div>
-      {summary && <p style={{ fontSize: "0.72rem", color: "#a8edcf", padding: "7px 9px", background: "rgba(26,158,110,0.06)", borderRadius: "9px", marginBottom: "8px" }}>📋 {summary}</p>}
+      {summary && <p style={{ fontSize: "0.8rem", color: "#4a6a5e", padding: "8px 11px", background: "#f0f9f5", border: "1px solid #d1ede3", borderRadius: "10px", marginBottom: "10px", lineHeight: 1.6 }}>📋 {summary}</p>}
       {showForm && (
-        <div style={{ padding: "12px", background: "rgba(26,158,110,0.06)", border: "1px solid rgba(26,158,110,0.18)", borderRadius: "12px", marginBottom: "10px" }}>
-          <div style={{ marginBottom: "8px" }}><p style={{ fontSize: "0.7rem", color: "#4a7a6a", marginBottom: "5px" }}>Ta note</p><StarRating value={rating} onChange={setRating} /></div>
-          <button onClick={getSuggestion} disabled={loadingSuggestion} style={{ background: "none", border: "1px solid rgba(99,102,241,0.3)", padding: "4px 9px", borderRadius: "20px", color: "#a5b4fc", fontSize: "0.68rem", cursor: "pointer", marginBottom: "8px" }}>
+        <div style={{ padding: "14px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "14px", marginBottom: "12px" }}>
+          <div style={{ marginBottom: "10px" }}>
+            <p style={{ fontSize: "0.78rem", color: "#6a8a80", marginBottom: "6px", fontWeight: 600 }}>Ta note</p>
+            <StarRating value={rating} onChange={setRating} />
+          </div>
+          <button onClick={getSuggestion} disabled={loadingSuggestion} style={{ background: "#f5f3ff", border: "1px solid #e9d5ff", padding: "5px 11px", borderRadius: "20px", color: "#7c3aed", fontSize: "0.78rem", cursor: "pointer", marginBottom: "10px", fontWeight: 500 }}>
             🪄 {loadingSuggestion ? "Génération..." : "Suggestion IA"}
           </button>
-          <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Partage ton expérience..." rows={2} style={{ width: "100%", padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(26,158,110,0.18)", borderRadius: "10px", color: "#e8f4f0", fontSize: "0.8rem", resize: "vertical", outline: "none", marginBottom: "8px" }} />
-          {err && <p style={{ color: "#f87171", fontSize: "0.7rem", marginBottom: "6px" }}>{err}</p>}
-          <div style={{ display: "flex", gap: "6px" }}>
-            <button onClick={submit} disabled={submitting} style={{ padding: "6px 14px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 600, fontSize: "0.75rem", opacity: submitting ? 0.7 : 1 }}>{submitting ? "⏳..." : "✅ Publier"}</button>
-            <button onClick={() => { setShowForm(false); setRating(0); setComment(""); setErr(""); }} style={{ padding: "6px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", color: "#5a8a78", fontSize: "0.75rem" }}>Annuler</button>
+          <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Partage ton expérience..." rows={2} style={{ width: "100%", padding: "9px 12px", background: "#fff", border: "1px solid #e0ece7", borderRadius: "10px", color: "#1a2e28", fontSize: "0.82rem", resize: "vertical", outline: "none", marginBottom: "10px", boxSizing: "border-box" }} />
+          {err && <p style={{ color: "#e11d48", fontSize: "0.78rem", marginBottom: "8px" }}>{err}</p>}
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={submit} disabled={submitting} style={{ padding: "7px 16px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "10px", color: "#fff", fontWeight: 700, fontSize: "0.82rem", opacity: submitting ? 0.7 : 1, cursor: "pointer" }}>{submitting ? "⏳..." : "Publier"}</button>
+            <button onClick={() => { setShowForm(false); setRating(0); setComment(""); setErr(""); }} style={{ padding: "7px 14px", background: "#f5f8f7", border: "1px solid #e0ece7", borderRadius: "10px", color: "#6a8a80", fontSize: "0.82rem", cursor: "pointer" }}>Annuler</button>
           </div>
         </div>
       )}
-      {!session && <p style={{ fontSize: "0.7rem", color: "#3a6a5a", marginBottom: "8px" }}>🔐 Connecte-toi pour laisser un avis</p>}
-      {loading ? <p style={{ fontSize: "0.7rem", color: "#3a6a5a" }}>Chargement...</p> : reviews.length === 0 ? <p style={{ fontSize: "0.7rem", color: "#3a6a5a" }}>Aucun avis. Sois le premier ! 🚀</p> : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+      {!session && <p style={{ fontSize: "0.8rem", color: "#9ab0a8", marginBottom: "10px" }}>🔐 Connecte-toi pour laisser un avis</p>}
+      {loading ? <p style={{ fontSize: "0.8rem", color: "#9ab0a8" }}>Chargement...</p> : reviews.length === 0 ? <p style={{ fontSize: "0.8rem", color: "#9ab0a8" }}>Aucun avis. Sois le premier ! 🚀</p> : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           {reviews.map(r => (
-            <div key={r.id} style={{ padding: "9px 11px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "10px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "4px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-                  <div style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700, color: "#fff" }}>{(r.user_name || "?")[0].toUpperCase()}</div>
-                  <div><span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#c8e8d8" }}>{r.user_name || "Utilisateur"}</span><div style={{ display: "flex", alignItems: "center", gap: "5px" }}><StarRating value={r.rating} readonly /><span style={{ fontSize: "0.6rem", color: "#3a6a5a" }}>{new Date(r.created_at).toLocaleDateString("fr-BE")}</span></div></div>
+            <div key={r.id} style={{ padding: "10px 12px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "12px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "5px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, color: "#fff", flexShrink: 0 }}>{(r.user_name || "?")[0].toUpperCase()}</div>
+                  <div>
+                    <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1a2e28" }}>{r.user_name || "Utilisateur"}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "1px" }}>
+                      <StarRating value={r.rating} readonly />
+                      <span style={{ fontSize: "0.75rem", color: "#9ab0a8" }}>{new Date(r.created_at).toLocaleDateString("fr-BE")}</span>
+                    </div>
+                  </div>
                 </div>
-                {session && session.user.id === r.user_id && <button onClick={() => supabase.from('reviews').delete().eq('id', r.id).then(load)} style={{ background: "none", border: "none", color: "#3a6a5a", fontSize: "0.7rem" }}>🗑️</button>}
+                {session && session.user.id === r.user_id && <button onClick={() => supabase.from('reviews').delete().eq('id', r.id).then(load)} style={{ background: "none", border: "none", color: "#9ab0a8", fontSize: "0.8rem", cursor: "pointer" }}>🗑️</button>}
               </div>
-              {r.comment && <p style={{ fontSize: "0.76rem", color: "#8ab8b0", lineHeight: 1.5, marginTop: "4px" }}>{r.comment}</p>}
+              {r.comment && <p style={{ fontSize: "0.82rem", color: "#4a6a5e", lineHeight: 1.6, marginTop: "5px" }}>{r.comment}</p>}
             </div>
           ))}
         </div>
       )}
-      <div style={{ marginTop: "10px", padding: "8px 11px", background: "rgba(26,158,110,0.05)", borderRadius: "11px", border: "1px solid rgba(26,158,110,0.12)" }}>
-        <button onClick={async e => { e.stopPropagation(); setLoadingRecs(true); const similar = allSpots.filter(s => s.id !== spot.id && s.type === spot.type).slice(0, 6); setRecs(await getRecommendations(spot, similar)); setLoadingRecs(false); }} disabled={loadingRecs} style={{ background: "none", border: "1px solid rgba(26,158,110,0.3)", padding: "5px 12px", borderRadius: "20px", color: "#a8edcf", fontSize: "0.72rem", cursor: "pointer" }}>
-          🧭 {loadingRecs ? "..." : "Spots similaires recommandés"}
+      <div style={{ marginTop: "12px", padding: "10px 12px", background: "#f0f9f5", borderRadius: "12px", border: "1px solid #d1ede3" }}>
+        <button onClick={async e => { e.stopPropagation(); setLoadingRecs(true); const similar = allSpots.filter(s => s.id !== spot.id && s.type === spot.type).slice(0, 6); setRecs(await getRecommendations(spot, similar)); setLoadingRecs(false); }} disabled={loadingRecs} style={{ background: "none", border: "1px solid #d1ede3", padding: "5px 12px", borderRadius: "20px", color: "#1a9e6e", fontSize: "0.8rem", fontWeight: 500, cursor: "pointer" }}>
+          🧭 {loadingRecs ? "..." : "Spots similaires"}
         </button>
-        {recs && <p style={{ fontSize: "0.75rem", color: "#8ab8b0", marginTop: "8px", lineHeight: 1.6 }}>✨ {recs}</p>}
+        {recs && <p style={{ fontSize: "0.82rem", color: "#4a6a5e", marginTop: "8px", lineHeight: 1.6 }}>✨ {recs}</p>}
       </div>
     </div>
   );
@@ -1072,16 +1084,16 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
         <div style={{ position: "absolute", top: 12, left: 12, right: 12, display: "flex", justifyContent: "space-between", alignItems: "flex-start", zIndex: 3 }}>
           <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
             {spot.activities.slice(0, 2).map(a => (
-              <span key={a} style={{ padding: "4px 10px", background: "rgba(255,255,255,0.18)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: "20px", fontSize: "0.65rem", color: "#fff", fontWeight: 500 }}>{a}</span>
+              <span key={a} style={{ padding: "4px 10px", background: "rgba(255,255,255,0.18)", backdropFilter: "blur(8px)", border: "1px solid rgba(255,255,255,0.25)", borderRadius: "20px", fontSize: "0.75rem", color: "#fff", fontWeight: 500 }}>{a}</span>
             ))}
-            {spot.sponsored && <span style={{ padding: "4px 10px", background: "rgba(245,158,11,0.85)", backdropFilter: "blur(6px)", borderRadius: "20px", fontSize: "0.62rem", fontWeight: 700, color: "#fff" }}>⭐ Partenaire</span>}
+            {spot.sponsored && <span style={{ padding: "4px 10px", background: "rgba(245,158,11,0.85)", backdropFilter: "blur(6px)", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700, color: "#fff" }}>⭐ Partenaire</span>}
           </div>
           <button className="fv-btn-fav" onClick={e => { e.stopPropagation(); onFav(spot.id); }} style={{ flexShrink: 0 }}>{isFav ? "❤️" : "🤍"}</button>
         </div>
 
         {/* BOTTOM INFO — location, title, price + CTA */}
         <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "16px 16px 14px", zIndex: 3 }}>
-          <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.7)", marginBottom: "5px", display: "flex", alignItems: "center", gap: "5px", letterSpacing: "0.03em" }}>
+          <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)", marginBottom: "5px", display: "flex", alignItems: "center", gap: "5px", letterSpacing: "0.03em" }}>
             📍 {spot.river && spot.river !== "Lac" && spot.river !== "Océan" && spot.river !== "Mer" ? spot.river + " · " : ""}{countryName}
           </div>
           <h3 style={{ fontFamily: "'Fraunces', Georgia, serif", fontSize: "1.15rem", fontWeight: 600, color: "#fff", lineHeight: 1.2, marginBottom: "12px" }}>{spot.name}</h3>
@@ -1157,12 +1169,12 @@ function NativeAd({ activities, type }) {
   const ad = getRelevantAd(activities, type);
   return (
     <div style={{ padding: "10px 14px 10px 14px", background: `linear-gradient(135deg,${ad.color}18,${ad.color}08)`, border: `1px solid ${ad.color}30`, borderRadius: "16px", display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", position: "relative" }} onClick={() => trackEvent('ad_click', { adId: ad.id })}>
-      <div style={{ position: "absolute", top: "4px", right: "8px", fontSize: "0.5rem", color: "#3a5a50", letterSpacing: "0.5px" }}>Sponsorisé</div>
-      <div style={{ flex: 1, paddingTop: "8px" }}>
-        <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#daf0e8", marginBottom: "2px" }}>{ad.label}</div>
-        <div style={{ fontSize: "0.68rem", color: "#5a8a78" }}>{ad.sub}</div>
+      <div style={{ position: "absolute", top: "5px", right: "8px", fontSize: "0.7rem", color: "#9ab0a8", letterSpacing: "0.3px" }}>Sponsorisé</div>
+      <div style={{ flex: 1, paddingTop: "6px" }}>
+        <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1a2e28", marginBottom: "2px" }}>{ad.label}</div>
+        <div style={{ fontSize: "0.8rem", color: "#6a8a80" }}>{ad.sub}</div>
       </div>
-      <div style={{ padding: "6px 12px", background: ad.color, borderRadius: "20px", fontSize: "0.68rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap", flexShrink: 0 }}>{ad.cta}</div>
+      <div style={{ padding: "6px 12px", background: ad.color, borderRadius: "20px", fontSize: "0.78rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap", flexShrink: 0 }}>{ad.cta}</div>
     </div>
   );
 }
@@ -1190,40 +1202,48 @@ function PremiumModal({ onClose, onActivate }) {
 
   return (
     <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "24px", padding: "28px", maxWidth: "540px", width: "100%", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", maxHeight: "90vh", overflowY: "auto" }}>
-        <div style={{ textAlign: "center", marginBottom: "18px" }}>
+      <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", padding: "28px", maxWidth: "540px", width: "100%", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.12)", maxHeight: "90vh", overflowY: "auto" }}>
+
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: "20px" }}>
           <div style={{ fontSize: "2.5rem", marginBottom: "8px" }}>⭐</div>
-          <h2 style={{ fontSize: "1.3rem", fontWeight: 800, background: "linear-gradient(135deg,#f59e0b,#ef4444)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: "6px" }}>FleuVibe Premium</h2>
-          <p style={{ color: "#5a8a78", fontSize: "0.78rem" }}>Toutes les fonctionnalités IA incluses</p>
+          <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#1a2e28", marginBottom: "6px" }}>FleuVibe Premium</h2>
+          <p style={{ color: "#6a8a80", fontSize: "0.85rem" }}>Toutes les fonctionnalités IA incluses</p>
         </div>
-        <div style={{ padding: "9px 14px", background: "linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1))", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "12px", marginBottom: "16px", textAlign: "center" }}>
-          <p style={{ fontSize: "0.75rem", color: "#a5b4fc" }}>🤖 Propulsé par <strong>OpenAI GPT-4o mini</strong></p>
+
+        {/* AI badge */}
+        <div style={{ padding: "10px 14px", background: "#f5f3ff", border: "1px solid #e9d5ff", borderRadius: "12px", marginBottom: "20px", textAlign: "center" }}>
+          <p style={{ fontSize: "0.82rem", color: "#7c3aed", fontWeight: 500 }}>🤖 Propulsé par <strong>OpenAI GPT-4o mini</strong></p>
         </div>
-        <div style={{ display: "flex", gap: "10px", marginBottom: "18px", flexWrap: "wrap" }}>
+
+        {/* Plan cards */}
+        <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap" }}>
           {plans.map(p => (
-            <div key={p.key} onClick={() => setSelectedPlan(p.key)} style={{ flex: 1, minWidth: "140px", padding: "14px", background: p.popular ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.04)", border: `2px solid ${selectedPlan === p.key ? (p.popular ? "rgba(245,158,11,0.7)" : "rgba(26,158,110,0.6)") : (p.popular ? "rgba(245,158,11,0.3)" : "rgba(255,255,255,0.08)")}`, borderRadius: "16px", position: "relative", cursor: "pointer", transition: "all 0.2s" }}>
-              {p.popular && <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#f59e0b,#ef4444)", padding: "2px 12px", borderRadius: "20px", fontSize: "0.6rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>⭐ POPULAIRE</div>}
-              {p.savings && <div style={{ position: "absolute", top: -10, right: "10px", background: "#10b981", padding: "2px 8px", borderRadius: "20px", fontSize: "0.58rem", fontWeight: 700, color: "#fff" }}>-{p.savings}</div>}
-              <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#a8edcf", marginBottom: "4px" }}>{p.name}</div>
+            <div key={p.key} onClick={() => setSelectedPlan(p.key)} style={{ flex: 1, minWidth: "140px", padding: "16px", background: selectedPlan === p.key ? "#f0f9f5" : "#f7faf9", border: `2px solid ${selectedPlan === p.key ? "#1a9e6e" : "#e0ece7"}`, borderRadius: "16px", position: "relative", cursor: "pointer", transition: "all 0.2s" }}>
+              {p.popular && <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#f59e0b,#ef4444)", padding: "2px 12px", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>⭐ POPULAIRE</div>}
+              {p.savings && <div style={{ position: "absolute", top: -10, right: "10px", background: "#10b981", padding: "2px 8px", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700, color: "#fff" }}>-{p.savings}</div>}
+              <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1a2e28", marginBottom: "4px" }}>{p.name}</div>
               <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#f59e0b" }}>{formatPrice(p)}</div>
-              <div style={{ fontSize: "0.63rem", color: "#4a7a6a", marginBottom: "10px" }}>{formatPeriod(p)}</div>
-              {p.features.map(f => <div key={f} style={{ fontSize: "0.67rem", color: "#8ab8b0", marginBottom: "3px" }}>{f}</div>)}
+              <div style={{ fontSize: "0.75rem", color: "#9ab0a8", marginBottom: "10px" }}>{formatPeriod(p)}</div>
+              {p.features.map(f => <div key={f} style={{ fontSize: "0.78rem", color: "#4a6a5e", marginBottom: "4px" }}>✓ {f}</div>)}
             </div>
           ))}
         </div>
+
+        {/* CTA */}
         {plan?.url ? (
-          <button onClick={handlePay} style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+          <button onClick={handlePay} style={{ width: "100%", padding: "13px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.95rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", cursor: "pointer" }}>
             💳 Payer avec Stripe · {formatPrice(plan)}
           </button>
         ) : (
-          <button onClick={handlePay} style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)" }}>
+          <button onClick={handlePay} style={{ width: "100%", padding: "13px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.95rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)", cursor: "pointer" }}>
             ⭐ Commencer l'essai gratuit 7 jours
           </button>
         )}
         {!STRIPE_MONTHLY_URL && !STRIPE_ANNUAL_URL && (
-          <p style={{ textAlign: "center", fontSize: "0.6rem", color: "#3a6a5a", marginTop: "6px" }}>Ajoutez VITE_STRIPE_MONTHLY_URL / VITE_STRIPE_ANNUAL_URL dans Vercel pour activer Stripe</p>
+          <p style={{ textAlign: "center", fontSize: "0.75rem", color: "#9ab0a8", marginTop: "8px" }}>Ajoutez VITE_STRIPE_MONTHLY_URL / VITE_STRIPE_ANNUAL_URL dans Vercel pour activer Stripe</p>
         )}
-        <p style={{ textAlign: "center", fontSize: "0.62rem", color: "#3a6a5a", marginTop: "8px" }}>Sans engagement · Annulable à tout moment</p>
+        <p style={{ textAlign: "center", fontSize: "0.78rem", color: "#9ab0a8", marginTop: "10px" }}>Sans engagement · Annulable à tout moment</p>
       </div>
     </div>
   );
@@ -1270,51 +1290,58 @@ function BookingModal({ spot, provider, onClose }) {
 
   return (
     <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: `1px solid ${spot.color}40`, borderRadius: "24px", padding: "24px", maxWidth: "420px", width: "100%", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
+      <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", padding: "24px", maxWidth: "420px", width: "100%", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
         {status === "success" ? (
-          <div style={{ textAlign: "center", padding: "20px 0" }}>
+          <div style={{ textAlign: "center", padding: "24px 0" }}>
             <div style={{ fontSize: "3rem", marginBottom: "12px" }}>🎉</div>
-            <h3 style={{ color: "#a8edcf", fontSize: "1.1rem", marginBottom: "6px" }}>{hasStripe && price ? "Paiement confirmé !" : "Demande envoyée !"}</h3>
-            <p style={{ color: "#5a8a78", fontSize: "0.82rem", marginBottom: "12px" }}>{hasStripe && price ? "Votre réservation est confirmée. Bonne aventure !" : "Un prestataire local vous contactera sous 24h."}</p>
+            <h3 style={{ color: "#1a2e28", fontSize: "1.15rem", fontWeight: 700, marginBottom: "8px" }}>{hasStripe && price ? "Paiement confirmé !" : "Demande envoyée !"}</h3>
+            <p style={{ color: "#6a8a80", fontSize: "0.87rem", marginBottom: "14px" }}>{hasStripe && price ? "Votre réservation est confirmée. Bonne aventure !" : "Un prestataire local vous contactera sous 24h."}</p>
             {pointsEarned > 0 && (
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "20px" }}>
-                <span style={{ fontSize: "0.85rem" }}>⭐</span>
-                <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#fbbf24" }}>+{pointsEarned} points fidélité gagnés !</span>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 16px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "20px" }}>
+                <span>⭐</span>
+                <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#92400e" }}>+{pointsEarned} points fidélité gagnés !</span>
               </div>
             )}
           </div>
         ) : (
           <>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
-              <div><h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#daf0e8", marginBottom: "2px" }}>📅 Réserver ce spot</h2><p style={{ color: "#4a7a6a", fontSize: "0.75rem" }}>{spot.emoji} {spot.name}</p></div>
-              <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#5a8a78", borderRadius: "50%", width: 32, height: 32, fontSize: "0.85rem" }}>✕</button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <div>
+                <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#1a2e28", marginBottom: "2px" }}>Réserver ce spot</h2>
+                <p style={{ color: "#6a8a80", fontSize: "0.82rem" }}>{spot.emoji} {spot.name}</p>
+              </div>
+              <button onClick={onClose} style={{ background: "#f5f8f7", border: "1px solid #e0ece7", color: "#9ab0a8", borderRadius: "50%", width: 32, height: 32, fontSize: "0.85rem", cursor: "pointer" }}>✕</button>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div><label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "5px", fontWeight: 500 }}>Date souhaitée</label><input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ width: "100%", padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.25)", borderRadius: "12px", color: "#e8f4f0", fontSize: "0.84rem", outline: "none" }} /></div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div>
+                <label style={{ display: "block", color: "#6a8a80", fontSize: "0.78rem", marginBottom: "6px", fontWeight: 600 }}>Date souhaitée</label>
+                <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ width: "100%", padding: "10px 14px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "12px", color: "#1a2e28", fontSize: "0.87rem", outline: "none", boxSizing: "border-box" }} />
+              </div>
               {dynPrice?.badge && (
-                <div style={{ padding: "6px 12px", background: `${dynPrice.badge.color}18`, border: `1px solid ${dynPrice.badge.color}40`, borderRadius: "10px", fontSize: "0.72rem", fontWeight: 700, color: dynPrice.badge.color, textAlign: "center" }}>{dynPrice.badge.label}</div>
+                <div style={{ padding: "8px 12px", background: `${dynPrice.badge.color}12`, border: `1px solid ${dynPrice.badge.color}40`, borderRadius: "10px", fontSize: "0.8rem", fontWeight: 700, color: dynPrice.badge.color, textAlign: "center" }}>{dynPrice.badge.label}</div>
               )}
-              <div><label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "5px", fontWeight: 500 }}>Personnes</label>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <button onClick={() => setPax(p => Math.max(1, p - 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "#a8edcf", fontSize: "1.1rem" }}>−</button>
-                  <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "#daf0e8", minWidth: "30px", textAlign: "center" }}>{pax}</span>
-                  <button onClick={() => setPax(p => p + 1)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "#a8edcf", fontSize: "1.1rem" }}>+</button>
+              <div>
+                <label style={{ display: "block", color: "#6a8a80", fontSize: "0.78rem", marginBottom: "6px", fontWeight: 600 }}>Personnes</label>
+                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                  <button onClick={() => setPax(p => Math.max(1, p - 1))} style={{ width: 38, height: 38, borderRadius: "50%", background: "#f7faf9", border: "1px solid #e0ece7", color: "#1a2e28", fontSize: "1.1rem", cursor: "pointer" }}>−</button>
+                  <span style={{ fontSize: "1.15rem", fontWeight: 700, color: "#1a2e28", minWidth: "30px", textAlign: "center" }}>{pax}</span>
+                  <button onClick={() => setPax(p => p + 1)} style={{ width: 38, height: 38, borderRadius: "50%", background: "#f7faf9", border: "1px solid #e0ece7", color: "#1a2e28", fontSize: "1.1rem", cursor: "pointer" }}>+</button>
                 </div>
               </div>
               {price && (
-                <div style={{ padding: "10px 14px", background: "rgba(26,158,110,0.08)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "12px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#6a9a8c", marginBottom: "4px" }}>
+                <div style={{ padding: "12px 14px", background: "#f0f9f5", border: "1px solid #d1ede3", borderRadius: "12px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.82rem", color: "#4a6a5e", marginBottom: "5px" }}>
                     <span>{price.unit}{price.currency} × {pax} pers.{dynPrice && dynPrice.final !== price.total ? <span style={{ color: "#9ca3af", textDecoration: "line-through", marginLeft: "6px" }}>{price.total}{price.currency}</span> : null}</span>
-                    <span style={{ fontWeight: 700, color: "#a8edcf", fontSize: "0.95rem" }}>{finalTotal}{price.currency}</span>
+                    <span style={{ fontWeight: 800, color: "#1a9e6e", fontSize: "1rem" }}>{finalTotal}{price.currency}</span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.62rem", color: "#4a7a6a" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#9ab0a8" }}>
                     <span>Commission 18% incluse · Paiement sécurisé</span>
-                    <span style={{ color: "#f59e0b" }}>⭐ +{LoyaltyProgram.earnPoints(finalTotal || 0)} pts</span>
+                    <span style={{ color: "#f59e0b", fontWeight: 600 }}>⭐ +{LoyaltyProgram.earnPoints(finalTotal || 0)} pts</span>
                   </div>
                 </div>
               )}
-              {status === "error" && <div style={{ padding: "8px 12px", background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.3)", borderRadius: "10px", color: "#f87171", fontSize: "0.72rem" }}>⚠️ {errMsg}</div>}
-              <button onClick={confirm} disabled={status === "loading"} style={{ padding: "12px", background: `linear-gradient(135deg,${spot.color},#0891b2)`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", opacity: status === "loading" ? 0.7 : 1 }}>
+              {status === "error" && <div style={{ padding: "10px 14px", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "10px", color: "#e11d48", fontSize: "0.82rem" }}>⚠️ {errMsg}</div>}
+              <button onClick={confirm} disabled={status === "loading"} style={{ padding: "13px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.92rem", opacity: status === "loading" ? 0.7 : 1, cursor: "pointer", boxShadow: "0 4px 14px rgba(26,158,110,0.3)" }}>
                 {status === "loading" ? "⏳ Traitement..." : hasStripe && price ? `💳 Payer ${finalTotal}${price.currency}` : "✅ Envoyer ma demande"}
               </button>
             </div>
@@ -1330,7 +1357,7 @@ function SubmitSpotModal({ onClose, onAdd, session, showAuth }) {
   const [done, setDone] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const f = (k, v) => { setForm(x => ({ ...x, [k]: v })); setValidationErrors(e => ({ ...e, [k]: undefined })); };
-  const inp = (field) => ({ width: "100%", padding: "9px 13px", background: "rgba(255,255,255,0.05)", border: `1px solid ${validationErrors[field] ? "rgba(220,38,38,0.5)" : "rgba(26,158,110,0.2)"}`, borderRadius: "12px", color: "#e8f4f0", fontSize: "0.82rem", outline: "none" });
+  const inp = (field) => ({ width: "100%", padding: "9px 13px", background: "#f7faf9", border: `1px solid ${validationErrors[field] ? "#fca5a5" : "#e0ece7"}`, borderRadius: "12px", color: "#1a2e28", fontSize: "0.82rem", outline: "none", boxSizing: "border-box" });
   const submit = () => {
     if (!session) { showAuth(); return; }
     const sanitized = { ...form, name: sanitizeInput(form.name), river: sanitizeInput(form.river), description: sanitizeInput(form.description) };
@@ -1344,50 +1371,53 @@ function SubmitSpotModal({ onClose, onAdd, session, showAuth }) {
   };
   return (
     <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(26,158,110,0.28)", borderRadius: "24px", padding: "22px", maxWidth: "480px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.55)" }}>
+      <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", padding: "24px", maxWidth: "480px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
         {done ? (
-          <div style={{ textAlign: "center", padding: "28px 0" }}><div style={{ fontSize: "2.8rem", marginBottom: "10px" }}>🎉</div><h3 style={{ color: "#a8edcf" }}>Spot ajouté ! Merci 🌊</h3></div>
+          <div style={{ textAlign: "center", padding: "28px 0" }}>
+            <div style={{ fontSize: "2.8rem", marginBottom: "10px" }}>🎉</div>
+            <h3 style={{ color: "#1a2e28", fontSize: "1.1rem", fontWeight: 700 }}>Spot ajouté ! Merci 🌊</h3>
+          </div>
         ) : (
           <>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px" }}>
-              <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#daf0e8" }}>➕ Ajouter un spot</h2>
-              <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#5a8a78", borderRadius: "50%", width: 32, height: 32 }}>✕</button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+              <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#1a2e28" }}>Ajouter un spot</h2>
+              <button onClick={onClose} style={{ background: "#f5f8f7", border: "1px solid #e0ece7", color: "#9ab0a8", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div>
-                <label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "5px", fontWeight: 500 }}>Type</label>
-                <div style={{ display: "flex", gap: "5px" }}>
+                <label style={{ display: "block", color: "#6a8a80", fontSize: "0.78rem", marginBottom: "6px", fontWeight: 600 }}>Type</label>
+                <div style={{ display: "flex", gap: "6px" }}>
                   {[["RIVER", "🏞️ Rivière", "#2563eb"], ["LAKE", "🏔️ Lac", "#0891b2"], ["SEA", "🌊 Mer", "#7c3aed"]].map(([code, label, col]) => (
-                    <button key={code} onClick={() => f("type", code)} style={{ flex: 1, padding: "7px", borderRadius: "20px", border: `1px solid ${form.type === code ? col : "rgba(255,255,255,0.08)"}`, background: form.type === code ? `${col}18` : "rgba(255,255,255,0.02)", color: form.type === code ? col : "#4a7a6a", fontSize: "0.72rem", fontWeight: 600 }}>{label}</button>
+                    <button key={code} onClick={() => f("type", code)} style={{ flex: 1, padding: "8px", borderRadius: "10px", border: `1px solid ${form.type === code ? col : "#e0ece7"}`, background: form.type === code ? `${col}10` : "#f7faf9", color: form.type === code ? col : "#6a8a80", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}>{label}</button>
                   ))}
                 </div>
               </div>
               {[["Nom *", "name", "text", "Ex: Lesse · Houyet"], ["Rivière / Lac *", "river", "text", "Ex: Lesse"], ["Région", "region", "text", "Ex: Wallonie"], ["Distance", "distance", "text", "Ex: 21 km"], ["Durée", "duration", "text", "Ex: 4–5h"], ["Coordonnées GPS", "coords", "text", "Ex: 50.185, 5.002"], ["Description", "description", "textarea", "Décris ce spot..."]].map(([label, key, type, ph]) => (
                 <div key={key}>
-                  <label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "4px", fontWeight: 500 }}>{label}</label>
+                  <label style={{ display: "block", color: "#6a8a80", fontSize: "0.78rem", marginBottom: "5px", fontWeight: 600 }}>{label}</label>
                   {type === "textarea" ? <textarea value={form[key]} onChange={e => f(key, e.target.value)} placeholder={ph} rows={2} style={{ ...inp(key), resize: "vertical" }} /> : <input value={form[key]} onChange={e => f(key, e.target.value)} placeholder={ph} style={inp(key)} />}
-                  {validationErrors[key] && <p style={{ color: "#f87171", fontSize: "0.65rem", marginTop: "3px" }}>⚠️ {validationErrors[key]}</p>}
+                  {validationErrors[key] && <p style={{ color: "#e11d48", fontSize: "0.75rem", marginTop: "3px" }}>⚠️ {validationErrors[key]}</p>}
                 </div>
               ))}
               <div>
-                <label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "4px", fontWeight: 500 }}>Pays</label>
-                <select value={form.country} onChange={e => f("country", e.target.value)} style={{ ...inp("country"), background: "#0d2240" }}>
+                <label style={{ display: "block", color: "#6a8a80", fontSize: "0.78rem", marginBottom: "5px", fontWeight: 600 }}>Pays</label>
+                <select value={form.country} onChange={e => f("country", e.target.value)} style={{ ...inp("country"), background: "#f7faf9" }}>
                   {Object.entries(COUNTRIES).sort((a, b) => a[1].name.localeCompare(b[1].name)).map(([code, c]) => <option key={code} value={code}>{c.flag} {c.name}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "4px", fontWeight: 500 }}>Difficulté</label>
-                <div style={{ display: "flex", gap: "5px" }}>
-                  {["Facile", "Intermédiaire", "Sportif"].map(d => <button key={d} onClick={() => f("difficulty", d)} style={{ flex: 1, padding: "7px", borderRadius: "20px", border: `1px solid ${form.difficulty === d ? DIFF_COLOR[d] : "rgba(255,255,255,0.07)"}`, background: form.difficulty === d ? `${DIFF_COLOR[d]}18` : "rgba(255,255,255,0.02)", color: form.difficulty === d ? DIFF_COLOR[d] : "#4a7a6a", fontSize: "0.72rem", fontWeight: 600 }}>{d}</button>)}
+                <label style={{ display: "block", color: "#6a8a80", fontSize: "0.78rem", marginBottom: "5px", fontWeight: 600 }}>Difficulté</label>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  {["Facile", "Intermédiaire", "Sportif"].map(d => <button key={d} onClick={() => f("difficulty", d)} style={{ flex: 1, padding: "8px", borderRadius: "10px", border: `1px solid ${form.difficulty === d ? DIFF_COLOR[d] : "#e0ece7"}`, background: form.difficulty === d ? `${DIFF_COLOR[d]}10` : "#f7faf9", color: form.difficulty === d ? DIFF_COLOR[d] : "#6a8a80", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}>{d}</button>)}
                 </div>
               </div>
               <div>
-                <label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "4px", fontWeight: 500 }}>Activités</label>
-                <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                  {["Kayak", "Canoë", "SUP", "Rafting", "Surf", "Voile", "Kitesurf", "Plongée", "Baignade", "Camping", "Pêche"].map(a => { const sel = form.activities.includes(a); return <button key={a} onClick={() => f("activities", sel ? form.activities.filter(x => x !== a) : [...form.activities, a])} style={{ padding: "4px 10px", borderRadius: "20px", border: `1px solid ${sel ? "#1a9e6e" : "rgba(255,255,255,0.07)"}`, background: sel ? "rgba(26,158,110,0.16)" : "rgba(255,255,255,0.02)", color: sel ? "#a8edcf" : "#4a7a6a", fontSize: "0.7rem" }}>{a}</button>; })}
+                <label style={{ display: "block", color: "#6a8a80", fontSize: "0.78rem", marginBottom: "5px", fontWeight: 600 }}>Activités</label>
+                <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+                  {["Kayak", "Canoë", "SUP", "Rafting", "Surf", "Voile", "Kitesurf", "Plongée", "Baignade", "Camping", "Pêche"].map(a => { const sel = form.activities.includes(a); return <button key={a} onClick={() => f("activities", sel ? form.activities.filter(x => x !== a) : [...form.activities, a])} style={{ padding: "5px 11px", borderRadius: "20px", border: `1px solid ${sel ? "#1a9e6e" : "#e0ece7"}`, background: sel ? "#f0f9f5" : "#f7faf9", color: sel ? "#1a9e6e" : "#6a8a80", fontSize: "0.78rem", fontWeight: sel ? 600 : 400, cursor: "pointer" }}>{a}</button>; })}
                 </div>
               </div>
-              <button onClick={submit} style={{ padding: "11px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.86rem", marginTop: "4px" }}>🌊 Soumettre le spot</button>
+              <button onClick={submit} style={{ padding: "12px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.9rem", marginTop: "4px", cursor: "pointer", boxShadow: "0 4px 14px rgba(26,158,110,0.3)" }}>🌊 Soumettre le spot</button>
             </div>
           </>
         )}
@@ -1403,7 +1433,7 @@ function GroupCreator({ spots, onCreate }) {
   const [date, setDate] = useState("");
   const [meeting, setMeeting] = useState("");
   const [done, setDone] = useState(false);
-  const inp = { width: "100%", padding: "9px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(8,145,178,0.2)", borderRadius: "12px", color: "#e8f4f0", fontSize: "0.8rem", outline: "none" };
+  const inp = { width: "100%", padding: "9px 12px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "12px", color: "#1a2e28", fontSize: "0.82rem", outline: "none", boxSizing: "border-box" };
   const submit = () => {
     if (!name || !spotId) return;
     onCreate(name, spotId, date, meeting);
@@ -1411,18 +1441,18 @@ function GroupCreator({ spots, onCreate }) {
     setDone(true); setTimeout(() => setDone(false), 2000);
   };
   return (
-    <div style={{ padding: "14px", background: "rgba(8,145,178,0.06)", border: "1px solid rgba(8,145,178,0.15)", borderRadius: "16px" }}>
-      <p style={{ fontSize: "0.74rem", fontWeight: 600, color: "#67e8f9", marginBottom: "10px" }}>➕ Nouvelle expédition</p>
-      {done ? <p style={{ textAlign: "center", color: "#a8edcf", fontSize: "0.8rem", padding: "10px 0" }}>🎉 Groupe créé ! +50 XP</p> : (
+    <div style={{ padding: "16px", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "14px" }}>
+      <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#0369a1", marginBottom: "12px" }}>Nouvelle expédition</p>
+      {done ? <p style={{ textAlign: "center", color: "#1a9e6e", fontSize: "0.87rem", padding: "10px 0", fontWeight: 600 }}>🎉 Groupe créé !</p> : (
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <input placeholder="Nom du groupe *" value={name} onChange={e => setName(e.target.value)} style={inp} />
-          <select value={spotId} onChange={e => setSpotId(e.target.value)} style={{ ...inp, background: "#0d2240" }}>
+          <select value={spotId} onChange={e => setSpotId(e.target.value)} style={{ ...inp, background: "#f7faf9" }}>
             <option value="">Choisir un spot *</option>
             {spots.slice(0, 20).map(s => <option key={s.id} value={s.id}>{s.emoji} {s.name}</option>)}
           </select>
           <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inp} />
           <input placeholder="Point de rendez-vous (optionnel)" value={meeting} onChange={e => setMeeting(e.target.value)} style={inp} />
-          <button onClick={submit} style={{ padding: "9px", background: "linear-gradient(135deg,#0891b2,#1a9e6e)", border: "none", borderRadius: "12px", color: "#fff", fontWeight: 600, fontSize: "0.78rem", cursor: "pointer" }}>🚀 Créer l'expédition</button>
+          <button onClick={submit} style={{ padding: "10px", background: "linear-gradient(135deg,#0891b2,#1a9e6e)", border: "none", borderRadius: "10px", color: "#fff", fontWeight: 700, fontSize: "0.85rem", cursor: "pointer" }}>🚀 Créer l'expédition</button>
         </div>
       )}
     </div>
@@ -1780,7 +1810,6 @@ export default function FleuVibe() {
   return (
     <div style={{ minHeight: "100vh", background: "#f5f8f7", fontFamily: "'Inter',sans-serif", color: "#1a2e28" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{background:#f5f8f7}
         ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:#e8f0ed;border-radius:10px}::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#1a9e6e,#0891b2);border-radius:10px}
@@ -1854,30 +1883,28 @@ export default function FleuVibe() {
         <div style={{ position: "absolute", bottom: "15%", left: "-10%", width: "300px", height: "300px", background: "radial-gradient(circle,rgba(8,145,178,0.03) 0%,transparent 70%)", borderRadius: "50%", filter: "blur(60px)" }} />
       </div>
 
-      {/* ── HEADER MOMONDO STYLE ── */}
-      <div style={{ position: "sticky", top: 0, background: "#fff", boxShadow: "0 1px 0 rgba(0,0,0,0.06)", zIndex: 100, padding: "0 20px" }}>
-        <div style={{ maxWidth: "1280px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", height: "68px", gap: "12px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-            <span style={{ fontSize: "1.5rem" }}>🌊</span>
-            <h1 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#1a9e6e", letterSpacing: "-0.5px" }}>FleuVibe</h1>
-            <span style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#6366f1", fontWeight: 700 }}>🤖 IA</span>
-            {!isOnline && <span style={{ background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.3)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#dc2626", fontWeight: 700 }}>📡 Hors-ligne</span>}
+      {/* ── HEADER ── */}
+      <header style={{ position: "sticky", top: 0, background: "#fff", boxShadow: "0 1px 0 rgba(0,0,0,0.08)", zIndex: 100, padding: "0 20px" }}>
+        <div style={{ maxWidth: "1280px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", height: "64px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+            <span style={{ fontSize: "1.4rem" }}>🌊</span>
+            <span style={{ fontSize: "1.2rem", fontWeight: 800, color: "#1a9e6e", letterSpacing: "-0.5px" }}>FleuVibe</span>
+            {!isOnline && <span style={{ width: 8, height: 8, background: "#ef4444", borderRadius: "50%", display: "inline-block", marginLeft: 4 }} title="Hors ligne" />}
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            {isAdmin && <button onClick={() => setShowAdmin(true)} style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "40px", padding: "6px 12px", fontSize: "0.68rem", color: "#6366f1", fontWeight: 600 }}>🛡️ Admin</button>}
-            <button onClick={() => setShowSubmit(true)} style={{ padding: "8px 16px", background: "transparent", border: "1px solid #d0dfdc", borderRadius: "40px", color: "#1a9e6e", fontWeight: 600, fontSize: "0.72rem" }}>+ Ajouter</button>
-            {!isPremium && <button onClick={() => setShowPremium(true)} style={{ padding: "8px 16px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 700, fontSize: "0.72rem" }}>⭐ Premium</button>}
+            {session && isAdmin && <button onClick={() => setShowAdmin(true)} style={{ background: "none", border: "none", color: "#6366f1", fontWeight: 600, fontSize: "0.8rem", padding: "6px 10px" }}>Admin</button>}
             {session ? (
-              <button onClick={() => setShowProfile(true)} style={{ display: "flex", alignItems: "center", gap: "7px", padding: "6px 14px", background: "rgba(26,158,110,0.08)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "40px", color: "#1a9e6e", fontSize: "0.72rem", fontWeight: 600 }}>
-                <div style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, color: "#fff" }}>{userName[0].toUpperCase()}</div>
-                {isPremium && <span style={{ fontSize: "0.6rem", color: "#f59e0b" }}>⭐</span>}
+              <button onClick={() => setShowProfile(true)} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 14px 6px 6px", background: "#f5f8f7", border: "1px solid #e0ece7", borderRadius: "40px", color: "#1a2e28", fontSize: "0.82rem", fontWeight: 600 }}>
+                <div style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.8rem", fontWeight: 700, color: "#fff", flexShrink: 0 }}>{userName[0].toUpperCase()}</div>
+                {userName.split(" ")[0]}
+                {isPremium && <span style={{ fontSize: "0.7rem", color: "#f59e0b" }}>★</span>}
               </button>
             ) : (
-              <button onClick={() => setShowAuth(true)} style={{ padding: "9px 20px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 700, fontSize: "0.72rem" }}>Connexion</button>
+              <button onClick={() => setShowAuth(true)} style={{ padding: "9px 22px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 700, fontSize: "0.85rem" }}>Connexion</button>
             )}
           </div>
         </div>
-      </div>
+      </header>
 
       {/* ── LANDING (non connecté) ── */}
       {!session && (
@@ -1901,21 +1928,8 @@ export default function FleuVibe() {
         </>
       )}
 
-      <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px 40px", position: "relative", zIndex: 1 }}>
+      {session && <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px 40px", position: "relative", zIndex: 1 }}>
 
-        {/* Logged-in stats row */}
-        {session && (
-          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "16px", marginBottom: "8px", flexWrap: "wrap" }}>
-            <LevelBadge xp={userXP} />
-            {earnedBadges.slice(0, 4).map(b => (
-              <span key={b.name} style={{ padding: "3px 9px", background: "rgba(26,158,110,0.08)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", fontSize: "0.65rem", color: "#1a9e6e" }}>{b.icon} {b.name}</span>
-            ))}
-            <div style={{ marginLeft: "auto", display: "flex", gap: "6px" }}>
-              <button onClick={() => setShowChallenges(true)} style={{ padding: "5px 10px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "20px", color: "#d97706", fontWeight: 600, fontSize: "0.65rem" }}>🏆 Défis</button>
-              <button onClick={() => setShowGroups(true)} style={{ padding: "5px 10px", background: "rgba(8,145,178,0.08)", border: "1px solid rgba(8,145,178,0.2)", borderRadius: "20px", color: "#0891b2", fontWeight: 600, fontSize: "0.65rem" }}>👥 Groupes</button>
-            </div>
-          </div>
-        )}
 
         {/* SPOTS À LA UNE */}
         {page === "explore" && !search && (
@@ -1924,8 +1938,8 @@ export default function FleuVibe() {
               <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#1a2e28" }}>🔥 Spots populaires</h2>
               <button onClick={() => { setSearch(""); clearAISearch(); }} style={{ color: "#1a9e6e", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", background: "none", border: "none", padding: 0 }}>Voir tout →</button>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
-              {spots.filter(s => s.popular).slice(0, 3).map(s => (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "12px" }}>
+              {[...spots].sort((a, b) => (b.sponsored ? 1 : 0) - (a.sponsored ? 1 : 0) || (b.rating || 0) - (a.rating || 0)).slice(0, 3).map(s => (
                 <div key={s.id} onClick={() => { handlePageChange("explore"); setTimeout(() => setSearch(s.name), 100); }}
                   style={{ background: "#fff", borderRadius: "20px", overflow: "hidden", border: "1px solid #e8f0ed", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", cursor: "pointer", transition: "all 0.3s" }}
                   onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(0,0,0,0.1)"; }}
@@ -1958,11 +1972,11 @@ export default function FleuVibe() {
           </div>
         )}
 
-        {/* NAV FILTER CHIPS */}
-        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ transitionDelay: "0.06s", background: "#fff", borderRadius: "60px", padding: "8px 16px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)", display: "flex", gap: "6px", marginTop: "24px", marginBottom: "20px", flexWrap: "wrap" }}>
-          {[["explore", "🗺️", "Explorer"], ["map", "🌍", "Carte"], ["hidden", "💎", "Pépites"], ["weather", "🌤️", "Météo"], ["favorites", "❤️", favorites.length > 0 ? `Favoris (${favorites.length})` : "Favoris"], ["tourism", "🤝", "Partenaires"]].map(([id, icon, label]) => (
-            <button key={id} onClick={() => handlePageChange(id)} style={{ padding: "8px 18px", borderRadius: "40px", border: "none", fontSize: "0.82rem", fontWeight: 600, background: page === id ? "#1a9e6e" : "#f5f8f7", color: page === id ? "#fff" : "#4a6a5e", transition: "all 0.2s", cursor: "pointer" }}>
-              {icon} {label}
+        {/* NAV TABS */}
+        <div style={{ display: "flex", gap: "2px", marginTop: "20px", marginBottom: "24px", background: "#f0f5f3", borderRadius: "14px", padding: "4px" }}>
+          {[["explore", "Explorer"], ["map", "Carte"], ["hidden", "Pépites"], ["favorites", favorites.length > 0 ? `Favoris (${favorites.length})` : "Favoris"]].map(([id, label]) => (
+            <button key={id} onClick={() => handlePageChange(id)} style={{ flex: 1, padding: "9px 4px", borderRadius: "10px", border: "none", fontSize: "0.82rem", fontWeight: 600, background: (page === id || (page === "expeditions" && id === "explore")) ? "#fff" : "transparent", color: (page === id || (page === "expeditions" && id === "explore")) ? "#1a2e28" : "#6a8a80", boxShadow: (page === id || (page === "expeditions" && id === "explore")) ? "0 1px 4px rgba(0,0,0,0.1)" : "none", transition: "all 0.15s", cursor: "pointer", whiteSpace: "nowrap" }}>
+              {label}
             </button>
           ))}
         </div>
@@ -2026,9 +2040,9 @@ export default function FleuVibe() {
                           style={{
                             padding: "7px 16px", borderRadius: "50px", whiteSpace: "nowrap",
                             fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", flexShrink: 0,
-                            background: pillActive ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.05)",
-                            color: pillActive ? "#fff" : "#6a9a8c",
-                            border: `1px solid ${pillActive ? "transparent" : "rgba(255,255,255,0.08)"}`,
+                            background: pillActive ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "#f0f5f3",
+                            color: pillActive ? "#fff" : "#3a6a5e",
+                            border: `1px solid ${pillActive ? "transparent" : "#d4e8e0"}`,
                             transition: "all 0.15s ease",
                           }}
                         >{label}</button>
@@ -2040,9 +2054,9 @@ export default function FleuVibe() {
                       style={{
                         padding: "7px 16px", borderRadius: "50px", whiteSpace: "nowrap",
                         fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", flexShrink: 0,
-                        background: selContinent !== "ALL" ? "rgba(26,158,110,0.15)" : "rgba(255,255,255,0.05)",
-                        color: selContinent !== "ALL" ? "#a8edcf" : "#6a9a8c",
-                        border: `1px solid ${selContinent !== "ALL" ? "rgba(26,158,110,0.4)" : "rgba(255,255,255,0.08)"}`,
+                        background: selContinent !== "ALL" ? "rgba(26,158,110,0.1)" : "#f0f5f3",
+                        color: selContinent !== "ALL" ? "#1a9e6e" : "#3a6a5e",
+                        border: `1px solid ${selContinent !== "ALL" ? "rgba(26,158,110,0.35)" : "#d4e8e0"}`,
                       }}
                     >🌍 Région {selContinent !== "ALL" ? `· ${selContinent}` : ""}</button>
                     {activeCount > 0 && (
@@ -2053,12 +2067,12 @@ export default function FleuVibe() {
                     )}
                   </div>
                   {showFilters && (
-                    <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "16px", marginBottom: "14px", animation: "slideUp 0.2s ease" }}>
+                    <div style={{ background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "20px", padding: "16px", marginBottom: "14px", animation: "slideUp 0.2s ease" }}>
                       <div>
                         <p style={{ fontSize: "0.65rem", color: "#5a8a78", fontWeight: 600, marginBottom: "6px", letterSpacing: "0.5px" }}>RÉGION</p>
                         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                           {[["ALL", "🌍 Monde"], ["EU", "🇪🇺 Europe"], ["AM", "🌎 Amériques"], ["AS", "🌏 Asie"], ["AF", "🌍 Afrique"], ["OC", "🌊 Océanie"]].map(([id, label]) => (
-                            <button key={id} onClick={() => { setSelContinent(id); setDbPage(1); }} style={{ padding: "7px 14px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: selContinent === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.05)", color: selContinent === id ? "#fff" : "#6a9a8c" }}>{label}</button>
+                            <button key={id} onClick={() => { setSelContinent(id); setDbPage(1); }} style={{ padding: "7px 14px", borderRadius: "50px", border: "1px solid #d4e8e0", fontSize: "0.7rem", fontWeight: 600, background: selContinent === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "#fff", color: selContinent === id ? "#fff" : "#3a6a5e" }}>{label}</button>
                           ))}
                         </div>
                       </div>
@@ -2068,15 +2082,15 @@ export default function FleuVibe() {
               );
             })()}
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-              <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf", background: "rgba(26,158,110,0.12)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", padding: "3px 10px" }}>{dbTotal} spots</span>
-              <span style={{ fontSize: "0.68rem", color: "#4a7a6a" }}>{[...new Set(dbSpots.map(s => s.country))].length} pays{page === "expeditions" ? " · ⛺ Expéditions longue durée" : ""}</span>
+              <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#1a9e6e", background: "rgba(26,158,110,0.08)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", padding: "3px 10px" }}>{dbTotal} spots</span>
+              <span style={{ fontSize: "0.68rem", color: "#6a8a80" }}>{[...new Set(dbSpots.map(s => s.country))].length} pays{page === "expeditions" ? " · ⛺ Expéditions longue durée" : ""}</span>
             </div>
             {dbLoading ? (
               <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}><div className="loading-spinner" /></div>
             ) : dbSpots.length === 0 ? (
-              <div style={{ padding: "50px", textAlign: "center", background: "rgba(255,255,255,0.03)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ padding: "50px", textAlign: "center", background: "#fff", borderRadius: "24px", border: "1px solid #e8f0ed" }}>
                 <span style={{ fontSize: "3rem" }}>🏄</span>
-                <p style={{ marginTop: "14px", color: "#5a8a78", marginBottom: "14px" }}>Aucun spot trouvé.</p>
+                <p style={{ marginTop: "14px", color: "#6a8a80", marginBottom: "14px" }}>Aucun spot trouvé.</p>
                 <button onClick={() => setShowSubmit(true)} style={{ padding: "9px 20px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.8rem" }}>➕ Ajouter le premier</button>
               </div>
             ) : (
@@ -2123,7 +2137,7 @@ export default function FleuVibe() {
         {page === "hidden" && (
           <div>
             <div style={{ textAlign: "center", marginBottom: "18px" }}>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#fbbf24", marginBottom: "5px" }}>💎 Pépites Cachées</h2>
+              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#b45309", marginBottom: "5px" }}>💎 Pépites Cachées</h2>
               <p style={{ color: "#4a7a6a", fontSize: "0.8rem" }}>Spots secrets partagés par la communauté. Pas dans les guides.</p>
             </div>
             {HIDDEN_GEMS.map(gem => (
@@ -2133,23 +2147,23 @@ export default function FleuVibe() {
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
                     <span style={{ fontSize: "1.2rem" }}>{gem.emoji}</span>
                     <div>
-                      <h3 style={{ fontSize: "0.92rem", fontWeight: 700, color: "#fbbf24" }}>{gem.name} {COUNTRIES[gem.country]?.flag}</h3>
-                      <div style={{ color: "#4a7a6a", fontSize: "0.7rem" }}>📍 {gem.region} · {COUNTRIES[gem.country]?.name} · {gem.difficulty}</div>
+                      <h3 style={{ fontSize: "0.92rem", fontWeight: 700, color: "#92400e" }}>{gem.name} {COUNTRIES[gem.country]?.flag}</h3>
+                      <div style={{ color: "#6a8a80", fontSize: "0.7rem" }}>📍 {gem.region} · {COUNTRIES[gem.country]?.name} · {gem.difficulty}</div>
                     </div>
-                    <span style={{ marginLeft: "auto", padding: "2px 8px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "20px", fontSize: "0.6rem", color: "#fbbf24" }}>📅 {gem.season}</span>
+                    <span style={{ marginLeft: "auto", padding: "2px 8px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "20px", fontSize: "0.6rem", color: "#92400e" }}>📅 {gem.season}</span>
                   </div>
-                  <p style={{ color: "#8ab8b0", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: "8px" }}>{gem.description}</p>
+                  <p style={{ color: "#4a6a60", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: "8px" }}>{gem.description}</p>
                   <div style={{ padding: "8px 10px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.18)", borderRadius: "10px" }}>
-                    <p style={{ fontSize: "0.72rem", color: "#fbbf24" }}>🤫 <strong>Secret communauté :</strong> {gem.secret}</p>
+                    <p style={{ fontSize: "0.72rem", color: "#92400e" }}>🤫 <strong>Secret communauté :</strong> {gem.secret}</p>
                   </div>
                   <div style={{ display: "flex", gap: "5px", marginTop: "8px", flexWrap: "wrap" }}>
-                    {gem.activities?.map(a => <span key={a} style={{ padding: "2px 8px", background: "rgba(245,158,11,0.08)", borderRadius: "20px", fontSize: "0.65rem", color: "#fbbf24" }}>{a}</span>)}
+                    {gem.activities?.map(a => <span key={a} style={{ padding: "2px 8px", background: "rgba(245,158,11,0.1)", borderRadius: "20px", fontSize: "0.65rem", color: "#92400e" }}>{a}</span>)}
                   </div>
                 </div>
               </div>
             ))}
             <div style={{ padding: "16px", background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: "18px", textAlign: "center" }}>
-              <p style={{ color: "#fbbf24", fontSize: "0.8rem", marginBottom: "10px" }}>🌟 Tu connais un spot secret ? Partage-le avec la communauté !</p>
+              <p style={{ color: "#92400e", fontSize: "0.8rem", marginBottom: "10px" }}>🌟 Tu connais un spot secret ? Partage-le avec la communauté !</p>
               <button onClick={() => setShowSubmit(true)} style={{ padding: "8px 20px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.8rem" }}>💎 Ajouter une pépite</button>
             </div>
           </div>
@@ -2159,16 +2173,16 @@ export default function FleuVibe() {
         {page === "weather" && (
           <div>
             <div style={{ textAlign: "center", marginBottom: "18px" }}>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a8edcf", marginBottom: "5px" }}>🌤️ Conditions en temps réel</h2>
-              <p style={{ color: "#4a7a6a", fontSize: "0.8rem" }}>Météo actuelle + 🤖 conseils IA.</p>
+              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a9e6e", marginBottom: "5px" }}>🌤️ Conditions en temps réel</h2>
+              <p style={{ color: "#6a8a80", fontSize: "0.8rem" }}>Météo actuelle + 🤖 conseils IA.</p>
             </div>
             {spots.slice(0, 18).map(s => (
-              <div key={s.id} style={{ marginBottom: "10px", padding: "13px 15px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px" }}>
+              <div key={s.id} style={{ marginBottom: "10px", padding: "13px 15px", background: "#fff", border: "1px solid #e8f0ed", borderRadius: "14px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "8px" }}>
                   <span style={{ fontSize: "1.1rem" }}>{s.emoji}</span>
                   <div style={{ flex: 1 }}>
-                    <h3 style={{ fontSize: "0.88rem", fontWeight: 700, color: "#daf0e8" }}>{s.name} {COUNTRIES[s.country]?.flag}</h3>
-                    <p style={{ fontSize: "0.68rem", color: "#4a7a6a" }}>{s.river} · {s.region}</p>
+                    <h3 style={{ fontSize: "0.88rem", fontWeight: 700, color: "#1a2e28" }}>{s.name} {COUNTRIES[s.country]?.flag}</h3>
+                    <p style={{ fontSize: "0.68rem", color: "#6a8a80" }}>{s.river} · {s.region}</p>
                   </div>
                 </div>
                 <WeatherWidget coords={s.coords} spotName={s.name} difficulty={s.difficulty} />
@@ -2181,8 +2195,8 @@ export default function FleuVibe() {
         {page === "tourism" && (
           <div>
             <div style={{ textAlign: "center", marginBottom: "18px" }}>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a8edcf", marginBottom: "5px" }}>🤝 Destinations Nautiques Partenaires</h2>
-              <p style={{ color: "#4a7a6a", fontSize: "0.8rem" }}>Régions & clubs officiellement partenaires de FleuVibe</p>
+              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a2e28", marginBottom: "5px" }}>🤝 Destinations Nautiques Partenaires</h2>
+              <p style={{ color: "#6a8a80", fontSize: "0.8rem" }}>Régions & clubs officiellement partenaires de FleuVibe</p>
             </div>
             {SPONSORED.map(r => (
               <div key={r.id} style={{ marginBottom: "12px", background: `linear-gradient(135deg,${r.color}07,rgba(255,255,255,0.02))`, border: `1px solid ${r.color}26`, borderRadius: "18px", overflow: "hidden" }}>
@@ -2192,24 +2206,24 @@ export default function FleuVibe() {
                     <span style={{ fontSize: "1.8rem" }}>{r.flag}</span>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
-                        <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#daf0e8" }}>{r.name}</h3>
+                        <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#1a2e28" }}>{r.name}</h3>
                         <span style={{ padding: "2px 7px", background: `${r.color}16`, border: `1px solid ${r.color}30`, borderRadius: "20px", fontSize: "0.6rem", color: r.color, fontWeight: 700 }}>⭐ {r.badge}</span>
                       </div>
-                      <p style={{ fontSize: "0.78rem", color: "#8ab8b0" }}>{r.desc}</p>
+                      <p style={{ fontSize: "0.78rem", color: "#6a8a80" }}>{r.desc}</p>
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
                     {spots.filter(s => s.sponsored === r.name).map(s => (
-                      <button key={s.id} onClick={() => { setPage("explore"); }} style={{ padding: "3px 9px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "20px", color: "#7ecfb0", fontSize: "0.7rem", fontWeight: 600 }}>{s.emoji} {s.name.split("·")[0]}</button>
+                      <button key={s.id} onClick={() => { setPage("explore"); }} style={{ padding: "3px 9px", background: "#f0f5f3", border: "1px solid #d4e8e0", borderRadius: "20px", color: "#1a9e6e", fontSize: "0.7rem", fontWeight: 600 }}>{s.emoji} {s.name.split("·")[0]}</button>
                     ))}
                   </div>
                 </div>
               </div>
             ))}
-            <div style={{ padding: "22px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "24px", textAlign: "center" }}>
+            <div style={{ padding: "22px", background: "#fff", border: "1px solid #e8f0ed", borderRadius: "24px", textAlign: "center" }}>
               <div style={{ fontSize: "1.8rem", marginBottom: "8px" }}>🌍</div>
-              <h3 style={{ fontSize: "0.97rem", fontWeight: 700, color: "#a8edcf", marginBottom: "6px" }}>Vous gérez un site ou club nautique ?</h3>
-              <p style={{ color: "#4a7a6a", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: "12px" }}>Mettez vos spots en avant auprès de milliers de passionnés de sports aquatiques.</p>
+              <h3 style={{ fontSize: "0.97rem", fontWeight: 700, color: "#1a2e28", marginBottom: "6px" }}>Vous gérez un site ou club nautique ?</h3>
+              <p style={{ color: "#6a8a80", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: "12px" }}>Mettez vos spots en avant auprès de milliers de passionnés de sports aquatiques.</p>
               <button style={{ padding: "9px 22px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.82rem" }}>📩 Nous contacter</button>
             </div>
           </div>
@@ -2218,15 +2232,14 @@ export default function FleuVibe() {
         {/* FAVORIS */}
         {page === "favorites" && (
           <div>
-            {!session && <div style={{ padding: "50px", textAlign: "center", background: "#fff", borderRadius: "24px", border: "1px solid #e8f0ed" }}><div style={{ fontSize: "3rem", marginBottom: "12px" }}>❤️</div><h3 style={{ color: "#1a2e28", marginBottom: "8px" }}>Connecte-toi pour voir tes favoris</h3><button onClick={() => setShowAuth(true)} style={{ padding: "10px 24px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 700, fontSize: "0.85rem" }}>Se connecter</button></div>}
-            {session && favorites.length === 0 && <div style={{ padding: "50px", textAlign: "center", background: "#fff", borderRadius: "24px", border: "1px solid #e8f0ed" }}><div style={{ fontSize: "3rem", marginBottom: "12px" }}>🏞️</div><h3 style={{ color: "#1a2e28", marginBottom: "8px" }}>Aucun favori pour l'instant</h3><button onClick={() => setPage("explore")} style={{ padding: "9px 20px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 600, fontSize: "0.83rem" }}>Explorer les spots</button></div>}
-            {session && filtered.map(s => <SpotCard key={s.id} spot={s} isFav={favorites.includes(s.id)} onFav={toggleFav} onBook={setBookingSpot} session={session} userName={userName} isPremium={isPremium} onShowPremium={() => setShowPremium(true)} allSpots={spots} />)}
+            {favorites.length === 0 && <div style={{ padding: "50px", textAlign: "center", background: "#fff", borderRadius: "24px", border: "1px solid #e8f0ed" }}><div style={{ fontSize: "3rem", marginBottom: "12px" }}>🏞️</div><h3 style={{ color: "#1a2e28", marginBottom: "8px" }}>Aucun favori pour l'instant</h3><button onClick={() => setPage("explore")} style={{ padding: "9px 20px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "40px", color: "#fff", fontWeight: 600, fontSize: "0.83rem" }}>Explorer les spots</button></div>}
+            {filtered.map(s => <SpotCard key={s.id} spot={s} isFav={favorites.includes(s.id)} onFav={toggleFav} onBook={setBookingSpot} session={session} userName={userName} isPremium={isPremium} onShowPremium={() => setShowPremium(true)} allSpots={spots} />)}
           </div>
         )}
 
           </div>
         )}
-      </div>
+      </div>}
 
       {/* FOOTER */}
       <footer style={{ background: "#111827", padding: "64px 32px 32px", marginTop: "60px" }}>
@@ -2239,8 +2252,11 @@ export default function FleuVibe() {
               </div>
               <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.82rem", lineHeight: 1.7, marginBottom: "20px" }}>Connectez les aventuriers aux plus beaux plans d'eau du monde depuis 2024.</p>
               <div style={{ display: "flex", gap: "10px" }}>
-                {["📸", "👍", "▶️", "🎵"].map((icon, i) => (
-                  <div key={i} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", cursor: "pointer" }}>{icon}</div>
+                {[["📸", "Instagram", "#"], ["👍", "Facebook", "#"], ["▶️", "YouTube", "#"], ["🎵", "TikTok", "#"]].map(([icon, label, href]) => (
+                  <a key={label} href={href} aria-label={`FleuVibe sur ${label}`} rel="noopener noreferrer" style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", textDecoration: "none", transition: "background 0.2s" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.16)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
+                  >{icon}</a>
                 ))}
               </div>
             </div>
@@ -2266,18 +2282,11 @@ export default function FleuVibe() {
         </div>
       </footer>
 
-      {/* FLOATING ACTION BUTTONS */}
-      <button
-        onClick={() => setShowTripFinder(true)}
-        title="Trip Finder — trouve ton activité idéale"
-        style={{ position: "fixed", bottom: 96, right: 28, zIndex: 1500, width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", boxShadow: "0 6px 20px rgba(26,158,110,0.4)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem", transition: "transform 0.2s" }}
-        onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
-        onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
-      >🧭</button>
+      {/* FLOATING ACTION BUTTON */}
       <button
         onClick={() => setShowConversionChat(true)}
-        title="Aide à la réservation"
-        style={{ position: "fixed", bottom: 28, right: 28, zIndex: 1500, width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", boxShadow: "0 6px 20px rgba(245,158,11,0.4)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem", transition: "transform 0.2s" }}
+        title="Des questions ? On t'aide"
+        style={{ position: "fixed", bottom: 28, right: 28, zIndex: 1500, width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", boxShadow: "0 6px 20px rgba(26,158,110,0.35)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.4rem", transition: "transform 0.2s" }}
         onMouseEnter={e => e.currentTarget.style.transform = "scale(1.1)"}
         onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
       >💬</button>
@@ -2296,32 +2305,35 @@ export default function FleuVibe() {
       {/* CHALLENGES MODAL */}
       {showChallenges && (
         <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowChallenges(false); }}>
-          <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "28px", padding: "28px", maxWidth: "560px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.3s ease", boxShadow: "0 30px 80px rgba(0,0,0,0.6)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-              <div><h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#fbbf24" }}>🏆 Challenges</h2><p style={{ fontSize: "0.72rem", color: "#5a8a78" }}>Complète des défis pour gagner des badges et de l'XP</p></div>
-              <button onClick={() => setShowChallenges(false)} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#5a8a78", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
+          <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", padding: "28px", maxWidth: "560px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "22px" }}>
+              <div>
+                <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#1a2e28" }}>🏆 Challenges</h2>
+                <p style={{ fontSize: "0.8rem", color: "#9ab0a8", marginTop: "3px" }}>Complète des défis pour gagner des badges et de l'XP</p>
+              </div>
+              <button onClick={() => setShowChallenges(false)} style={{ background: "#f5f8f7", border: "1px solid #e0ece7", color: "#9ab0a8", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {CHALLENGES.map(ch => {
                 const current = Math.min(ch.progress(userStats, userXP), ch.goal);
                 const pct = Math.round((current / ch.goal) * 100);
                 const done = current >= ch.goal;
                 return (
-                  <div key={ch.id} style={{ padding: "14px 16px", background: done ? "rgba(26,158,110,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${done ? "rgba(26,158,110,0.3)" : "rgba(255,255,255,0.06)"}`, borderRadius: "16px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                  <div key={ch.id} style={{ padding: "14px 16px", background: done ? "#f0f9f5" : "#f7faf9", border: `1px solid ${done ? "#d1ede3" : "#e0ece7"}`, borderRadius: "14px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
                       <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                         <span style={{ fontSize: "1.4rem" }}>{ch.icon}</span>
                         <div>
-                          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: done ? "#a8edcf" : "#daf0e8" }}>{ch.name}</div>
-                          <div style={{ fontSize: "0.65rem", color: "#5a8a78" }}>{ch.desc}</div>
+                          <div style={{ fontSize: "0.87rem", fontWeight: 700, color: "#1a2e28" }}>{ch.name}</div>
+                          <div style={{ fontSize: "0.78rem", color: "#9ab0a8" }}>{ch.desc}</div>
                         </div>
                       </div>
-                      {done ? <span style={{ fontSize: "1.2rem" }}>✅</span> : <span style={{ fontSize: "0.7rem", color: "#f59e0b", fontWeight: 700 }}>{current}/{ch.goal}</span>}
+                      {done ? <span style={{ fontSize: "1.2rem" }}>✅</span> : <span style={{ fontSize: "0.8rem", color: "#f59e0b", fontWeight: 700 }}>{current}/{ch.goal}</span>}
                     </div>
-                    <div style={{ height: "5px", background: "rgba(255,255,255,0.08)", borderRadius: "3px", overflow: "hidden", marginBottom: "6px" }}>
+                    <div style={{ height: "6px", background: "#e0ece7", borderRadius: "3px", overflow: "hidden", marginBottom: "8px" }}>
                       <div style={{ width: `${pct}%`, height: "100%", background: done ? "linear-gradient(90deg,#1a9e6e,#0891b2)" : "linear-gradient(90deg,#f59e0b,#ef4444)", borderRadius: "3px", transition: "width 0.5s" }} />
                     </div>
-                    <div style={{ fontSize: "0.62rem", color: "#fbbf24" }}>🎁 {ch.reward.badge} · +{ch.reward.xp} XP</div>
+                    <div style={{ fontSize: "0.78rem", color: "#92400e", fontWeight: 500 }}>🎁 {ch.reward.badge} · +{ch.reward.xp} XP</div>
                   </div>
                 );
               })}
@@ -2333,36 +2345,39 @@ export default function FleuVibe() {
       {/* GROUPES MODAL */}
       {showGroups && (
         <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowGroups(false); }}>
-          <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(8,145,178,0.3)", borderRadius: "28px", padding: "28px", maxWidth: "540px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.3s ease", boxShadow: "0 30px 80px rgba(0,0,0,0.6)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-              <div><h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#67e8f9" }}>👥 Groupes d'expédition</h2><p style={{ fontSize: "0.72rem", color: "#5a8a78" }}>Planifiez et coordonnez vos sorties entre passionnés</p></div>
-              <button onClick={() => setShowGroups(false)} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#5a8a78", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
+          <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", padding: "28px", maxWidth: "540px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "22px" }}>
+              <div>
+                <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#1a2e28" }}>👥 Groupes d'expédition</h2>
+                <p style={{ fontSize: "0.8rem", color: "#9ab0a8", marginTop: "3px" }}>Planifiez et coordonnez vos sorties entre passionnés</p>
+              </div>
+              <button onClick={() => setShowGroups(false)} style={{ background: "#f5f8f7", border: "1px solid #e0ece7", color: "#9ab0a8", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
             </div>
-            {/* Créer un groupe */}
             <GroupCreator spots={spots} onCreate={(name, spotId, date, meeting) => { createGroup(name, spotId, date, meeting); }} />
-            {/* Groupes existants */}
             {groups.length > 0 && (
-              <div style={{ marginTop: "16px" }}>
-                <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "#a8edcf", marginBottom: "10px" }}>Mes expéditions ({groups.length})</p>
+              <div style={{ marginTop: "18px" }}>
+                <p style={{ fontSize: "0.8rem", fontWeight: 700, color: "#1a2e28", marginBottom: "10px" }}>Mes expéditions ({groups.length})</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   {groups.map(g => (
-                    <div key={g.id} style={{ padding: "12px 14px", background: "rgba(8,145,178,0.08)", border: "1px solid rgba(8,145,178,0.2)", borderRadius: "14px" }}>
+                    <div key={g.id} style={{ padding: "12px 14px", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "12px" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div><div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#67e8f9" }}>{g.name}</div><div style={{ fontSize: "0.65rem", color: "#5a8a78" }}>{g.spot?.name} · 📅 {g.date || "Date à définir"}</div></div>
-                        <span style={{ fontSize: "0.68rem", color: "#8ab8b0" }}>👥 {g.members.length}</span>
+                        <div>
+                          <div style={{ fontSize: "0.87rem", fontWeight: 600, color: "#0369a1" }}>{g.name}</div>
+                          <div style={{ fontSize: "0.78rem", color: "#9ab0a8", marginTop: "2px" }}>{g.spot?.name} · 📅 {g.date || "Date à définir"}</div>
+                        </div>
+                        <span style={{ fontSize: "0.8rem", color: "#6a8a80" }}>👥 {g.members.length}</span>
                       </div>
-                      {g.meeting && <div style={{ fontSize: "0.62rem", color: "#5a8a78", marginTop: "4px" }}>📍 {g.meeting}</div>}
+                      {g.meeting && <div style={{ fontSize: "0.78rem", color: "#6a8a80", marginTop: "5px" }}>📍 {g.meeting}</div>}
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            {groups.length === 0 && !session && <p style={{ fontSize: "0.72rem", color: "#3a6a5a", textAlign: "center", marginTop: "10px" }}>Connecte-toi pour créer un groupe !</p>}
-            {/* Affiliation en bas */}
-            <div style={{ marginTop: "18px", padding: "14px", background: "rgba(26,158,110,0.06)", border: "1px solid rgba(26,158,110,0.15)", borderRadius: "14px" }}>
-              <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "#a8edcf", marginBottom: "8px" }}>🤝 Programme d'affiliation</p>
-              <p style={{ fontSize: "0.65rem", color: "#5a8a78", marginBottom: "10px" }}>Parraine des amis et gagne des récompenses !</p>
-              <button onClick={() => { setShowGroups(false); setShowAffiliate(true); }} style={{ padding: "7px 16px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 600, fontSize: "0.72rem", cursor: "pointer" }}>🔗 Mon lien de parrainage</button>
+            {groups.length === 0 && !session && <p style={{ fontSize: "0.82rem", color: "#9ab0a8", textAlign: "center", marginTop: "12px" }}>Connecte-toi pour créer un groupe !</p>}
+            <div style={{ marginTop: "20px", padding: "14px", background: "#f0f9f5", border: "1px solid #d1ede3", borderRadius: "14px" }}>
+              <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1a2e28", marginBottom: "6px" }}>🤝 Programme d'affiliation</p>
+              <p style={{ fontSize: "0.8rem", color: "#6a8a80", marginBottom: "10px" }}>Parraine des amis et gagne des récompenses !</p>
+              <button onClick={() => { setShowGroups(false); setShowAffiliate(true); }} style={{ padding: "8px 18px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "10px", color: "#fff", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer" }}>🔗 Mon lien de parrainage</button>
             </div>
           </div>
         </div>
@@ -2371,30 +2386,30 @@ export default function FleuVibe() {
       {/* AFFILIATE MODAL */}
       {showAffiliate && (
         <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowAffiliate(false); }}>
-          <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(26,158,110,0.3)", borderRadius: "28px", padding: "28px", maxWidth: "440px", width: "100%", animation: "slideUp 0.3s ease", boxShadow: "0 30px 80px rgba(0,0,0,0.6)" }}>
-            <div style={{ textAlign: "center", marginBottom: "20px" }}>
+          <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", padding: "28px", maxWidth: "440px", width: "100%", animation: "slideUp 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
+            <div style={{ textAlign: "center", marginBottom: "22px" }}>
               <div style={{ fontSize: "3rem", marginBottom: "10px" }}>🤝</div>
-              <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#a8edcf", marginBottom: "6px" }}>Programme d'affiliation</h2>
-              <p style={{ fontSize: "0.78rem", color: "#5a8a78" }}>Parraine tes amis · Gagne des récompenses</p>
+              <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#1a2e28", marginBottom: "6px" }}>Programme d'affiliation</h2>
+              <p style={{ fontSize: "0.82rem", color: "#9ab0a8" }}>Parraine tes amis · Gagne des récompenses</p>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "18px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px" }}>
               {[["1 parrainage", "🤝 Badge Parrain", "#10b981"], ["5 parrainages", "👑 Badge Ambassadeur", "#f59e0b"], ["10 parrainages", "⭐ 3 mois Premium offerts", "#ef4444"], ["20 parrainages", "⭐ 6 mois Premium offerts", "#8b5cf6"]].map(([label, reward, col]) => (
-                <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: `${col}10`, border: `1px solid ${col}25`, borderRadius: "12px" }}>
-                  <span style={{ fontSize: "0.72rem", color: "#8ab8b0" }}>{label}</span>
-                  <span style={{ fontSize: "0.72rem", color: col, fontWeight: 600 }}>{reward}</span>
+                <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: `${col}08`, border: `1px solid ${col}30`, borderRadius: "12px" }}>
+                  <span style={{ fontSize: "0.82rem", color: "#6a8a80" }}>{label}</span>
+                  <span style={{ fontSize: "0.82rem", color: col, fontWeight: 700 }}>{reward}</span>
                 </div>
               ))}
             </div>
-            <div style={{ marginBottom: "14px" }}>
-              <label style={{ display: "block", fontSize: "0.7rem", color: "#6a9a8c", marginBottom: "6px", fontWeight: 500 }}>Ton lien unique</label>
-              <div style={{ display: "flex", gap: "6px" }}>
-                <input readOnly value={AffiliateProgram.generateLink(session?.user?.id || userName.replace(/\s/g,"_"))} style={{ flex: 1, padding: "10px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "12px", color: "#8ab8b0", fontSize: "0.72rem", outline: "none" }} />
-                <button onClick={copyAffiliateLink} style={{ padding: "10px 14px", background: affiliateCopied ? "rgba(26,158,110,0.3)" : "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "12px", color: "#fff", fontWeight: 600, fontSize: "0.72rem", cursor: "pointer", whiteSpace: "nowrap" }}>
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", fontSize: "0.78rem", color: "#6a8a80", marginBottom: "8px", fontWeight: 600 }}>Ton lien unique</label>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <input readOnly value={AffiliateProgram.generateLink(session?.user?.id || userName.replace(/\s/g,"_"))} style={{ flex: 1, padding: "10px 12px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "12px", color: "#4a6a5e", fontSize: "0.78rem", outline: "none" }} />
+                <button onClick={copyAffiliateLink} style={{ padding: "10px 16px", background: affiliateCopied ? "#f0f9f5" : "linear-gradient(135deg,#1a9e6e,#0891b2)", border: affiliateCopied ? "1px solid #d1ede3" : "none", borderRadius: "12px", color: affiliateCopied ? "#1a9e6e" : "#fff", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer", whiteSpace: "nowrap" }}>
                   {affiliateCopied ? "✅ Copié !" : "📋 Copier"}
                 </button>
               </div>
             </div>
-            <button onClick={() => setShowAffiliate(false)} style={{ width: "100%", padding: "10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", color: "#5a8a78", fontSize: "0.78rem", cursor: "pointer" }}>Fermer</button>
+            <button onClick={() => setShowAffiliate(false)} style={{ width: "100%", padding: "10px", background: "#f5f8f7", border: "1px solid #e0ece7", borderRadius: "12px", color: "#6a8a80", fontSize: "0.82rem", cursor: "pointer", fontWeight: 500 }}>Fermer</button>
           </div>
         </div>
       )}
@@ -2402,21 +2417,22 @@ export default function FleuVibe() {
       {/* AUTH */}
       {showAuth && (
         <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowAuth(false); }}>
-          <div style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "24px", maxWidth: "380px", width: "100%", padding: "28px", animation: "pop 0.3s ease" }}>
-            <div style={{ textAlign: "center", marginBottom: "20px" }}>
+          <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", maxWidth: "380px", width: "100%", padding: "32px 28px", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
+            <div style={{ textAlign: "center", marginBottom: "24px" }}>
               <span style={{ fontSize: "2.5rem" }}>🌊</span>
-              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a8edcf", marginTop: "8px", marginBottom: "4px" }}>{authMode === "login" ? "Connexion à FleuVibe" : "Créer un compte"}</h3>
+              <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#1a2e28", marginTop: "10px", marginBottom: "6px" }}>{authMode === "login" ? "Connexion à FleuVibe" : "Créer un compte"}</h3>
+              <p style={{ fontSize: "0.82rem", color: "#9ab0a8" }}>{authMode === "login" ? "Retrouve tes favoris et spots sauvegardés" : "Rejoins 2 400+ pagayeurs sur FleuVibe"}</p>
             </div>
-            {authError && <div style={{ padding: "8px 12px", background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.22)", borderRadius: "10px", color: "#f87171", fontSize: "0.76rem", marginBottom: "12px" }}>{authError}</div>}
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {authMode === "signup" && <input value={authForm.fullName} onChange={e => setAuthForm(f => ({ ...f, fullName: e.target.value }))} placeholder="Prénom et nom" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", color: "#e8f4f0", fontSize: "0.82rem" }} />}
-              <input type="email" value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))} placeholder="Email" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", color: "#e8f4f0", fontSize: "0.82rem" }} />
-              <input type="password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} placeholder="Mot de passe" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", color: "#e8f4f0", fontSize: "0.82rem" }} onKeyDown={e => e.key === "Enter" && (authMode === "login" ? handleSignIn() : handleSignUp())} />
-              <button onClick={authMode === "login" ? handleSignIn : handleSignUp} disabled={authLoading} style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.85rem", opacity: authLoading ? 0.7 : 1 }}>
-                {authLoading ? "⏳ Chargement..." : authMode === "login" ? "🌊 Se connecter" : "✨ Créer mon compte"}
+            {authError && <div style={{ padding: "10px 14px", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "10px", color: "#e11d48", fontSize: "0.82rem", marginBottom: "14px" }}>{authError}</div>}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {authMode === "signup" && <input value={authForm.fullName} onChange={e => setAuthForm(f => ({ ...f, fullName: e.target.value }))} placeholder="Prénom et nom" style={{ width: "100%", padding: "12px 14px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "12px", color: "#1a2e28", fontSize: "0.87rem", outline: "none", boxSizing: "border-box" }} />}
+              <input type="email" value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))} placeholder="Email" style={{ width: "100%", padding: "12px 14px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "12px", color: "#1a2e28", fontSize: "0.87rem", outline: "none", boxSizing: "border-box" }} />
+              <input type="password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} placeholder="Mot de passe" style={{ width: "100%", padding: "12px 14px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "12px", color: "#1a2e28", fontSize: "0.87rem", outline: "none", boxSizing: "border-box" }} onKeyDown={e => e.key === "Enter" && (authMode === "login" ? handleSignIn() : handleSignUp())} />
+              <button onClick={authMode === "login" ? handleSignIn : handleSignUp} disabled={authLoading} style={{ width: "100%", padding: "13px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.92rem", opacity: authLoading ? 0.7 : 1, cursor: "pointer", boxShadow: "0 4px 14px rgba(26,158,110,0.3)" }}>
+                {authLoading ? "⏳ Chargement..." : authMode === "login" ? "Se connecter" : "Créer mon compte"}
               </button>
-              <button onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(""); }} style={{ background: "none", border: "none", color: "#5a9a80", fontSize: "0.76rem", textDecoration: "underline" }}>
-                {authMode === "login" ? "Pas de compte ? S'inscrire" : "Déjà un compte ? Se connecter"}
+              <button onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(""); }} style={{ background: "none", border: "none", color: "#1a9e6e", fontSize: "0.82rem", textDecoration: "underline", cursor: "pointer" }}>
+                {authMode === "login" ? "Pas encore de compte ? S'inscrire" : "Déjà un compte ? Se connecter"}
               </button>
             </div>
           </div>
@@ -2426,48 +2442,67 @@ export default function FleuVibe() {
       {/* PROFILE */}
       {showProfile && session && (
         <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowProfile(false); }}>
-          <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "24px", maxWidth: "380px", width: "100%", padding: "26px", animation: "pop 0.3s ease", maxHeight: "90vh", overflowY: "auto" }}>
-            <div style={{ textAlign: "center", marginBottom: "18px" }}>
-              <div style={{ width: 64, height: 64, borderRadius: "50%", background: `linear-gradient(135deg,${currentTheme.primary},${currentTheme.secondary})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", fontWeight: 700, color: "#fff", margin: "0 auto 10px" }}>{userName[0].toUpperCase()}</div>
-              <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#daf0e8" }}>{userName}</h2>
-              <p style={{ color: "#4a7a6a", fontSize: "0.73rem", marginTop: "2px" }}>{session.user.email}</p>
-              {isPremium && <span style={{ display: "inline-block", marginTop: "6px", padding: "3px 12px", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "20px", fontSize: "0.65rem", color: "#f59e0b", fontWeight: 700 }}>⭐ Membre Premium</span>}
+          <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", maxWidth: "380px", width: "100%", padding: "26px", animation: "pop 0.3s ease", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
+
+            {/* Close */}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "4px" }}>
+              <button onClick={() => setShowProfile(false)} style={{ background: "none", border: "none", fontSize: "1.2rem", color: "#9ab0a8", cursor: "pointer", padding: "4px 8px" }}>✕</button>
             </div>
-            <div style={{ marginBottom: "14px" }}><LevelBadge xp={userXP} /></div>
+
+            {/* Avatar + identity */}
+            <div style={{ textAlign: "center", marginBottom: "20px" }}>
+              <div style={{ width: 64, height: 64, borderRadius: "50%", background: `linear-gradient(135deg,${currentTheme.primary},${currentTheme.secondary})`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.6rem", fontWeight: 700, color: "#fff", margin: "0 auto 10px" }}>{userName[0].toUpperCase()}</div>
+              <h2 style={{ fontSize: "1.05rem", fontWeight: 700, color: "#1a2e28" }}>{userName}</h2>
+              <p style={{ color: "#9ab0a8", fontSize: "0.8rem", marginTop: "3px" }}>{session.user.email}</p>
+              {isPremium && <span style={{ display: "inline-block", marginTop: "8px", padding: "4px 12px", background: "#fef3c7", border: "1px solid #fcd34d", borderRadius: "20px", fontSize: "0.78rem", color: "#92400e", fontWeight: 700 }}>⭐ Membre Premium</span>}
+            </div>
+
+            {/* Level */}
+            <div style={{ marginBottom: "16px" }}><LevelBadge xp={userXP} /></div>
+
+            {/* Earned badges */}
             {earnedBadges.length > 0 && (
-              <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "14px" }}>
-                {earnedBadges.map(b => <span key={b.name} style={{ padding: "3px 8px", background: "rgba(26,158,110,0.1)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", fontSize: "0.62rem", color: "#a8edcf" }}>{b.icon} {b.name}</span>)}
+              <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "16px" }}>
+                {earnedBadges.map(b => <span key={b.name} style={{ padding: "4px 10px", background: "#f0f9f5", border: "1px solid #d1ede3", borderRadius: "20px", fontSize: "0.75rem", color: "#1a9e6e", fontWeight: 600 }}>{b.icon} {b.name}</span>)}
               </div>
             )}
-            <div style={{ display: "flex", gap: "7px", marginBottom: "16px" }}>
-              {[["❤️", favorites.length, "Favoris"], ["🌊", spots.length, "Spots"], ["🤖", isPremium ? "ON" : "OFF", "IA Premium"]].map(([ic, val, label]) => (
-                <div key={label} style={{ flex: 1, padding: "10px 6px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", textAlign: "center" }}>
+
+            {/* Stats */}
+            <div style={{ display: "flex", gap: "8px", marginBottom: "20px" }}>
+              {[["❤️", favorites.length, "Favoris"], ["🌊", spots.length, "Spots"], ["🤖", isPremium ? "ON" : "OFF", "IA"]].map(([ic, val, label]) => (
+                <div key={label} style={{ flex: 1, padding: "12px 6px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "14px", textAlign: "center" }}>
                   <div style={{ fontSize: "1rem" }}>{ic}</div>
-                  <div style={{ fontSize: "0.88rem", fontWeight: 800, color: val === "OFF" ? "#dc2626" : "#a8edcf" }}>{val}</div>
-                  <div style={{ fontSize: "0.56rem", color: "#4a7a6a", marginTop: "2px" }}>{label}</div>
+                  <div style={{ fontSize: "0.95rem", fontWeight: 800, color: val === "OFF" ? "#dc2626" : "#1a9e6e" }}>{val}</div>
+                  <div style={{ fontSize: "0.75rem", color: "#9ab0a8", marginTop: "2px" }}>{label}</div>
                 </div>
               ))}
             </div>
-            {/* Raccourcis */}
-            <div style={{ display: "flex", gap: "6px", marginBottom: "16px" }}>
-              <button onClick={() => { setShowProfile(false); setShowChallenges(true); }} style={{ flex: 1, padding: "8px", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "14px", color: "#fbbf24", fontWeight: 600, fontSize: "0.7rem" }}>🏆 Défis</button>
-              <button onClick={() => { setShowProfile(false); setShowGroups(true); }} style={{ flex: 1, padding: "8px", background: "rgba(8,145,178,0.1)", border: "1px solid rgba(8,145,178,0.2)", borderRadius: "14px", color: "#67e8f9", fontWeight: 600, fontSize: "0.7rem" }}>👥 Groupes</button>
-              <button onClick={() => { setShowProfile(false); setShowAffiliate(true); }} style={{ flex: 1, padding: "8px", background: "rgba(139,92,246,0.1)", border: "1px solid rgba(139,92,246,0.2)", borderRadius: "14px", color: "#c4b5fd", fontWeight: 600, fontSize: "0.7rem" }}>🤝 Parrainer</button>
+
+            {/* Actions */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "16px" }}>
+              <button onClick={() => { setShowProfile(false); setShowSubmit(true); }} style={{ padding: "10px 8px", background: "#f0f9f5", border: "1px solid #d1ede3", borderRadius: "12px", color: "#1a9e6e", fontWeight: 700, fontSize: "0.82rem", cursor: "pointer" }}>+ Ajouter un spot</button>
+              <button onClick={() => { setShowProfile(false); setShowChallenges(true); }} style={{ padding: "10px 8px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "12px", color: "#92400e", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer" }}>🏆 Défis</button>
+              <button onClick={() => { setShowProfile(false); setShowGroups(true); }} style={{ padding: "10px 8px", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "12px", color: "#0369a1", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer" }}>👥 Groupes</button>
+              <button onClick={() => { setShowProfile(false); setShowAffiliate(true); }} style={{ padding: "10px 8px", background: "#faf5ff", border: "1px solid #e9d5ff", borderRadius: "12px", color: "#7c3aed", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer" }}>🤝 Parrainer</button>
             </div>
-            {/* Apparence */}
-            <div style={{ marginBottom: "16px", padding: "12px 14px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "16px" }}>
-              <p style={{ fontSize: "0.65rem", color: "#5a8a78", fontWeight: 600, marginBottom: "10px", letterSpacing: "0.5px" }}>APPARENCE</p>
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+
+            {/* Theme switcher */}
+            <div style={{ marginBottom: "16px", padding: "14px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "14px" }}>
+              <p style={{ fontSize: "0.75rem", color: "#9ab0a8", fontWeight: 600, marginBottom: "10px", letterSpacing: "0.5px", textTransform: "uppercase" }}>Thème</p>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 {Object.entries(THEMES).map(([key, t]) => (
-                  <button key={key} onClick={() => setTheme(key)} title={t.name} style={{ width: 24, height: 24, borderRadius: "50%", background: `linear-gradient(135deg,${t.primary},${t.secondary})`, border: theme === key ? "2px solid #fff" : "2px solid transparent", cursor: "pointer" }} />
+                  <button key={key} onClick={() => setTheme(key)} title={t.name} style={{ width: 26, height: 26, borderRadius: "50%", background: `linear-gradient(135deg,${t.primary},${t.secondary})`, border: theme === key ? "2px solid #1a2e28" : "2px solid #e0ece7", cursor: "pointer" }} />
                 ))}
-                <span style={{ fontSize: "0.65rem", color: "#5a8a78", alignSelf: "center", marginLeft: "4px" }}>Thème</span>
               </div>
             </div>
-            {!isPremium && <button onClick={() => { setShowProfile(false); setShowPremium(true); }} style={{ width: "100%", padding: "10px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.82rem", marginBottom: "8px", boxShadow: "0 3px 10px rgba(245,158,11,0.25)" }}>⭐ Passer Premium</button>}
-            {!isPremium && isAdmin && <button onClick={() => { setIsPremium(true); addXP(200); setShowProfile(false); }} style={{ width: "100%", padding: "8px", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.18)", borderRadius: "20px", color: "#a5b4fc", fontWeight: 500, fontSize: "0.72rem", marginBottom: "8px" }}>🧪 Tester Premium (dev)</button>}
-            {isPremium && <button onClick={() => setIsPremium(false)} style={{ width: "100%", padding: "9px", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.22)", borderRadius: "20px", color: "#a5b4fc", fontWeight: 600, fontSize: "0.78rem", marginBottom: "8px" }}>🤖 IA Premium Active ✓</button>}
-            <button onClick={handleSignOut} style={{ width: "100%", padding: "9px", background: "rgba(220,38,38,0.08)", border: "1px solid rgba(220,38,38,0.18)", borderRadius: "20px", color: "#f87171", fontWeight: 600, fontSize: "0.82rem" }}>🚪 Se déconnecter</button>
+
+            {/* Premium upsell */}
+            {!isPremium && <button onClick={() => { setShowProfile(false); setShowPremium(true); }} style={{ width: "100%", padding: "11px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.9rem", marginBottom: "8px", cursor: "pointer", boxShadow: "0 4px 12px rgba(245,158,11,0.3)" }}>⭐ Passer Premium</button>}
+            {!isPremium && isAdmin && <button onClick={() => { setIsPremium(true); addXP(200); setShowProfile(false); }} style={{ width: "100%", padding: "8px", background: "#f0f0ff", border: "1px solid #c7d2fe", borderRadius: "14px", color: "#6366f1", fontWeight: 500, fontSize: "0.8rem", marginBottom: "8px", cursor: "pointer" }}>🧪 Tester Premium (dev)</button>}
+            {isPremium && <button onClick={() => setIsPremium(false)} style={{ width: "100%", padding: "10px", background: "#f0f0ff", border: "1px solid #c7d2fe", borderRadius: "14px", color: "#6366f1", fontWeight: 600, fontSize: "0.82rem", marginBottom: "8px", cursor: "pointer" }}>🤖 IA Premium Active ✓</button>}
+
+            {/* Sign out */}
+            <button onClick={handleSignOut} style={{ width: "100%", padding: "10px", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "14px", color: "#e11d48", fontWeight: 600, fontSize: "0.85rem", cursor: "pointer" }}>Se déconnecter</button>
           </div>
         </div>
       )}
