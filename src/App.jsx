@@ -1193,40 +1193,48 @@ function PremiumModal({ onClose, onActivate }) {
 
   return (
     <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "24px", padding: "28px", maxWidth: "540px", width: "100%", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", maxHeight: "90vh", overflowY: "auto" }}>
-        <div style={{ textAlign: "center", marginBottom: "18px" }}>
+      <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", padding: "28px", maxWidth: "540px", width: "100%", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.12)", maxHeight: "90vh", overflowY: "auto" }}>
+
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: "20px" }}>
           <div style={{ fontSize: "2.5rem", marginBottom: "8px" }}>⭐</div>
-          <h2 style={{ fontSize: "1.3rem", fontWeight: 800, background: "linear-gradient(135deg,#f59e0b,#ef4444)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", marginBottom: "6px" }}>FleuVibe Premium</h2>
-          <p style={{ color: "#5a8a78", fontSize: "0.78rem" }}>Toutes les fonctionnalités IA incluses</p>
+          <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#1a2e28", marginBottom: "6px" }}>FleuVibe Premium</h2>
+          <p style={{ color: "#6a8a80", fontSize: "0.85rem" }}>Toutes les fonctionnalités IA incluses</p>
         </div>
-        <div style={{ padding: "9px 14px", background: "linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1))", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "12px", marginBottom: "16px", textAlign: "center" }}>
-          <p style={{ fontSize: "0.75rem", color: "#a5b4fc" }}>🤖 Propulsé par <strong>OpenAI GPT-4o mini</strong></p>
+
+        {/* AI badge */}
+        <div style={{ padding: "10px 14px", background: "#f5f3ff", border: "1px solid #e9d5ff", borderRadius: "12px", marginBottom: "20px", textAlign: "center" }}>
+          <p style={{ fontSize: "0.82rem", color: "#7c3aed", fontWeight: 500 }}>🤖 Propulsé par <strong>OpenAI GPT-4o mini</strong></p>
         </div>
-        <div style={{ display: "flex", gap: "10px", marginBottom: "18px", flexWrap: "wrap" }}>
+
+        {/* Plan cards */}
+        <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap" }}>
           {plans.map(p => (
-            <div key={p.key} onClick={() => setSelectedPlan(p.key)} style={{ flex: 1, minWidth: "140px", padding: "14px", background: p.popular ? "rgba(245,158,11,0.1)" : "rgba(255,255,255,0.04)", border: `2px solid ${selectedPlan === p.key ? (p.popular ? "rgba(245,158,11,0.7)" : "rgba(26,158,110,0.6)") : (p.popular ? "rgba(245,158,11,0.3)" : "rgba(255,255,255,0.08)")}`, borderRadius: "16px", position: "relative", cursor: "pointer", transition: "all 0.2s" }}>
-              {p.popular && <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#f59e0b,#ef4444)", padding: "2px 12px", borderRadius: "20px", fontSize: "0.6rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>⭐ POPULAIRE</div>}
-              {p.savings && <div style={{ position: "absolute", top: -10, right: "10px", background: "#10b981", padding: "2px 8px", borderRadius: "20px", fontSize: "0.58rem", fontWeight: 700, color: "#fff" }}>-{p.savings}</div>}
-              <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#a8edcf", marginBottom: "4px" }}>{p.name}</div>
+            <div key={p.key} onClick={() => setSelectedPlan(p.key)} style={{ flex: 1, minWidth: "140px", padding: "16px", background: selectedPlan === p.key ? "#f0f9f5" : "#f7faf9", border: `2px solid ${selectedPlan === p.key ? "#1a9e6e" : "#e0ece7"}`, borderRadius: "16px", position: "relative", cursor: "pointer", transition: "all 0.2s" }}>
+              {p.popular && <div style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#f59e0b,#ef4444)", padding: "2px 12px", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700, color: "#fff", whiteSpace: "nowrap" }}>⭐ POPULAIRE</div>}
+              {p.savings && <div style={{ position: "absolute", top: -10, right: "10px", background: "#10b981", padding: "2px 8px", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700, color: "#fff" }}>-{p.savings}</div>}
+              <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1a2e28", marginBottom: "4px" }}>{p.name}</div>
               <div style={{ fontSize: "1.4rem", fontWeight: 800, color: "#f59e0b" }}>{formatPrice(p)}</div>
-              <div style={{ fontSize: "0.63rem", color: "#4a7a6a", marginBottom: "10px" }}>{formatPeriod(p)}</div>
-              {p.features.map(f => <div key={f} style={{ fontSize: "0.67rem", color: "#8ab8b0", marginBottom: "3px" }}>{f}</div>)}
+              <div style={{ fontSize: "0.75rem", color: "#9ab0a8", marginBottom: "10px" }}>{formatPeriod(p)}</div>
+              {p.features.map(f => <div key={f} style={{ fontSize: "0.78rem", color: "#4a6a5e", marginBottom: "4px" }}>✓ {f}</div>)}
             </div>
           ))}
         </div>
+
+        {/* CTA */}
         {plan?.url ? (
-          <button onClick={handlePay} style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px" }}>
+          <button onClick={handlePay} style={{ width: "100%", padding: "13px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.95rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", cursor: "pointer" }}>
             💳 Payer avec Stripe · {formatPrice(plan)}
           </button>
         ) : (
-          <button onClick={handlePay} style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)" }}>
+          <button onClick={handlePay} style={{ width: "100%", padding: "13px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.95rem", boxShadow: "0 4px 16px rgba(245,158,11,0.3)", cursor: "pointer" }}>
             ⭐ Commencer l'essai gratuit 7 jours
           </button>
         )}
         {!STRIPE_MONTHLY_URL && !STRIPE_ANNUAL_URL && (
-          <p style={{ textAlign: "center", fontSize: "0.6rem", color: "#3a6a5a", marginTop: "6px" }}>Ajoutez VITE_STRIPE_MONTHLY_URL / VITE_STRIPE_ANNUAL_URL dans Vercel pour activer Stripe</p>
+          <p style={{ textAlign: "center", fontSize: "0.75rem", color: "#9ab0a8", marginTop: "8px" }}>Ajoutez VITE_STRIPE_MONTHLY_URL / VITE_STRIPE_ANNUAL_URL dans Vercel pour activer Stripe</p>
         )}
-        <p style={{ textAlign: "center", fontSize: "0.62rem", color: "#3a6a5a", marginTop: "8px" }}>Sans engagement · Annulable à tout moment</p>
+        <p style={{ textAlign: "center", fontSize: "0.78rem", color: "#9ab0a8", marginTop: "10px" }}>Sans engagement · Annulable à tout moment</p>
       </div>
     </div>
   );
@@ -1273,51 +1281,58 @@ function BookingModal({ spot, provider, onClose }) {
 
   return (
     <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: `1px solid ${spot.color}40`, borderRadius: "24px", padding: "24px", maxWidth: "420px", width: "100%", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" }}>
+      <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", padding: "24px", maxWidth: "420px", width: "100%", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
         {status === "success" ? (
-          <div style={{ textAlign: "center", padding: "20px 0" }}>
+          <div style={{ textAlign: "center", padding: "24px 0" }}>
             <div style={{ fontSize: "3rem", marginBottom: "12px" }}>🎉</div>
-            <h3 style={{ color: "#a8edcf", fontSize: "1.1rem", marginBottom: "6px" }}>{hasStripe && price ? "Paiement confirmé !" : "Demande envoyée !"}</h3>
-            <p style={{ color: "#5a8a78", fontSize: "0.82rem", marginBottom: "12px" }}>{hasStripe && price ? "Votre réservation est confirmée. Bonne aventure !" : "Un prestataire local vous contactera sous 24h."}</p>
+            <h3 style={{ color: "#1a2e28", fontSize: "1.15rem", fontWeight: 700, marginBottom: "8px" }}>{hasStripe && price ? "Paiement confirmé !" : "Demande envoyée !"}</h3>
+            <p style={{ color: "#6a8a80", fontSize: "0.87rem", marginBottom: "14px" }}>{hasStripe && price ? "Votre réservation est confirmée. Bonne aventure !" : "Un prestataire local vous contactera sous 24h."}</p>
             {pointsEarned > 0 && (
-              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "6px 14px", background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "20px" }}>
-                <span style={{ fontSize: "0.85rem" }}>⭐</span>
-                <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#fbbf24" }}>+{pointsEarned} points fidélité gagnés !</span>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", padding: "8px 16px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "20px" }}>
+                <span>⭐</span>
+                <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#92400e" }}>+{pointsEarned} points fidélité gagnés !</span>
               </div>
             )}
           </div>
         ) : (
           <>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
-              <div><h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#daf0e8", marginBottom: "2px" }}>📅 Réserver ce spot</h2><p style={{ color: "#4a7a6a", fontSize: "0.75rem" }}>{spot.emoji} {spot.name}</p></div>
-              <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#5a8a78", borderRadius: "50%", width: 32, height: 32, fontSize: "0.85rem" }}>✕</button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <div>
+                <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#1a2e28", marginBottom: "2px" }}>Réserver ce spot</h2>
+                <p style={{ color: "#6a8a80", fontSize: "0.82rem" }}>{spot.emoji} {spot.name}</p>
+              </div>
+              <button onClick={onClose} style={{ background: "#f5f8f7", border: "1px solid #e0ece7", color: "#9ab0a8", borderRadius: "50%", width: 32, height: 32, fontSize: "0.85rem", cursor: "pointer" }}>✕</button>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div><label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "5px", fontWeight: 500 }}>Date souhaitée</label><input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ width: "100%", padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.25)", borderRadius: "12px", color: "#e8f4f0", fontSize: "0.84rem", outline: "none" }} /></div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div>
+                <label style={{ display: "block", color: "#6a8a80", fontSize: "0.78rem", marginBottom: "6px", fontWeight: 600 }}>Date souhaitée</label>
+                <input type="date" value={date} onChange={e => setDate(e.target.value)} style={{ width: "100%", padding: "10px 14px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "12px", color: "#1a2e28", fontSize: "0.87rem", outline: "none", boxSizing: "border-box" }} />
+              </div>
               {dynPrice?.badge && (
-                <div style={{ padding: "6px 12px", background: `${dynPrice.badge.color}18`, border: `1px solid ${dynPrice.badge.color}40`, borderRadius: "10px", fontSize: "0.72rem", fontWeight: 700, color: dynPrice.badge.color, textAlign: "center" }}>{dynPrice.badge.label}</div>
+                <div style={{ padding: "8px 12px", background: `${dynPrice.badge.color}12`, border: `1px solid ${dynPrice.badge.color}40`, borderRadius: "10px", fontSize: "0.8rem", fontWeight: 700, color: dynPrice.badge.color, textAlign: "center" }}>{dynPrice.badge.label}</div>
               )}
-              <div><label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "5px", fontWeight: 500 }}>Personnes</label>
-                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <button onClick={() => setPax(p => Math.max(1, p - 1))} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "#a8edcf", fontSize: "1.1rem" }}>−</button>
-                  <span style={{ fontSize: "1.1rem", fontWeight: 700, color: "#daf0e8", minWidth: "30px", textAlign: "center" }}>{pax}</span>
-                  <button onClick={() => setPax(p => p + 1)} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.1)", color: "#a8edcf", fontSize: "1.1rem" }}>+</button>
+              <div>
+                <label style={{ display: "block", color: "#6a8a80", fontSize: "0.78rem", marginBottom: "6px", fontWeight: 600 }}>Personnes</label>
+                <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+                  <button onClick={() => setPax(p => Math.max(1, p - 1))} style={{ width: 38, height: 38, borderRadius: "50%", background: "#f7faf9", border: "1px solid #e0ece7", color: "#1a2e28", fontSize: "1.1rem", cursor: "pointer" }}>−</button>
+                  <span style={{ fontSize: "1.15rem", fontWeight: 700, color: "#1a2e28", minWidth: "30px", textAlign: "center" }}>{pax}</span>
+                  <button onClick={() => setPax(p => p + 1)} style={{ width: 38, height: 38, borderRadius: "50%", background: "#f7faf9", border: "1px solid #e0ece7", color: "#1a2e28", fontSize: "1.1rem", cursor: "pointer" }}>+</button>
                 </div>
               </div>
               {price && (
-                <div style={{ padding: "10px 14px", background: "rgba(26,158,110,0.08)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "12px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#6a9a8c", marginBottom: "4px" }}>
+                <div style={{ padding: "12px 14px", background: "#f0f9f5", border: "1px solid #d1ede3", borderRadius: "12px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.82rem", color: "#4a6a5e", marginBottom: "5px" }}>
                     <span>{price.unit}{price.currency} × {pax} pers.{dynPrice && dynPrice.final !== price.total ? <span style={{ color: "#9ca3af", textDecoration: "line-through", marginLeft: "6px" }}>{price.total}{price.currency}</span> : null}</span>
-                    <span style={{ fontWeight: 700, color: "#a8edcf", fontSize: "0.95rem" }}>{finalTotal}{price.currency}</span>
+                    <span style={{ fontWeight: 800, color: "#1a9e6e", fontSize: "1rem" }}>{finalTotal}{price.currency}</span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.62rem", color: "#4a7a6a" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "#9ab0a8" }}>
                     <span>Commission 18% incluse · Paiement sécurisé</span>
-                    <span style={{ color: "#f59e0b" }}>⭐ +{LoyaltyProgram.earnPoints(finalTotal || 0)} pts</span>
+                    <span style={{ color: "#f59e0b", fontWeight: 600 }}>⭐ +{LoyaltyProgram.earnPoints(finalTotal || 0)} pts</span>
                   </div>
                 </div>
               )}
-              {status === "error" && <div style={{ padding: "8px 12px", background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.3)", borderRadius: "10px", color: "#f87171", fontSize: "0.72rem" }}>⚠️ {errMsg}</div>}
-              <button onClick={confirm} disabled={status === "loading"} style={{ padding: "12px", background: `linear-gradient(135deg,${spot.color},#0891b2)`, border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", opacity: status === "loading" ? 0.7 : 1 }}>
+              {status === "error" && <div style={{ padding: "10px 14px", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "10px", color: "#e11d48", fontSize: "0.82rem" }}>⚠️ {errMsg}</div>}
+              <button onClick={confirm} disabled={status === "loading"} style={{ padding: "13px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.92rem", opacity: status === "loading" ? 0.7 : 1, cursor: "pointer", boxShadow: "0 4px 14px rgba(26,158,110,0.3)" }}>
                 {status === "loading" ? "⏳ Traitement..." : hasStripe && price ? `💳 Payer ${finalTotal}${price.currency}` : "✅ Envoyer ma demande"}
               </button>
             </div>
@@ -1333,7 +1348,7 @@ function SubmitSpotModal({ onClose, onAdd, session, showAuth }) {
   const [done, setDone] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
   const f = (k, v) => { setForm(x => ({ ...x, [k]: v })); setValidationErrors(e => ({ ...e, [k]: undefined })); };
-  const inp = (field) => ({ width: "100%", padding: "9px 13px", background: "rgba(255,255,255,0.05)", border: `1px solid ${validationErrors[field] ? "rgba(220,38,38,0.5)" : "rgba(26,158,110,0.2)"}`, borderRadius: "12px", color: "#e8f4f0", fontSize: "0.82rem", outline: "none" });
+  const inp = (field) => ({ width: "100%", padding: "9px 13px", background: "#f7faf9", border: `1px solid ${validationErrors[field] ? "#fca5a5" : "#e0ece7"}`, borderRadius: "12px", color: "#1a2e28", fontSize: "0.82rem", outline: "none", boxSizing: "border-box" });
   const submit = () => {
     if (!session) { showAuth(); return; }
     const sanitized = { ...form, name: sanitizeInput(form.name), river: sanitizeInput(form.river), description: sanitizeInput(form.description) };
@@ -1347,50 +1362,53 @@ function SubmitSpotModal({ onClose, onAdd, session, showAuth }) {
   };
   return (
     <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(26,158,110,0.28)", borderRadius: "24px", padding: "22px", maxWidth: "480px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.55)" }}>
+      <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", padding: "24px", maxWidth: "480px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
         {done ? (
-          <div style={{ textAlign: "center", padding: "28px 0" }}><div style={{ fontSize: "2.8rem", marginBottom: "10px" }}>🎉</div><h3 style={{ color: "#a8edcf" }}>Spot ajouté ! Merci 🌊</h3></div>
+          <div style={{ textAlign: "center", padding: "28px 0" }}>
+            <div style={{ fontSize: "2.8rem", marginBottom: "10px" }}>🎉</div>
+            <h3 style={{ color: "#1a2e28", fontSize: "1.1rem", fontWeight: 700 }}>Spot ajouté ! Merci 🌊</h3>
+          </div>
         ) : (
           <>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "16px" }}>
-              <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#daf0e8" }}>➕ Ajouter un spot</h2>
-              <button onClick={onClose} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#5a8a78", borderRadius: "50%", width: 32, height: 32 }}>✕</button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "18px" }}>
+              <h2 style={{ fontSize: "1rem", fontWeight: 700, color: "#1a2e28" }}>Ajouter un spot</h2>
+              <button onClick={onClose} style={{ background: "#f5f8f7", border: "1px solid #e0ece7", color: "#9ab0a8", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div>
-                <label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "5px", fontWeight: 500 }}>Type</label>
-                <div style={{ display: "flex", gap: "5px" }}>
+                <label style={{ display: "block", color: "#6a8a80", fontSize: "0.78rem", marginBottom: "6px", fontWeight: 600 }}>Type</label>
+                <div style={{ display: "flex", gap: "6px" }}>
                   {[["RIVER", "🏞️ Rivière", "#2563eb"], ["LAKE", "🏔️ Lac", "#0891b2"], ["SEA", "🌊 Mer", "#7c3aed"]].map(([code, label, col]) => (
-                    <button key={code} onClick={() => f("type", code)} style={{ flex: 1, padding: "7px", borderRadius: "20px", border: `1px solid ${form.type === code ? col : "rgba(255,255,255,0.08)"}`, background: form.type === code ? `${col}18` : "rgba(255,255,255,0.02)", color: form.type === code ? col : "#4a7a6a", fontSize: "0.72rem", fontWeight: 600 }}>{label}</button>
+                    <button key={code} onClick={() => f("type", code)} style={{ flex: 1, padding: "8px", borderRadius: "10px", border: `1px solid ${form.type === code ? col : "#e0ece7"}`, background: form.type === code ? `${col}10` : "#f7faf9", color: form.type === code ? col : "#6a8a80", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}>{label}</button>
                   ))}
                 </div>
               </div>
               {[["Nom *", "name", "text", "Ex: Lesse · Houyet"], ["Rivière / Lac *", "river", "text", "Ex: Lesse"], ["Région", "region", "text", "Ex: Wallonie"], ["Distance", "distance", "text", "Ex: 21 km"], ["Durée", "duration", "text", "Ex: 4–5h"], ["Coordonnées GPS", "coords", "text", "Ex: 50.185, 5.002"], ["Description", "description", "textarea", "Décris ce spot..."]].map(([label, key, type, ph]) => (
                 <div key={key}>
-                  <label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "4px", fontWeight: 500 }}>{label}</label>
+                  <label style={{ display: "block", color: "#6a8a80", fontSize: "0.78rem", marginBottom: "5px", fontWeight: 600 }}>{label}</label>
                   {type === "textarea" ? <textarea value={form[key]} onChange={e => f(key, e.target.value)} placeholder={ph} rows={2} style={{ ...inp(key), resize: "vertical" }} /> : <input value={form[key]} onChange={e => f(key, e.target.value)} placeholder={ph} style={inp(key)} />}
-                  {validationErrors[key] && <p style={{ color: "#f87171", fontSize: "0.65rem", marginTop: "3px" }}>⚠️ {validationErrors[key]}</p>}
+                  {validationErrors[key] && <p style={{ color: "#e11d48", fontSize: "0.75rem", marginTop: "3px" }}>⚠️ {validationErrors[key]}</p>}
                 </div>
               ))}
               <div>
-                <label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "4px", fontWeight: 500 }}>Pays</label>
-                <select value={form.country} onChange={e => f("country", e.target.value)} style={{ ...inp("country"), background: "#0d2240" }}>
+                <label style={{ display: "block", color: "#6a8a80", fontSize: "0.78rem", marginBottom: "5px", fontWeight: 600 }}>Pays</label>
+                <select value={form.country} onChange={e => f("country", e.target.value)} style={{ ...inp("country"), background: "#f7faf9" }}>
                   {Object.entries(COUNTRIES).sort((a, b) => a[1].name.localeCompare(b[1].name)).map(([code, c]) => <option key={code} value={code}>{c.flag} {c.name}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "4px", fontWeight: 500 }}>Difficulté</label>
-                <div style={{ display: "flex", gap: "5px" }}>
-                  {["Facile", "Intermédiaire", "Sportif"].map(d => <button key={d} onClick={() => f("difficulty", d)} style={{ flex: 1, padding: "7px", borderRadius: "20px", border: `1px solid ${form.difficulty === d ? DIFF_COLOR[d] : "rgba(255,255,255,0.07)"}`, background: form.difficulty === d ? `${DIFF_COLOR[d]}18` : "rgba(255,255,255,0.02)", color: form.difficulty === d ? DIFF_COLOR[d] : "#4a7a6a", fontSize: "0.72rem", fontWeight: 600 }}>{d}</button>)}
+                <label style={{ display: "block", color: "#6a8a80", fontSize: "0.78rem", marginBottom: "5px", fontWeight: 600 }}>Difficulté</label>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  {["Facile", "Intermédiaire", "Sportif"].map(d => <button key={d} onClick={() => f("difficulty", d)} style={{ flex: 1, padding: "8px", borderRadius: "10px", border: `1px solid ${form.difficulty === d ? DIFF_COLOR[d] : "#e0ece7"}`, background: form.difficulty === d ? `${DIFF_COLOR[d]}10` : "#f7faf9", color: form.difficulty === d ? DIFF_COLOR[d] : "#6a8a80", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}>{d}</button>)}
                 </div>
               </div>
               <div>
-                <label style={{ display: "block", color: "#6a9a8c", fontSize: "0.72rem", marginBottom: "4px", fontWeight: 500 }}>Activités</label>
-                <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                  {["Kayak", "Canoë", "SUP", "Rafting", "Surf", "Voile", "Kitesurf", "Plongée", "Baignade", "Camping", "Pêche"].map(a => { const sel = form.activities.includes(a); return <button key={a} onClick={() => f("activities", sel ? form.activities.filter(x => x !== a) : [...form.activities, a])} style={{ padding: "4px 10px", borderRadius: "20px", border: `1px solid ${sel ? "#1a9e6e" : "rgba(255,255,255,0.07)"}`, background: sel ? "rgba(26,158,110,0.16)" : "rgba(255,255,255,0.02)", color: sel ? "#a8edcf" : "#4a7a6a", fontSize: "0.7rem" }}>{a}</button>; })}
+                <label style={{ display: "block", color: "#6a8a80", fontSize: "0.78rem", marginBottom: "5px", fontWeight: 600 }}>Activités</label>
+                <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+                  {["Kayak", "Canoë", "SUP", "Rafting", "Surf", "Voile", "Kitesurf", "Plongée", "Baignade", "Camping", "Pêche"].map(a => { const sel = form.activities.includes(a); return <button key={a} onClick={() => f("activities", sel ? form.activities.filter(x => x !== a) : [...form.activities, a])} style={{ padding: "5px 11px", borderRadius: "20px", border: `1px solid ${sel ? "#1a9e6e" : "#e0ece7"}`, background: sel ? "#f0f9f5" : "#f7faf9", color: sel ? "#1a9e6e" : "#6a8a80", fontSize: "0.78rem", fontWeight: sel ? 600 : 400, cursor: "pointer" }}>{a}</button>; })}
                 </div>
               </div>
-              <button onClick={submit} style={{ padding: "11px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.86rem", marginTop: "4px" }}>🌊 Soumettre le spot</button>
+              <button onClick={submit} style={{ padding: "12px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.9rem", marginTop: "4px", cursor: "pointer", boxShadow: "0 4px 14px rgba(26,158,110,0.3)" }}>🌊 Soumettre le spot</button>
             </div>
           </>
         )}
@@ -2384,21 +2402,22 @@ export default function FleuVibe() {
       {/* AUTH */}
       {showAuth && (
         <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowAuth(false); }}>
-          <div style={{ background: "rgba(255,255,255,0.03)", backdropFilter: "blur(10px)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "24px", maxWidth: "380px", width: "100%", padding: "28px", animation: "pop 0.3s ease" }}>
-            <div style={{ textAlign: "center", marginBottom: "20px" }}>
+          <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", maxWidth: "380px", width: "100%", padding: "32px 28px", animation: "pop 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
+            <div style={{ textAlign: "center", marginBottom: "24px" }}>
               <span style={{ fontSize: "2.5rem" }}>🌊</span>
-              <h3 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a8edcf", marginTop: "8px", marginBottom: "4px" }}>{authMode === "login" ? "Connexion à FleuVibe" : "Créer un compte"}</h3>
+              <h3 style={{ fontSize: "1.15rem", fontWeight: 700, color: "#1a2e28", marginTop: "10px", marginBottom: "6px" }}>{authMode === "login" ? "Connexion à FleuVibe" : "Créer un compte"}</h3>
+              <p style={{ fontSize: "0.82rem", color: "#9ab0a8" }}>{authMode === "login" ? "Retrouve tes favoris et spots sauvegardés" : "Rejoins 2 400+ pagayeurs sur FleuVibe"}</p>
             </div>
-            {authError && <div style={{ padding: "8px 12px", background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.22)", borderRadius: "10px", color: "#f87171", fontSize: "0.76rem", marginBottom: "12px" }}>{authError}</div>}
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {authMode === "signup" && <input value={authForm.fullName} onChange={e => setAuthForm(f => ({ ...f, fullName: e.target.value }))} placeholder="Prénom et nom" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", color: "#e8f4f0", fontSize: "0.82rem" }} />}
-              <input type="email" value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))} placeholder="Email" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", color: "#e8f4f0", fontSize: "0.82rem" }} />
-              <input type="password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} placeholder="Mot de passe" style={{ width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", color: "#e8f4f0", fontSize: "0.82rem" }} onKeyDown={e => e.key === "Enter" && (authMode === "login" ? handleSignIn() : handleSignUp())} />
-              <button onClick={authMode === "login" ? handleSignIn : handleSignUp} disabled={authLoading} style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.85rem", opacity: authLoading ? 0.7 : 1 }}>
-                {authLoading ? "⏳ Chargement..." : authMode === "login" ? "🌊 Se connecter" : "✨ Créer mon compte"}
+            {authError && <div style={{ padding: "10px 14px", background: "#fff1f2", border: "1px solid #fecdd3", borderRadius: "10px", color: "#e11d48", fontSize: "0.82rem", marginBottom: "14px" }}>{authError}</div>}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {authMode === "signup" && <input value={authForm.fullName} onChange={e => setAuthForm(f => ({ ...f, fullName: e.target.value }))} placeholder="Prénom et nom" style={{ width: "100%", padding: "12px 14px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "12px", color: "#1a2e28", fontSize: "0.87rem", outline: "none", boxSizing: "border-box" }} />}
+              <input type="email" value={authForm.email} onChange={e => setAuthForm(f => ({ ...f, email: e.target.value }))} placeholder="Email" style={{ width: "100%", padding: "12px 14px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "12px", color: "#1a2e28", fontSize: "0.87rem", outline: "none", boxSizing: "border-box" }} />
+              <input type="password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} placeholder="Mot de passe" style={{ width: "100%", padding: "12px 14px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "12px", color: "#1a2e28", fontSize: "0.87rem", outline: "none", boxSizing: "border-box" }} onKeyDown={e => e.key === "Enter" && (authMode === "login" ? handleSignIn() : handleSignUp())} />
+              <button onClick={authMode === "login" ? handleSignIn : handleSignUp} disabled={authLoading} style={{ width: "100%", padding: "13px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.92rem", opacity: authLoading ? 0.7 : 1, cursor: "pointer", boxShadow: "0 4px 14px rgba(26,158,110,0.3)" }}>
+                {authLoading ? "⏳ Chargement..." : authMode === "login" ? "Se connecter" : "Créer mon compte"}
               </button>
-              <button onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(""); }} style={{ background: "none", border: "none", color: "#5a9a80", fontSize: "0.76rem", textDecoration: "underline" }}>
-                {authMode === "login" ? "Pas de compte ? S'inscrire" : "Déjà un compte ? Se connecter"}
+              <button onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthError(""); }} style={{ background: "none", border: "none", color: "#1a9e6e", fontSize: "0.82rem", textDecoration: "underline", cursor: "pointer" }}>
+                {authMode === "login" ? "Pas encore de compte ? S'inscrire" : "Déjà un compte ? Se connecter"}
               </button>
             </div>
           </div>
