@@ -955,54 +955,63 @@ function ReviewsSection({ spot, session, userName, allSpots }) {
   };
 
   return (
-    <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+    <div style={{ marginTop: "16px", paddingTop: "16px", borderTop: "1px solid #f0f5f3" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#a8edcf" }}>⭐ Avis</span>
-          {avg && <><span style={{ fontSize: "0.95rem", fontWeight: 800, color: "#f59e0b" }}>{avg}</span><StarRating value={Math.round(avg)} readonly /><span style={{ fontSize: "0.65rem", color: "#3a6a5a" }}>({reviews.length})</span></>}
+          <span style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1a2e28" }}>Avis</span>
+          {avg && <><span style={{ fontSize: "0.95rem", fontWeight: 800, color: "#f59e0b" }}>{avg}</span><StarRating value={Math.round(avg)} readonly /><span style={{ fontSize: "0.78rem", color: "#9ab0a8" }}>({reviews.length})</span></>}
         </div>
-        <div style={{ display: "flex", gap: "5px" }}>
-          {reviews.length >= 2 && <button onClick={async e => { e.stopPropagation(); setLoadingSummary(true); setSummary(await summarizeReviews(reviews)); setLoadingSummary(false); }} disabled={loadingSummary} style={{ padding: "3px 8px", background: "none", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", color: "#7ecfb0", fontSize: "0.62rem", cursor: "pointer" }}>📋 {loadingSummary ? "..." : "Résumé IA"}</button>}
-          {session && !showForm && <button onClick={() => setShowForm(true)} style={{ padding: "4px 12px", background: "rgba(26,158,110,0.12)", border: "1px solid rgba(26,158,110,0.28)", borderRadius: "20px", color: "#7ecfb0", fontSize: "0.72rem", fontWeight: 600 }}>✍️ Avis</button>}
+        <div style={{ display: "flex", gap: "6px" }}>
+          {reviews.length >= 2 && <button onClick={async e => { e.stopPropagation(); setLoadingSummary(true); setSummary(await summarizeReviews(reviews)); setLoadingSummary(false); }} disabled={loadingSummary} style={{ padding: "4px 10px", background: "#f0f9f5", border: "1px solid #d1ede3", borderRadius: "20px", color: "#1a9e6e", fontSize: "0.78rem", fontWeight: 500, cursor: "pointer" }}>📋 {loadingSummary ? "..." : "Résumé IA"}</button>}
+          {session && !showForm && <button onClick={() => setShowForm(true)} style={{ padding: "4px 12px", background: "#f0f9f5", border: "1px solid #d1ede3", borderRadius: "20px", color: "#1a9e6e", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>✍️ Avis</button>}
         </div>
       </div>
-      {summary && <p style={{ fontSize: "0.72rem", color: "#a8edcf", padding: "7px 9px", background: "rgba(26,158,110,0.06)", borderRadius: "9px", marginBottom: "8px" }}>📋 {summary}</p>}
+      {summary && <p style={{ fontSize: "0.8rem", color: "#4a6a5e", padding: "8px 11px", background: "#f0f9f5", border: "1px solid #d1ede3", borderRadius: "10px", marginBottom: "10px", lineHeight: 1.6 }}>📋 {summary}</p>}
       {showForm && (
-        <div style={{ padding: "12px", background: "rgba(26,158,110,0.06)", border: "1px solid rgba(26,158,110,0.18)", borderRadius: "12px", marginBottom: "10px" }}>
-          <div style={{ marginBottom: "8px" }}><p style={{ fontSize: "0.7rem", color: "#4a7a6a", marginBottom: "5px" }}>Ta note</p><StarRating value={rating} onChange={setRating} /></div>
-          <button onClick={getSuggestion} disabled={loadingSuggestion} style={{ background: "none", border: "1px solid rgba(99,102,241,0.3)", padding: "4px 9px", borderRadius: "20px", color: "#a5b4fc", fontSize: "0.68rem", cursor: "pointer", marginBottom: "8px" }}>
+        <div style={{ padding: "14px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "14px", marginBottom: "12px" }}>
+          <div style={{ marginBottom: "10px" }}>
+            <p style={{ fontSize: "0.78rem", color: "#6a8a80", marginBottom: "6px", fontWeight: 600 }}>Ta note</p>
+            <StarRating value={rating} onChange={setRating} />
+          </div>
+          <button onClick={getSuggestion} disabled={loadingSuggestion} style={{ background: "#f5f3ff", border: "1px solid #e9d5ff", padding: "5px 11px", borderRadius: "20px", color: "#7c3aed", fontSize: "0.78rem", cursor: "pointer", marginBottom: "10px", fontWeight: 500 }}>
             🪄 {loadingSuggestion ? "Génération..." : "Suggestion IA"}
           </button>
-          <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Partage ton expérience..." rows={2} style={{ width: "100%", padding: "8px 10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(26,158,110,0.18)", borderRadius: "10px", color: "#e8f4f0", fontSize: "0.8rem", resize: "vertical", outline: "none", marginBottom: "8px" }} />
-          {err && <p style={{ color: "#f87171", fontSize: "0.7rem", marginBottom: "6px" }}>{err}</p>}
-          <div style={{ display: "flex", gap: "6px" }}>
-            <button onClick={submit} disabled={submitting} style={{ padding: "6px 14px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 600, fontSize: "0.75rem", opacity: submitting ? 0.7 : 1 }}>{submitting ? "⏳..." : "✅ Publier"}</button>
-            <button onClick={() => { setShowForm(false); setRating(0); setComment(""); setErr(""); }} style={{ padding: "6px 12px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", color: "#5a8a78", fontSize: "0.75rem" }}>Annuler</button>
+          <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="Partage ton expérience..." rows={2} style={{ width: "100%", padding: "9px 12px", background: "#fff", border: "1px solid #e0ece7", borderRadius: "10px", color: "#1a2e28", fontSize: "0.82rem", resize: "vertical", outline: "none", marginBottom: "10px", boxSizing: "border-box" }} />
+          {err && <p style={{ color: "#e11d48", fontSize: "0.78rem", marginBottom: "8px" }}>{err}</p>}
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button onClick={submit} disabled={submitting} style={{ padding: "7px 16px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "10px", color: "#fff", fontWeight: 700, fontSize: "0.82rem", opacity: submitting ? 0.7 : 1, cursor: "pointer" }}>{submitting ? "⏳..." : "Publier"}</button>
+            <button onClick={() => { setShowForm(false); setRating(0); setComment(""); setErr(""); }} style={{ padding: "7px 14px", background: "#f5f8f7", border: "1px solid #e0ece7", borderRadius: "10px", color: "#6a8a80", fontSize: "0.82rem", cursor: "pointer" }}>Annuler</button>
           </div>
         </div>
       )}
-      {!session && <p style={{ fontSize: "0.7rem", color: "#3a6a5a", marginBottom: "8px" }}>🔐 Connecte-toi pour laisser un avis</p>}
-      {loading ? <p style={{ fontSize: "0.7rem", color: "#3a6a5a" }}>Chargement...</p> : reviews.length === 0 ? <p style={{ fontSize: "0.7rem", color: "#3a6a5a" }}>Aucun avis. Sois le premier ! 🚀</p> : (
-        <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+      {!session && <p style={{ fontSize: "0.8rem", color: "#9ab0a8", marginBottom: "10px" }}>🔐 Connecte-toi pour laisser un avis</p>}
+      {loading ? <p style={{ fontSize: "0.8rem", color: "#9ab0a8" }}>Chargement...</p> : reviews.length === 0 ? <p style={{ fontSize: "0.8rem", color: "#9ab0a8" }}>Aucun avis. Sois le premier ! 🚀</p> : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           {reviews.map(r => (
-            <div key={r.id} style={{ padding: "9px 11px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)", borderRadius: "10px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "4px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
-                  <div style={{ width: 26, height: 26, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: 700, color: "#fff" }}>{(r.user_name || "?")[0].toUpperCase()}</div>
-                  <div><span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#c8e8d8" }}>{r.user_name || "Utilisateur"}</span><div style={{ display: "flex", alignItems: "center", gap: "5px" }}><StarRating value={r.rating} readonly /><span style={{ fontSize: "0.6rem", color: "#3a6a5a" }}>{new Date(r.created_at).toLocaleDateString("fr-BE")}</span></div></div>
+            <div key={r.id} style={{ padding: "10px 12px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "12px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "5px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.75rem", fontWeight: 700, color: "#fff", flexShrink: 0 }}>{(r.user_name || "?")[0].toUpperCase()}</div>
+                  <div>
+                    <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1a2e28" }}>{r.user_name || "Utilisateur"}</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "1px" }}>
+                      <StarRating value={r.rating} readonly />
+                      <span style={{ fontSize: "0.75rem", color: "#9ab0a8" }}>{new Date(r.created_at).toLocaleDateString("fr-BE")}</span>
+                    </div>
+                  </div>
                 </div>
-                {session && session.user.id === r.user_id && <button onClick={() => supabase.from('reviews').delete().eq('id', r.id).then(load)} style={{ background: "none", border: "none", color: "#3a6a5a", fontSize: "0.7rem" }}>🗑️</button>}
+                {session && session.user.id === r.user_id && <button onClick={() => supabase.from('reviews').delete().eq('id', r.id).then(load)} style={{ background: "none", border: "none", color: "#9ab0a8", fontSize: "0.8rem", cursor: "pointer" }}>🗑️</button>}
               </div>
-              {r.comment && <p style={{ fontSize: "0.76rem", color: "#8ab8b0", lineHeight: 1.5, marginTop: "4px" }}>{r.comment}</p>}
+              {r.comment && <p style={{ fontSize: "0.82rem", color: "#4a6a5e", lineHeight: 1.6, marginTop: "5px" }}>{r.comment}</p>}
             </div>
           ))}
         </div>
       )}
-      <div style={{ marginTop: "10px", padding: "8px 11px", background: "rgba(26,158,110,0.05)", borderRadius: "11px", border: "1px solid rgba(26,158,110,0.12)" }}>
-        <button onClick={async e => { e.stopPropagation(); setLoadingRecs(true); const similar = allSpots.filter(s => s.id !== spot.id && s.type === spot.type).slice(0, 6); setRecs(await getRecommendations(spot, similar)); setLoadingRecs(false); }} disabled={loadingRecs} style={{ background: "none", border: "1px solid rgba(26,158,110,0.3)", padding: "5px 12px", borderRadius: "20px", color: "#a8edcf", fontSize: "0.72rem", cursor: "pointer" }}>
-          🧭 {loadingRecs ? "..." : "Spots similaires recommandés"}
+      <div style={{ marginTop: "12px", padding: "10px 12px", background: "#f0f9f5", borderRadius: "12px", border: "1px solid #d1ede3" }}>
+        <button onClick={async e => { e.stopPropagation(); setLoadingRecs(true); const similar = allSpots.filter(s => s.id !== spot.id && s.type === spot.type).slice(0, 6); setRecs(await getRecommendations(spot, similar)); setLoadingRecs(false); }} disabled={loadingRecs} style={{ background: "none", border: "1px solid #d1ede3", padding: "5px 12px", borderRadius: "20px", color: "#1a9e6e", fontSize: "0.8rem", fontWeight: 500, cursor: "pointer" }}>
+          🧭 {loadingRecs ? "..." : "Spots similaires"}
         </button>
-        {recs && <p style={{ fontSize: "0.75rem", color: "#8ab8b0", marginTop: "8px", lineHeight: 1.6 }}>✨ {recs}</p>}
+        {recs && <p style={{ fontSize: "0.82rem", color: "#4a6a5e", marginTop: "8px", lineHeight: 1.6 }}>✨ {recs}</p>}
       </div>
     </div>
   );
@@ -1424,7 +1433,7 @@ function GroupCreator({ spots, onCreate }) {
   const [date, setDate] = useState("");
   const [meeting, setMeeting] = useState("");
   const [done, setDone] = useState(false);
-  const inp = { width: "100%", padding: "9px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(8,145,178,0.2)", borderRadius: "12px", color: "#e8f4f0", fontSize: "0.8rem", outline: "none" };
+  const inp = { width: "100%", padding: "9px 12px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "12px", color: "#1a2e28", fontSize: "0.82rem", outline: "none", boxSizing: "border-box" };
   const submit = () => {
     if (!name || !spotId) return;
     onCreate(name, spotId, date, meeting);
@@ -1432,18 +1441,18 @@ function GroupCreator({ spots, onCreate }) {
     setDone(true); setTimeout(() => setDone(false), 2000);
   };
   return (
-    <div style={{ padding: "14px", background: "rgba(8,145,178,0.06)", border: "1px solid rgba(8,145,178,0.15)", borderRadius: "16px" }}>
-      <p style={{ fontSize: "0.74rem", fontWeight: 600, color: "#67e8f9", marginBottom: "10px" }}>➕ Nouvelle expédition</p>
-      {done ? <p style={{ textAlign: "center", color: "#a8edcf", fontSize: "0.8rem", padding: "10px 0" }}>🎉 Groupe créé ! +50 XP</p> : (
+    <div style={{ padding: "16px", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "14px" }}>
+      <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#0369a1", marginBottom: "12px" }}>Nouvelle expédition</p>
+      {done ? <p style={{ textAlign: "center", color: "#1a9e6e", fontSize: "0.87rem", padding: "10px 0", fontWeight: 600 }}>🎉 Groupe créé !</p> : (
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <input placeholder="Nom du groupe *" value={name} onChange={e => setName(e.target.value)} style={inp} />
-          <select value={spotId} onChange={e => setSpotId(e.target.value)} style={{ ...inp, background: "#0d2240" }}>
+          <select value={spotId} onChange={e => setSpotId(e.target.value)} style={{ ...inp, background: "#f7faf9" }}>
             <option value="">Choisir un spot *</option>
             {spots.slice(0, 20).map(s => <option key={s.id} value={s.id}>{s.emoji} {s.name}</option>)}
           </select>
           <input type="date" value={date} onChange={e => setDate(e.target.value)} style={inp} />
           <input placeholder="Point de rendez-vous (optionnel)" value={meeting} onChange={e => setMeeting(e.target.value)} style={inp} />
-          <button onClick={submit} style={{ padding: "9px", background: "linear-gradient(135deg,#0891b2,#1a9e6e)", border: "none", borderRadius: "12px", color: "#fff", fontWeight: 600, fontSize: "0.78rem", cursor: "pointer" }}>🚀 Créer l'expédition</button>
+          <button onClick={submit} style={{ padding: "10px", background: "linear-gradient(135deg,#0891b2,#1a9e6e)", border: "none", borderRadius: "10px", color: "#fff", fontWeight: 700, fontSize: "0.85rem", cursor: "pointer" }}>🚀 Créer l'expédition</button>
         </div>
       )}
     </div>
@@ -2296,32 +2305,35 @@ export default function FleuVibe() {
       {/* CHALLENGES MODAL */}
       {showChallenges && (
         <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowChallenges(false); }}>
-          <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "28px", padding: "28px", maxWidth: "560px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.3s ease", boxShadow: "0 30px 80px rgba(0,0,0,0.6)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-              <div><h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#fbbf24" }}>🏆 Challenges</h2><p style={{ fontSize: "0.72rem", color: "#5a8a78" }}>Complète des défis pour gagner des badges et de l'XP</p></div>
-              <button onClick={() => setShowChallenges(false)} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#5a8a78", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
+          <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", padding: "28px", maxWidth: "560px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "22px" }}>
+              <div>
+                <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#1a2e28" }}>🏆 Challenges</h2>
+                <p style={{ fontSize: "0.8rem", color: "#9ab0a8", marginTop: "3px" }}>Complète des défis pour gagner des badges et de l'XP</p>
+              </div>
+              <button onClick={() => setShowChallenges(false)} style={{ background: "#f5f8f7", border: "1px solid #e0ece7", color: "#9ab0a8", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {CHALLENGES.map(ch => {
                 const current = Math.min(ch.progress(userStats, userXP), ch.goal);
                 const pct = Math.round((current / ch.goal) * 100);
                 const done = current >= ch.goal;
                 return (
-                  <div key={ch.id} style={{ padding: "14px 16px", background: done ? "rgba(26,158,110,0.1)" : "rgba(255,255,255,0.03)", border: `1px solid ${done ? "rgba(26,158,110,0.3)" : "rgba(255,255,255,0.06)"}`, borderRadius: "16px" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
+                  <div key={ch.id} style={{ padding: "14px 16px", background: done ? "#f0f9f5" : "#f7faf9", border: `1px solid ${done ? "#d1ede3" : "#e0ece7"}`, borderRadius: "14px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "10px" }}>
                       <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
                         <span style={{ fontSize: "1.4rem" }}>{ch.icon}</span>
                         <div>
-                          <div style={{ fontSize: "0.85rem", fontWeight: 700, color: done ? "#a8edcf" : "#daf0e8" }}>{ch.name}</div>
-                          <div style={{ fontSize: "0.65rem", color: "#5a8a78" }}>{ch.desc}</div>
+                          <div style={{ fontSize: "0.87rem", fontWeight: 700, color: "#1a2e28" }}>{ch.name}</div>
+                          <div style={{ fontSize: "0.78rem", color: "#9ab0a8" }}>{ch.desc}</div>
                         </div>
                       </div>
-                      {done ? <span style={{ fontSize: "1.2rem" }}>✅</span> : <span style={{ fontSize: "0.7rem", color: "#f59e0b", fontWeight: 700 }}>{current}/{ch.goal}</span>}
+                      {done ? <span style={{ fontSize: "1.2rem" }}>✅</span> : <span style={{ fontSize: "0.8rem", color: "#f59e0b", fontWeight: 700 }}>{current}/{ch.goal}</span>}
                     </div>
-                    <div style={{ height: "5px", background: "rgba(255,255,255,0.08)", borderRadius: "3px", overflow: "hidden", marginBottom: "6px" }}>
+                    <div style={{ height: "6px", background: "#e0ece7", borderRadius: "3px", overflow: "hidden", marginBottom: "8px" }}>
                       <div style={{ width: `${pct}%`, height: "100%", background: done ? "linear-gradient(90deg,#1a9e6e,#0891b2)" : "linear-gradient(90deg,#f59e0b,#ef4444)", borderRadius: "3px", transition: "width 0.5s" }} />
                     </div>
-                    <div style={{ fontSize: "0.62rem", color: "#fbbf24" }}>🎁 {ch.reward.badge} · +{ch.reward.xp} XP</div>
+                    <div style={{ fontSize: "0.78rem", color: "#92400e", fontWeight: 500 }}>🎁 {ch.reward.badge} · +{ch.reward.xp} XP</div>
                   </div>
                 );
               })}
@@ -2333,36 +2345,39 @@ export default function FleuVibe() {
       {/* GROUPES MODAL */}
       {showGroups && (
         <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowGroups(false); }}>
-          <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(8,145,178,0.3)", borderRadius: "28px", padding: "28px", maxWidth: "540px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.3s ease", boxShadow: "0 30px 80px rgba(0,0,0,0.6)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-              <div><h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#67e8f9" }}>👥 Groupes d'expédition</h2><p style={{ fontSize: "0.72rem", color: "#5a8a78" }}>Planifiez et coordonnez vos sorties entre passionnés</p></div>
-              <button onClick={() => setShowGroups(false)} style={{ background: "rgba(255,255,255,0.06)", border: "none", color: "#5a8a78", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
+          <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", padding: "28px", maxWidth: "540px", width: "100%", maxHeight: "88vh", overflowY: "auto", animation: "slideUp 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "22px" }}>
+              <div>
+                <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#1a2e28" }}>👥 Groupes d'expédition</h2>
+                <p style={{ fontSize: "0.8rem", color: "#9ab0a8", marginTop: "3px" }}>Planifiez et coordonnez vos sorties entre passionnés</p>
+              </div>
+              <button onClick={() => setShowGroups(false)} style={{ background: "#f5f8f7", border: "1px solid #e0ece7", color: "#9ab0a8", borderRadius: "50%", width: 32, height: 32, cursor: "pointer" }}>✕</button>
             </div>
-            {/* Créer un groupe */}
             <GroupCreator spots={spots} onCreate={(name, spotId, date, meeting) => { createGroup(name, spotId, date, meeting); }} />
-            {/* Groupes existants */}
             {groups.length > 0 && (
-              <div style={{ marginTop: "16px" }}>
-                <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "#a8edcf", marginBottom: "10px" }}>Mes expéditions ({groups.length})</p>
+              <div style={{ marginTop: "18px" }}>
+                <p style={{ fontSize: "0.8rem", fontWeight: 700, color: "#1a2e28", marginBottom: "10px" }}>Mes expéditions ({groups.length})</p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                   {groups.map(g => (
-                    <div key={g.id} style={{ padding: "12px 14px", background: "rgba(8,145,178,0.08)", border: "1px solid rgba(8,145,178,0.2)", borderRadius: "14px" }}>
+                    <div key={g.id} style={{ padding: "12px 14px", background: "#f0f9ff", border: "1px solid #bae6fd", borderRadius: "12px" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <div><div style={{ fontSize: "0.82rem", fontWeight: 600, color: "#67e8f9" }}>{g.name}</div><div style={{ fontSize: "0.65rem", color: "#5a8a78" }}>{g.spot?.name} · 📅 {g.date || "Date à définir"}</div></div>
-                        <span style={{ fontSize: "0.68rem", color: "#8ab8b0" }}>👥 {g.members.length}</span>
+                        <div>
+                          <div style={{ fontSize: "0.87rem", fontWeight: 600, color: "#0369a1" }}>{g.name}</div>
+                          <div style={{ fontSize: "0.78rem", color: "#9ab0a8", marginTop: "2px" }}>{g.spot?.name} · 📅 {g.date || "Date à définir"}</div>
+                        </div>
+                        <span style={{ fontSize: "0.8rem", color: "#6a8a80" }}>👥 {g.members.length}</span>
                       </div>
-                      {g.meeting && <div style={{ fontSize: "0.62rem", color: "#5a8a78", marginTop: "4px" }}>📍 {g.meeting}</div>}
+                      {g.meeting && <div style={{ fontSize: "0.78rem", color: "#6a8a80", marginTop: "5px" }}>📍 {g.meeting}</div>}
                     </div>
                   ))}
                 </div>
               </div>
             )}
-            {groups.length === 0 && !session && <p style={{ fontSize: "0.72rem", color: "#3a6a5a", textAlign: "center", marginTop: "10px" }}>Connecte-toi pour créer un groupe !</p>}
-            {/* Affiliation en bas */}
-            <div style={{ marginTop: "18px", padding: "14px", background: "rgba(26,158,110,0.06)", border: "1px solid rgba(26,158,110,0.15)", borderRadius: "14px" }}>
-              <p style={{ fontSize: "0.72rem", fontWeight: 600, color: "#a8edcf", marginBottom: "8px" }}>🤝 Programme d'affiliation</p>
-              <p style={{ fontSize: "0.65rem", color: "#5a8a78", marginBottom: "10px" }}>Parraine des amis et gagne des récompenses !</p>
-              <button onClick={() => { setShowGroups(false); setShowAffiliate(true); }} style={{ padding: "7px 16px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 600, fontSize: "0.72rem", cursor: "pointer" }}>🔗 Mon lien de parrainage</button>
+            {groups.length === 0 && !session && <p style={{ fontSize: "0.82rem", color: "#9ab0a8", textAlign: "center", marginTop: "12px" }}>Connecte-toi pour créer un groupe !</p>}
+            <div style={{ marginTop: "20px", padding: "14px", background: "#f0f9f5", border: "1px solid #d1ede3", borderRadius: "14px" }}>
+              <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1a2e28", marginBottom: "6px" }}>🤝 Programme d'affiliation</p>
+              <p style={{ fontSize: "0.8rem", color: "#6a8a80", marginBottom: "10px" }}>Parraine des amis et gagne des récompenses !</p>
+              <button onClick={() => { setShowGroups(false); setShowAffiliate(true); }} style={{ padding: "8px 18px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "10px", color: "#fff", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer" }}>🔗 Mon lien de parrainage</button>
             </div>
           </div>
         </div>
@@ -2371,30 +2386,30 @@ export default function FleuVibe() {
       {/* AFFILIATE MODAL */}
       {showAffiliate && (
         <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) setShowAffiliate(false); }}>
-          <div style={{ background: "linear-gradient(160deg,#0d2240,#0a3d2e)", border: "1px solid rgba(26,158,110,0.3)", borderRadius: "28px", padding: "28px", maxWidth: "440px", width: "100%", animation: "slideUp 0.3s ease", boxShadow: "0 30px 80px rgba(0,0,0,0.6)" }}>
-            <div style={{ textAlign: "center", marginBottom: "20px" }}>
+          <div style={{ background: "#fff", border: "1px solid #e0ece7", borderRadius: "24px", padding: "28px", maxWidth: "440px", width: "100%", animation: "slideUp 0.3s ease", boxShadow: "0 20px 60px rgba(0,0,0,0.12)" }}>
+            <div style={{ textAlign: "center", marginBottom: "22px" }}>
               <div style={{ fontSize: "3rem", marginBottom: "10px" }}>🤝</div>
-              <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#a8edcf", marginBottom: "6px" }}>Programme d'affiliation</h2>
-              <p style={{ fontSize: "0.78rem", color: "#5a8a78" }}>Parraine tes amis · Gagne des récompenses</p>
+              <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#1a2e28", marginBottom: "6px" }}>Programme d'affiliation</h2>
+              <p style={{ fontSize: "0.82rem", color: "#9ab0a8" }}>Parraine tes amis · Gagne des récompenses</p>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginBottom: "18px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "20px" }}>
               {[["1 parrainage", "🤝 Badge Parrain", "#10b981"], ["5 parrainages", "👑 Badge Ambassadeur", "#f59e0b"], ["10 parrainages", "⭐ 3 mois Premium offerts", "#ef4444"], ["20 parrainages", "⭐ 6 mois Premium offerts", "#8b5cf6"]].map(([label, reward, col]) => (
-                <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 12px", background: `${col}10`, border: `1px solid ${col}25`, borderRadius: "12px" }}>
-                  <span style={{ fontSize: "0.72rem", color: "#8ab8b0" }}>{label}</span>
-                  <span style={{ fontSize: "0.72rem", color: col, fontWeight: 600 }}>{reward}</span>
+                <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: `${col}08`, border: `1px solid ${col}30`, borderRadius: "12px" }}>
+                  <span style={{ fontSize: "0.82rem", color: "#6a8a80" }}>{label}</span>
+                  <span style={{ fontSize: "0.82rem", color: col, fontWeight: 700 }}>{reward}</span>
                 </div>
               ))}
             </div>
-            <div style={{ marginBottom: "14px" }}>
-              <label style={{ display: "block", fontSize: "0.7rem", color: "#6a9a8c", marginBottom: "6px", fontWeight: 500 }}>Ton lien unique</label>
-              <div style={{ display: "flex", gap: "6px" }}>
-                <input readOnly value={AffiliateProgram.generateLink(session?.user?.id || userName.replace(/\s/g,"_"))} style={{ flex: 1, padding: "10px 12px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "12px", color: "#8ab8b0", fontSize: "0.72rem", outline: "none" }} />
-                <button onClick={copyAffiliateLink} style={{ padding: "10px 14px", background: affiliateCopied ? "rgba(26,158,110,0.3)" : "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "12px", color: "#fff", fontWeight: 600, fontSize: "0.72rem", cursor: "pointer", whiteSpace: "nowrap" }}>
+            <div style={{ marginBottom: "16px" }}>
+              <label style={{ display: "block", fontSize: "0.78rem", color: "#6a8a80", marginBottom: "8px", fontWeight: 600 }}>Ton lien unique</label>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <input readOnly value={AffiliateProgram.generateLink(session?.user?.id || userName.replace(/\s/g,"_"))} style={{ flex: 1, padding: "10px 12px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "12px", color: "#4a6a5e", fontSize: "0.78rem", outline: "none" }} />
+                <button onClick={copyAffiliateLink} style={{ padding: "10px 16px", background: affiliateCopied ? "#f0f9f5" : "linear-gradient(135deg,#1a9e6e,#0891b2)", border: affiliateCopied ? "1px solid #d1ede3" : "none", borderRadius: "12px", color: affiliateCopied ? "#1a9e6e" : "#fff", fontWeight: 600, fontSize: "0.82rem", cursor: "pointer", whiteSpace: "nowrap" }}>
                   {affiliateCopied ? "✅ Copié !" : "📋 Copier"}
                 </button>
               </div>
             </div>
-            <button onClick={() => setShowAffiliate(false)} style={{ width: "100%", padding: "10px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", color: "#5a8a78", fontSize: "0.78rem", cursor: "pointer" }}>Fermer</button>
+            <button onClick={() => setShowAffiliate(false)} style={{ width: "100%", padding: "10px", background: "#f5f8f7", border: "1px solid #e0ece7", borderRadius: "12px", color: "#6a8a80", fontSize: "0.82rem", cursor: "pointer", fontWeight: 500 }}>Fermer</button>
           </div>
         </div>
       )}
