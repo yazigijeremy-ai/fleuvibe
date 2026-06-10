@@ -1780,7 +1780,6 @@ export default function FleuVibe() {
   return (
     <div style={{ minHeight: "100vh", background: "#f5f8f7", fontFamily: "'Inter',sans-serif", color: "#1a2e28" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap');
         *{box-sizing:border-box;margin:0;padding:0}
         body{background:#f5f8f7}
         ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:#e8f0ed;border-radius:10px}::-webkit-scrollbar-thumb{background:linear-gradient(135deg,#1a9e6e,#0891b2);border-radius:10px}
@@ -1859,7 +1858,7 @@ export default function FleuVibe() {
         <div style={{ maxWidth: "1280px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", height: "68px", gap: "12px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
             <span style={{ fontSize: "1.5rem" }}>🌊</span>
-            <h1 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#1a9e6e", letterSpacing: "-0.5px" }}>FleuVibe</h1>
+            <span style={{ fontSize: "1.3rem", fontWeight: 800, color: "#1a9e6e", letterSpacing: "-0.5px" }}>FleuVibe</span>
             <span style={{ background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.25)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#6366f1", fontWeight: 700 }}>🤖 IA</span>
             {!isOnline && <span style={{ background: "rgba(220,38,38,0.1)", border: "1px solid rgba(220,38,38,0.3)", borderRadius: "20px", padding: "2px 8px", fontSize: "0.58rem", color: "#dc2626", fontWeight: 700 }}>📡 Hors-ligne</span>}
           </div>
@@ -1901,11 +1900,10 @@ export default function FleuVibe() {
         </>
       )}
 
-      <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px 40px", position: "relative", zIndex: 1 }}>
+      {session && <div style={{ maxWidth: "1280px", margin: "0 auto", padding: "0 16px 40px", position: "relative", zIndex: 1 }}>
 
         {/* Logged-in stats row */}
-        {session && (
-          <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "16px", marginBottom: "8px", flexWrap: "wrap" }}>
+        <div className={`fade-in ${loaded ? "loaded" : ""}`} style={{ display: "flex", gap: "10px", alignItems: "center", marginTop: "16px", marginBottom: "8px", flexWrap: "wrap" }}>
             <LevelBadge xp={userXP} />
             {earnedBadges.slice(0, 4).map(b => (
               <span key={b.name} style={{ padding: "3px 9px", background: "rgba(26,158,110,0.08)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", fontSize: "0.65rem", color: "#1a9e6e" }}>{b.icon} {b.name}</span>
@@ -1914,8 +1912,7 @@ export default function FleuVibe() {
               <button onClick={() => setShowChallenges(true)} style={{ padding: "5px 10px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "20px", color: "#d97706", fontWeight: 600, fontSize: "0.65rem" }}>🏆 Défis</button>
               <button onClick={() => setShowGroups(true)} style={{ padding: "5px 10px", background: "rgba(8,145,178,0.08)", border: "1px solid rgba(8,145,178,0.2)", borderRadius: "20px", color: "#0891b2", fontWeight: 600, fontSize: "0.65rem" }}>👥 Groupes</button>
             </div>
-          </div>
-        )}
+        </div>
 
         {/* SPOTS À LA UNE */}
         {page === "explore" && !search && (
@@ -1924,7 +1921,7 @@ export default function FleuVibe() {
               <h2 style={{ fontSize: "1.3rem", fontWeight: 700, color: "#1a2e28" }}>🔥 Spots populaires</h2>
               <button onClick={() => { setSearch(""); clearAISearch(); }} style={{ color: "#1a9e6e", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", background: "none", border: "none", padding: 0 }}>Voir tout →</button>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "12px" }}>
               {spots.filter(s => s.popular).slice(0, 3).map(s => (
                 <div key={s.id} onClick={() => { handlePageChange("explore"); setTimeout(() => setSearch(s.name), 100); }}
                   style={{ background: "#fff", borderRadius: "20px", overflow: "hidden", border: "1px solid #e8f0ed", boxShadow: "0 2px 8px rgba(0,0,0,0.04)", cursor: "pointer", transition: "all 0.3s" }}
@@ -2026,9 +2023,9 @@ export default function FleuVibe() {
                           style={{
                             padding: "7px 16px", borderRadius: "50px", whiteSpace: "nowrap",
                             fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", flexShrink: 0,
-                            background: pillActive ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.05)",
-                            color: pillActive ? "#fff" : "#6a9a8c",
-                            border: `1px solid ${pillActive ? "transparent" : "rgba(255,255,255,0.08)"}`,
+                            background: pillActive ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "#f0f5f3",
+                            color: pillActive ? "#fff" : "#3a6a5e",
+                            border: `1px solid ${pillActive ? "transparent" : "#d4e8e0"}`,
                             transition: "all 0.15s ease",
                           }}
                         >{label}</button>
@@ -2040,9 +2037,9 @@ export default function FleuVibe() {
                       style={{
                         padding: "7px 16px", borderRadius: "50px", whiteSpace: "nowrap",
                         fontSize: "0.72rem", fontWeight: 600, cursor: "pointer", flexShrink: 0,
-                        background: selContinent !== "ALL" ? "rgba(26,158,110,0.15)" : "rgba(255,255,255,0.05)",
-                        color: selContinent !== "ALL" ? "#a8edcf" : "#6a9a8c",
-                        border: `1px solid ${selContinent !== "ALL" ? "rgba(26,158,110,0.4)" : "rgba(255,255,255,0.08)"}`,
+                        background: selContinent !== "ALL" ? "rgba(26,158,110,0.1)" : "#f0f5f3",
+                        color: selContinent !== "ALL" ? "#1a9e6e" : "#3a6a5e",
+                        border: `1px solid ${selContinent !== "ALL" ? "rgba(26,158,110,0.35)" : "#d4e8e0"}`,
                       }}
                     >🌍 Région {selContinent !== "ALL" ? `· ${selContinent}` : ""}</button>
                     {activeCount > 0 && (
@@ -2053,12 +2050,12 @@ export default function FleuVibe() {
                     )}
                   </div>
                   {showFilters && (
-                    <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "20px", padding: "16px", marginBottom: "14px", animation: "slideUp 0.2s ease" }}>
+                    <div style={{ background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "20px", padding: "16px", marginBottom: "14px", animation: "slideUp 0.2s ease" }}>
                       <div>
                         <p style={{ fontSize: "0.65rem", color: "#5a8a78", fontWeight: 600, marginBottom: "6px", letterSpacing: "0.5px" }}>RÉGION</p>
                         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                           {[["ALL", "🌍 Monde"], ["EU", "🇪🇺 Europe"], ["AM", "🌎 Amériques"], ["AS", "🌏 Asie"], ["AF", "🌍 Afrique"], ["OC", "🌊 Océanie"]].map(([id, label]) => (
-                            <button key={id} onClick={() => { setSelContinent(id); setDbPage(1); }} style={{ padding: "7px 14px", borderRadius: "50px", border: "none", fontSize: "0.7rem", fontWeight: 600, background: selContinent === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "rgba(255,255,255,0.05)", color: selContinent === id ? "#fff" : "#6a9a8c" }}>{label}</button>
+                            <button key={id} onClick={() => { setSelContinent(id); setDbPage(1); }} style={{ padding: "7px 14px", borderRadius: "50px", border: "1px solid #d4e8e0", fontSize: "0.7rem", fontWeight: 600, background: selContinent === id ? "linear-gradient(135deg,#1a9e6e,#0891b2)" : "#fff", color: selContinent === id ? "#fff" : "#3a6a5e" }}>{label}</button>
                           ))}
                         </div>
                       </div>
@@ -2068,15 +2065,15 @@ export default function FleuVibe() {
               );
             })()}
             <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-              <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf", background: "rgba(26,158,110,0.12)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", padding: "3px 10px" }}>{dbTotal} spots</span>
-              <span style={{ fontSize: "0.68rem", color: "#4a7a6a" }}>{[...new Set(dbSpots.map(s => s.country))].length} pays{page === "expeditions" ? " · ⛺ Expéditions longue durée" : ""}</span>
+              <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "#1a9e6e", background: "rgba(26,158,110,0.08)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "20px", padding: "3px 10px" }}>{dbTotal} spots</span>
+              <span style={{ fontSize: "0.68rem", color: "#6a8a80" }}>{[...new Set(dbSpots.map(s => s.country))].length} pays{page === "expeditions" ? " · ⛺ Expéditions longue durée" : ""}</span>
             </div>
             {dbLoading ? (
               <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}><div className="loading-spinner" /></div>
             ) : dbSpots.length === 0 ? (
-              <div style={{ padding: "50px", textAlign: "center", background: "rgba(255,255,255,0.03)", borderRadius: "24px", border: "1px solid rgba(255,255,255,0.06)" }}>
+              <div style={{ padding: "50px", textAlign: "center", background: "#fff", borderRadius: "24px", border: "1px solid #e8f0ed" }}>
                 <span style={{ fontSize: "3rem" }}>🏄</span>
-                <p style={{ marginTop: "14px", color: "#5a8a78", marginBottom: "14px" }}>Aucun spot trouvé.</p>
+                <p style={{ marginTop: "14px", color: "#6a8a80", marginBottom: "14px" }}>Aucun spot trouvé.</p>
                 <button onClick={() => setShowSubmit(true)} style={{ padding: "9px 20px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.8rem" }}>➕ Ajouter le premier</button>
               </div>
             ) : (
@@ -2138,7 +2135,7 @@ export default function FleuVibe() {
                     </div>
                     <span style={{ marginLeft: "auto", padding: "2px 8px", background: "rgba(245,158,11,0.12)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: "20px", fontSize: "0.6rem", color: "#fbbf24" }}>📅 {gem.season}</span>
                   </div>
-                  <p style={{ color: "#8ab8b0", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: "8px" }}>{gem.description}</p>
+                  <p style={{ color: "#4a6a60", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: "8px" }}>{gem.description}</p>
                   <div style={{ padding: "8px 10px", background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.18)", borderRadius: "10px" }}>
                     <p style={{ fontSize: "0.72rem", color: "#fbbf24" }}>🤫 <strong>Secret communauté :</strong> {gem.secret}</p>
                   </div>
@@ -2159,16 +2156,16 @@ export default function FleuVibe() {
         {page === "weather" && (
           <div>
             <div style={{ textAlign: "center", marginBottom: "18px" }}>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a8edcf", marginBottom: "5px" }}>🌤️ Conditions en temps réel</h2>
-              <p style={{ color: "#4a7a6a", fontSize: "0.8rem" }}>Météo actuelle + 🤖 conseils IA.</p>
+              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a9e6e", marginBottom: "5px" }}>🌤️ Conditions en temps réel</h2>
+              <p style={{ color: "#6a8a80", fontSize: "0.8rem" }}>Météo actuelle + 🤖 conseils IA.</p>
             </div>
             {spots.slice(0, 18).map(s => (
-              <div key={s.id} style={{ marginBottom: "10px", padding: "13px 15px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px" }}>
+              <div key={s.id} style={{ marginBottom: "10px", padding: "13px 15px", background: "#fff", border: "1px solid #e8f0ed", borderRadius: "14px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "8px" }}>
                   <span style={{ fontSize: "1.1rem" }}>{s.emoji}</span>
                   <div style={{ flex: 1 }}>
-                    <h3 style={{ fontSize: "0.88rem", fontWeight: 700, color: "#daf0e8" }}>{s.name} {COUNTRIES[s.country]?.flag}</h3>
-                    <p style={{ fontSize: "0.68rem", color: "#4a7a6a" }}>{s.river} · {s.region}</p>
+                    <h3 style={{ fontSize: "0.88rem", fontWeight: 700, color: "#1a2e28" }}>{s.name} {COUNTRIES[s.country]?.flag}</h3>
+                    <p style={{ fontSize: "0.68rem", color: "#6a8a80" }}>{s.river} · {s.region}</p>
                   </div>
                 </div>
                 <WeatherWidget coords={s.coords} spotName={s.name} difficulty={s.difficulty} />
@@ -2181,8 +2178,8 @@ export default function FleuVibe() {
         {page === "tourism" && (
           <div>
             <div style={{ textAlign: "center", marginBottom: "18px" }}>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#a8edcf", marginBottom: "5px" }}>🤝 Destinations Nautiques Partenaires</h2>
-              <p style={{ color: "#4a7a6a", fontSize: "0.8rem" }}>Régions & clubs officiellement partenaires de FleuVibe</p>
+              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a2e28", marginBottom: "5px" }}>🤝 Destinations Nautiques Partenaires</h2>
+              <p style={{ color: "#6a8a80", fontSize: "0.8rem" }}>Régions & clubs officiellement partenaires de FleuVibe</p>
             </div>
             {SPONSORED.map(r => (
               <div key={r.id} style={{ marginBottom: "12px", background: `linear-gradient(135deg,${r.color}07,rgba(255,255,255,0.02))`, border: `1px solid ${r.color}26`, borderRadius: "18px", overflow: "hidden" }}>
@@ -2192,24 +2189,24 @@ export default function FleuVibe() {
                     <span style={{ fontSize: "1.8rem" }}>{r.flag}</span>
                     <div>
                       <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
-                        <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#daf0e8" }}>{r.name}</h3>
+                        <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#1a2e28" }}>{r.name}</h3>
                         <span style={{ padding: "2px 7px", background: `${r.color}16`, border: `1px solid ${r.color}30`, borderRadius: "20px", fontSize: "0.6rem", color: r.color, fontWeight: 700 }}>⭐ {r.badge}</span>
                       </div>
-                      <p style={{ fontSize: "0.78rem", color: "#8ab8b0" }}>{r.desc}</p>
+                      <p style={{ fontSize: "0.78rem", color: "#6a8a80" }}>{r.desc}</p>
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
                     {spots.filter(s => s.sponsored === r.name).map(s => (
-                      <button key={s.id} onClick={() => { setPage("explore"); }} style={{ padding: "3px 9px", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "20px", color: "#7ecfb0", fontSize: "0.7rem", fontWeight: 600 }}>{s.emoji} {s.name.split("·")[0]}</button>
+                      <button key={s.id} onClick={() => { setPage("explore"); }} style={{ padding: "3px 9px", background: "#f0f5f3", border: "1px solid #d4e8e0", borderRadius: "20px", color: "#1a9e6e", fontSize: "0.7rem", fontWeight: 600 }}>{s.emoji} {s.name.split("·")[0]}</button>
                     ))}
                   </div>
                 </div>
               </div>
             ))}
-            <div style={{ padding: "22px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "24px", textAlign: "center" }}>
+            <div style={{ padding: "22px", background: "#fff", border: "1px solid #e8f0ed", borderRadius: "24px", textAlign: "center" }}>
               <div style={{ fontSize: "1.8rem", marginBottom: "8px" }}>🌍</div>
-              <h3 style={{ fontSize: "0.97rem", fontWeight: 700, color: "#a8edcf", marginBottom: "6px" }}>Vous gérez un site ou club nautique ?</h3>
-              <p style={{ color: "#4a7a6a", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: "12px" }}>Mettez vos spots en avant auprès de milliers de passionnés de sports aquatiques.</p>
+              <h3 style={{ fontSize: "0.97rem", fontWeight: 700, color: "#1a2e28", marginBottom: "6px" }}>Vous gérez un site ou club nautique ?</h3>
+              <p style={{ color: "#6a8a80", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: "12px" }}>Mettez vos spots en avant auprès de milliers de passionnés de sports aquatiques.</p>
               <button style={{ padding: "9px 22px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.82rem" }}>📩 Nous contacter</button>
             </div>
           </div>
@@ -2226,7 +2223,7 @@ export default function FleuVibe() {
 
           </div>
         )}
-      </div>
+      </div>}
 
       {/* FOOTER */}
       <footer style={{ background: "#111827", padding: "64px 32px 32px", marginTop: "60px" }}>
@@ -2239,8 +2236,11 @@ export default function FleuVibe() {
               </div>
               <p style={{ color: "rgba(255,255,255,0.45)", fontSize: "0.82rem", lineHeight: 1.7, marginBottom: "20px" }}>Connectez les aventuriers aux plus beaux plans d'eau du monde depuis 2024.</p>
               <div style={{ display: "flex", gap: "10px" }}>
-                {["📸", "👍", "▶️", "🎵"].map((icon, i) => (
-                  <div key={i} style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", cursor: "pointer" }}>{icon}</div>
+                {[["📸", "Instagram", "#"], ["👍", "Facebook", "#"], ["▶️", "YouTube", "#"], ["🎵", "TikTok", "#"]].map(([icon, label, href]) => (
+                  <a key={label} href={href} aria-label={`FleuVibe sur ${label}`} rel="noopener noreferrer" style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.08)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.9rem", textDecoration: "none", transition: "background 0.2s" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.16)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
+                  >{icon}</a>
                 ))}
               </div>
             </div>

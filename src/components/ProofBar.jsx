@@ -1,6 +1,6 @@
 const STATS = [
   { value: "2 000+", label: "pagayeurs actifs" },
-  { value: "150+",   label: "spots vérifiés" },
+  { value: "220+",   label: "spots vérifiés" },
   { value: "12",     label: "pays couverts" },
   { value: "4.9★",   label: "note moyenne" },
 ];
