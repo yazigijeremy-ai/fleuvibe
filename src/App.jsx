@@ -1142,8 +1142,10 @@ function SpotCard({ spot, isFav, onFav, onBook, session, userName, isPremium, on
           <SeasonalCalendar />
           <LiveConditions spotId={spot.id} />
           <ExpeditionPlanner spot={spot} />
-          <ProviderComparator routeId={spot.id} onShowPortal={p => window._setPartnerPortal?.(p)} />
-          <LegalWarning country={spot.country} />
+          <div style={{ marginTop: "14px", paddingTop: "14px", borderTop: "1px solid #f0f5f3" }}>
+            <ProviderComparator routeId={spot.id} onShowPortal={p => window._setPartnerPortal?.(p)} />
+            <LegalWarning country={spot.country} />
+          </div>
           <button onClick={e => { e.stopPropagation(); onBook(spot); }}
             style={{ width: "100%", marginTop: "14px", padding: "12px 18px", background: "linear-gradient(135deg,#0d6e8a,#0891b2)", border: "none", borderRadius: "14px", color: "#fff", fontWeight: 700, fontSize: "0.88rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px" }}>
             🛶 Réserver ce spot
@@ -1850,7 +1852,7 @@ export default function FleuVibe() {
 
         /* ── SPOT CARD REDESIGN ───────────────────────────────── */
         .fv-spot-card{background:#ffffff;border-radius:16px;border:1px solid rgba(0,0,0,0.08);overflow:hidden;cursor:pointer;transition:transform 0.2s ease,box-shadow 0.2s ease;position:relative}
-        .fv-spot-card:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,0.12)}
+        .fv-spot-card:hover{transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,0.12);border-color:rgba(26,158,110,0.3)}
         .fv-spot-card .card-img-wrap{position:relative;width:100%;height:220px;overflow:hidden}
         @media(max-width:768px){.fv-spot-card .card-img-wrap{height:200px}}
         .fv-badge-level{position:absolute;bottom:12px;left:12px;font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;backdrop-filter:blur(6px);color:#fff;z-index:3}
@@ -1871,8 +1873,8 @@ export default function FleuVibe() {
         .fv-spot-card .card-price-label{font-size:10px;color:#9ca3af;display:block;line-height:1;margin-bottom:2px}
         .fv-spot-card .card-price-val{font-size:20px;font-weight:700;color:#111827;line-height:1}
         .fv-spot-card .card-price-unit{font-size:12px;font-weight:400;color:#9ca3af}
-        .fv-spot-card .card-cta{background:#0d6e8a;color:#fff;font-size:13px;font-weight:500;padding:8px 18px;border-radius:10px;border:none;cursor:pointer;transition:background 0.15s;font-family:'DM Sans',sans-serif}
-        .fv-spot-card .card-cta:hover{background:#0a5a72}
+        .fv-spot-card .card-cta{background:linear-gradient(135deg,#1a9e6e,#0891b2);color:#fff;font-size:13px;font-weight:600;padding:9px 20px;border-radius:20px;border:none;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;box-shadow:0 4px 12px rgba(26,158,110,0.25)}
+        .fv-spot-card .card-cta:hover{background:linear-gradient(135deg,#158a5e,#0779a0);box-shadow:0 6px 16px rgba(26,158,110,0.35);transform:translateY(-1px)}
         @keyframes fv-pulse{0%,100%{opacity:1}50%{opacity:0.5}}
         .fv-skeleton{background:#e5e7eb;animation:fv-pulse 1.5s ease-in-out infinite;width:100%;height:100%}
       `}</style>
@@ -1884,7 +1886,7 @@ export default function FleuVibe() {
       </div>
 
       {/* ── HEADER ── */}
-      <header style={{ position: "sticky", top: 0, background: "#fff", boxShadow: "0 1px 0 rgba(0,0,0,0.08)", zIndex: 100, padding: "0 20px" }}>
+      <header style={{ position: "sticky", top: 0, background: "rgba(255,255,255,0.97)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", boxShadow: "0 1px 0 rgba(0,0,0,0.08)", zIndex: 100, padding: "0 20px" }}>
         <div style={{ maxWidth: "1280px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", height: "64px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
             <span style={{ fontSize: "1.4rem" }}>🌊</span>
@@ -1950,7 +1952,7 @@ export default function FleuVibe() {
                       fallbackUrl={getSpotPhoto(s)}
                     />
                     <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)" }} />
-                    {s.rating && <div style={{ position: "absolute", top: 10, left: 10, padding: "3px 8px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", borderRadius: "20px", fontSize: "0.65rem", color: "#fff", fontWeight: 600 }}>⭐ {s.rating.toFixed(1)}</div>}
+                    {s.rating && <div style={{ position: "absolute", top: 10, left: 10, padding: "3px 8px", background: "rgba(0,0,0,0.55)", backdropFilter: "blur(4px)", borderRadius: "20px", fontSize: "0.72rem", color: "#fff", fontWeight: 600 }}>⭐ {s.rating.toFixed(1)}</div>}
                     <button
                       onClick={e => { e.stopPropagation(); toggleFav(s.id); }}
                       aria-label={favorites.includes(s.id) ? "Retirer des favoris" : "Ajouter aux favoris"}
@@ -1961,8 +1963,8 @@ export default function FleuVibe() {
                   </div>
                   <div style={{ padding: "12px 14px" }}>
                     <p style={{ fontSize: "0.88rem", fontWeight: 700, color: "#1a2e28", marginBottom: "3px" }}>{s.name.split("·")[0].trim()}</p>
-                    <p style={{ fontSize: "0.68rem", color: "#7a9a8e" }}>{COUNTRIES[s.country]?.flag} {COUNTRIES[s.country]?.name} · {s.region}</p>
-                    <div style={{ display: "flex", gap: "8px", marginTop: "8px", fontSize: "0.65rem", color: "#8aa89e" }}>
+                    <p style={{ fontSize: "0.78rem", color: "#7a9a8e" }}>{COUNTRIES[s.country]?.flag} {COUNTRIES[s.country]?.name} · {s.region}</p>
+                    <div style={{ display: "flex", gap: "8px", marginTop: "8px", fontSize: "0.75rem", color: "#8aa89e" }}>
                       <span>📏 {s.distance}</span><span>⏱️ {s.duration}</span>
                     </div>
                   </div>
@@ -1974,7 +1976,7 @@ export default function FleuVibe() {
 
         {/* NAV TABS */}
         <div style={{ display: "flex", gap: "2px", marginTop: "20px", marginBottom: "24px", background: "#f0f5f3", borderRadius: "14px", padding: "4px" }}>
-          {[["explore", "Explorer"], ["map", "Carte"], ["hidden", "Pépites"], ["favorites", favorites.length > 0 ? `Favoris (${favorites.length})` : "Favoris"]].map(([id, label]) => (
+          {[["explore", "🔍 Explorer"], ["map", "🗺️ Carte"], ["hidden", "💎 Pépites"], ["favorites", favorites.length > 0 ? `❤️ Favoris (${favorites.length})` : "❤️ Favoris"]].map(([id, label]) => (
             <button key={id} onClick={() => handlePageChange(id)} style={{ flex: 1, padding: "9px 4px", borderRadius: "10px", border: "none", fontSize: "0.82rem", fontWeight: 600, background: (page === id || (page === "expeditions" && id === "explore")) ? "#fff" : "transparent", color: (page === id || (page === "expeditions" && id === "explore")) ? "#1a2e28" : "#6a8a80", boxShadow: (page === id || (page === "expeditions" && id === "explore")) ? "0 1px 4px rgba(0,0,0,0.1)" : "none", transition: "all 0.15s", cursor: "pointer", whiteSpace: "nowrap" }}>
               {label}
             </button>

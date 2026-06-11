@@ -46,7 +46,7 @@ export default function FeaturesSection() {
 
         {/* Header */}
         <div style={{ textAlign: "center", marginBottom: "60px" }}>
-          <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#1a9e6e", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>
+          <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "#1a9e6e", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "10px" }}>
             Fonctionnalités
           </p>
           <h2 id="features-heading" style={{ fontSize: "clamp(1.7rem,4vw,2.6rem)", fontWeight: 900, color: "#1a2e28", letterSpacing: "-0.8px", lineHeight: 1.15, fontFamily: "'Fraunces', Georgia, serif" }}>
@@ -67,7 +67,7 @@ export default function FeaturesSection() {
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px" }}>
                 <span style={{ fontSize: "1.9rem" }}>{icon}</span>
-                <span style={{ padding: "3px 10px", background: `${tagColor}18`, border: `1px solid ${tagColor}44`, borderRadius: "20px", fontSize: "0.62rem", fontWeight: 700, color: tagColor, letterSpacing: "0.5px" }}>
+                <span style={{ padding: "3px 10px", background: `${tagColor}18`, border: `1px solid ${tagColor}44`, borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700, color: tagColor, letterSpacing: "0.5px" }}>
                   {tag}
                 </span>
               </div>
