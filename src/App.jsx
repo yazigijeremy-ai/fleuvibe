@@ -713,7 +713,10 @@ function WeatherWidget({ coords, spotName, difficulty, small = false }) {
   const [w, setW] = useState(null);
   const [advice, setAdvice] = useState(null);
   const [loadingAdvice, setLoadingAdvice] = useState(false);
-  useEffect(() => { getWeather(coords[0], coords[1]).then(setW); }, []);
+  useEffect(() => {
+    if (!coords || !coords[0] || !coords[1] || (coords[0] === 0 && coords[1] === 0)) return;
+    getWeather(coords[0], coords[1]).then(setW);
+  }, []);
   const askAdvice = async (e) => {
     e.stopPropagation();
     if (!w) return;
@@ -721,25 +724,25 @@ function WeatherWidget({ coords, spotName, difficulty, small = false }) {
     setAdvice(await getWeatherAdvice(w, spotName || "ce spot", difficulty || "Intermédiaire"));
     setLoadingAdvice(false);
   };
-  if (!w) return <span style={{ fontSize: "0.68rem", color: "#3a6a5a" }}>🌤️ ...</span>;
-  if (small) return <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", padding: "2px 8px", background: `${w.col}15`, border: `1px solid ${w.col}30`, borderRadius: "20px", fontSize: "0.65rem", color: w.col, fontWeight: 600 }}>{w.icon} {w.temp}°C</span>;
+  if (!w) return <span style={{ fontSize: "0.75rem", color: "#9ab0a8" }}>🌤️ Météo indisponible</span>;
+  if (small) return <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", padding: "2px 8px", background: `${w.col}15`, border: `1px solid ${w.col}30`, borderRadius: "20px", fontSize: "0.75rem", color: w.col, fontWeight: 600 }}>{w.icon} {w.temp}°C</span>;
   return (
-    <div style={{ padding: "12px 14px", background: "rgba(255,255,255,0.04)", border: `1px solid ${w.col}40`, borderRadius: "14px", marginTop: "10px" }}>
+    <div style={{ padding: "12px 14px", background: "#f7faf9", border: `1px solid ${w.col}40`, borderRadius: "14px", marginTop: "10px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <span style={{ fontSize: "1.6rem" }}>{w.icon}</span>
-          <div><div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#daf0e8" }}>{w.temp}°C</div><div style={{ fontSize: "0.68rem", color: "#5a8a78", textTransform: "capitalize" }}>{w.desc}</div></div>
+          <div><div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#1a2e28" }}>{w.temp}°C</div><div style={{ fontSize: "0.78rem", color: "#6a8a80", textTransform: "capitalize" }}>{w.desc}</div></div>
         </div>
-        <div style={{ padding: "4px 10px", background: `${w.col}20`, border: `1px solid ${w.col}40`, borderRadius: "20px", fontSize: "0.68rem", fontWeight: 700, color: w.col }}>{w.s === "good" ? "✅" : w.s === "med" ? "⚠️" : "🚫"} {w.l}</div>
+        <div style={{ padding: "4px 10px", background: `${w.col}15`, border: `1px solid ${w.col}40`, borderRadius: "20px", fontSize: "0.78rem", fontWeight: 700, color: w.col }}>{w.s === "good" ? "✅" : w.s === "med" ? "⚠️" : "🚫"} {w.l}</div>
       </div>
       <div style={{ display: "flex", gap: "14px", alignItems: "center", marginBottom: advice ? "8px" : 0 }}>
-        <span style={{ fontSize: "0.68rem", color: "#4a7a6a" }}>💨 <strong style={{ color: "#8ab8b0" }}>{w.windKmh} km/h</strong></span>
-        <span style={{ fontSize: "0.68rem", color: "#4a7a6a" }}>🌧️ <strong style={{ color: "#8ab8b0" }}>{w.rain} mm/h</strong></span>
-        <button onClick={askAdvice} disabled={loadingAdvice} style={{ marginLeft: "auto", background: "none", border: "1px solid rgba(99,102,241,0.3)", padding: "2px 9px", borderRadius: "20px", color: "#a5b4fc", fontSize: "0.65rem", cursor: "pointer" }}>
+        <span style={{ fontSize: "0.78rem", color: "#6a8a80" }}>💨 <strong style={{ color: "#1a2e28" }}>{w.windKmh} km/h</strong></span>
+        <span style={{ fontSize: "0.78rem", color: "#6a8a80" }}>🌧️ <strong style={{ color: "#1a2e28" }}>{w.rain} mm/h</strong></span>
+        <button onClick={askAdvice} disabled={loadingAdvice} style={{ marginLeft: "auto", background: "none", border: "1px solid #e0ece7", padding: "3px 10px", borderRadius: "20px", color: "#6366f1", fontSize: "0.75rem", cursor: "pointer" }}>
           {loadingAdvice ? "⏳" : "🤖 Conseil IA"}
         </button>
       </div>
-      {advice && <div style={{ padding: "8px 10px", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: "10px" }}><p style={{ fontSize: "0.72rem", color: "#a5b4fc", lineHeight: 1.5 }}>🧠 {advice}</p></div>}
+      {advice && <div style={{ padding: "8px 10px", background: "#f5f3ff", border: "1px solid #e9d5ff", borderRadius: "10px" }}><p style={{ fontSize: "0.78rem", color: "#7c3aed", lineHeight: 1.5 }}>🧠 {advice}</p></div>}
     </div>
   );
 }
@@ -749,15 +752,15 @@ function LegalWarning({ country }) {
   const legal = LEGAL_INFO[country] || LEGAL_INFO.default;
   return (
     <div style={{ marginTop: "8px" }}>
-      <button onClick={e => { e.stopPropagation(); setOpen(o => !o); }} style={{ background: "none", border: "1px solid rgba(245,158,11,0.25)", padding: "3px 9px", borderRadius: "20px", color: "#fbbf24", fontSize: "0.65rem", cursor: "pointer" }}>
+      <button onClick={e => { e.stopPropagation(); setOpen(o => !o); }} style={{ background: "none", border: "1px solid rgba(245,158,11,0.4)", padding: "3px 9px", borderRadius: "20px", color: "#b45309", fontSize: "0.75rem", cursor: "pointer" }}>
         ⚖️ Réglementation {COUNTRIES[country]?.flag} {open ? "▲" : "▼"}
       </button>
       {open && (
-        <div style={{ marginTop: "6px", padding: "9px 11px", background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.18)", borderRadius: "10px" }}>
-          <p style={{ fontSize: "0.68rem", color: "#a8edcf", marginBottom: "3px" }}>📋 Licence : {legal.license}</p>
-          <p style={{ fontSize: "0.68rem", color: "#a8edcf", marginBottom: "3px" }}>🚸 Âge minimum : {legal.minAge} ans</p>
-          <p style={{ fontSize: "0.68rem", color: "#a8edcf", marginBottom: "3px" }}>🆘 Urgences : {legal.emergency}</p>
-          <p style={{ fontSize: "0.68rem", color: "#f87171" }}>⚠️ {legal.rules}</p>
+        <div style={{ marginTop: "6px", padding: "9px 11px", background: "#fffbeb", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "10px" }}>
+          <p style={{ fontSize: "0.78rem", color: "#4a3800", marginBottom: "3px" }}>📋 Licence : {legal.license}</p>
+          <p style={{ fontSize: "0.78rem", color: "#4a3800", marginBottom: "3px" }}>🚸 Âge minimum : {legal.minAge} ans</p>
+          <p style={{ fontSize: "0.78rem", color: "#4a3800", marginBottom: "3px" }}>🆘 Urgences : {legal.emergency}</p>
+          <p style={{ fontSize: "0.78rem", color: "#dc2626" }}>⚠️ {legal.rules}</p>
         </div>
       )}
     </div>
@@ -776,15 +779,15 @@ function ExpeditionPlanner({ spot }) {
     setLoading(false);
   };
   return (
-    <div style={{ marginTop: "10px", padding: "10px 12px", background: "rgba(26,158,110,0.06)", border: "1px solid rgba(26,158,110,0.18)", borderRadius: "12px" }}>
-      <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf", marginBottom: "6px" }}>⛺ Mode expédition longue durée</p>
+    <div style={{ marginTop: "10px", padding: "10px 12px", background: "#f0f9f5", border: "1px solid #d1ede3", borderRadius: "12px" }}>
+      <p style={{ fontSize: "0.78rem", fontWeight: 700, color: "#1a2e28", marginBottom: "6px" }}>⛺ Mode expédition longue durée</p>
       <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "7px" }}>
-        {["Kayak/Canoë", "Pagaie secours", "Gilet", "Trousse 1ers soins", "GPS/VHF"].map(item => <span key={item} style={{ fontSize: "0.6rem", padding: "2px 7px", background: "rgba(26,158,110,0.1)", borderRadius: "20px", color: "#7ecfb0" }}>✓ {item}</span>)}
+        {["Kayak/Canoë", "Pagaie secours", "Gilet", "Trousse 1ers soins", "GPS/VHF"].map(item => <span key={item} style={{ fontSize: "0.75rem", padding: "2px 7px", background: "#fff", border: "1px solid #d1ede3", borderRadius: "20px", color: "#1a9e6e" }}>✓ {item}</span>)}
       </div>
-      <button onClick={generate} disabled={loading} style={{ background: "none", border: "1px solid rgba(26,158,110,0.3)", padding: "4px 10px", borderRadius: "20px", color: "#a8edcf", fontSize: "0.68rem", cursor: "pointer" }}>
+      <button onClick={generate} disabled={loading} style={{ background: "none", border: "1px solid #d1ede3", padding: "4px 10px", borderRadius: "20px", color: "#1a9e6e", fontSize: "0.75rem", cursor: "pointer" }}>
         {loading ? "⏳ Génération..." : "📋 Checklist IA personnalisée"}
       </button>
-      {checklist && <p style={{ fontSize: "0.72rem", color: "#8ab8b0", marginTop: "8px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{checklist}</p>}
+      {checklist && <p style={{ fontSize: "0.78rem", color: "#4a6a5e", marginTop: "8px", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{checklist}</p>}
     </div>
   );
 }
@@ -794,24 +797,24 @@ function ProviderComparator({ routeId, onShowPortal }) {
   if (routeProviders.length < 1) return null;
   return (
     <div style={{ marginTop: "10px" }}>
-      <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf", marginBottom: "7px" }}>📊 Prestataires disponibles</p>
+      <p style={{ fontSize: "0.78rem", fontWeight: 700, color: "#1a2e28", marginBottom: "7px" }}>📊 Prestataires disponibles</p>
       <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
         {routeProviders.map(p => {
           const tier = partnershipManager.getTier(p.revenue || 0);
           const tierData = PARTNERSHIP_TIERS[tier];
           return (
-            <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "10px" }}>
+            <div key={p.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 10px", background: "#f7faf9", border: "1px solid #e0ece7", borderRadius: "10px" }}>
               <div>
                 <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-                  <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#c8e8d8" }}>{p.emoji} {p.name}</span>
-                  <span style={{ fontSize: "0.6rem", padding: "1px 6px", background: tierData.bg, border: `1px solid ${tierData.color}40`, borderRadius: "20px", color: tierData.color }}>{tierData.badge} {tierData.label}</span>
+                  <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#1a2e28" }}>{p.emoji} {p.name}</span>
+                  <span style={{ fontSize: "0.72rem", padding: "1px 6px", background: tierData.bg, border: `1px solid ${tierData.color}40`, borderRadius: "20px", color: tierData.color }}>{tierData.badge} {tierData.label}</span>
                 </div>
-                <div style={{ fontSize: "0.62rem", color: "#4a7a6a" }}>{p.inclut?.slice(0, 3).join(" · ")} {p.eco ? "· 🌿 Éco" : ""}</div>
+                <div style={{ fontSize: "0.75rem", color: "#6a8a80" }}>{p.inclut?.slice(0, 3).join(" · ")} {p.eco ? "· 🌿 Éco" : ""}</div>
               </div>
               <div style={{ textAlign: "right", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "3px" }}>
-                <div style={{ fontSize: "0.9rem", fontWeight: 800, color: "#a8edcf" }}>{p.price}{p.currency}</div>
-                <div style={{ fontSize: "0.62rem", color: "#f59e0b" }}>⭐ {p.rating} ({p.reviews})</div>
-                {onShowPortal && <button onClick={e => { e.stopPropagation(); onShowPortal(p); }} style={{ fontSize: "0.58rem", padding: "2px 7px", background: tierData.bg, border: `1px solid ${tierData.color}40`, borderRadius: "20px", color: tierData.color, cursor: "pointer" }}>🏢 Portail</button>}
+                <div style={{ fontSize: "0.9rem", fontWeight: 800, color: "#1a9e6e" }}>{p.price}{p.currency}</div>
+                <div style={{ fontSize: "0.75rem", color: "#f59e0b" }}>⭐ {p.rating} ({p.reviews})</div>
+                {onShowPortal && <button onClick={e => { e.stopPropagation(); onShowPortal(p); }} style={{ fontSize: "0.72rem", padding: "2px 7px", background: tierData.bg, border: `1px solid ${tierData.color}40`, borderRadius: "20px", color: tierData.color, cursor: "pointer" }}>🏢 Portail</button>}
               </div>
             </div>
           );
@@ -832,27 +835,27 @@ function LiveConditions({ spotId }) {
     setShowForm(false);
   };
   return (
-    <div style={{ marginTop: "10px", padding: "10px 12px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
+    <div style={{ marginTop: "10px", padding: "10px 12px", background: "#f7faf9", borderRadius: "12px", border: "1px solid #e0ece7" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "7px" }}>
-        <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf" }}>📸 Conditions en direct</p>
-        <button onClick={e => { e.stopPropagation(); setShowForm(f => !f); }} style={{ background: "rgba(26,158,110,0.15)", border: "none", padding: "3px 9px", borderRadius: "20px", color: "#a8edcf", fontSize: "0.65rem", cursor: "pointer" }}>+ Partager</button>
+        <p style={{ fontSize: "0.78rem", fontWeight: 700, color: "#1a2e28" }}>📸 Conditions en direct</p>
+        <button onClick={e => { e.stopPropagation(); setShowForm(f => !f); }} style={{ background: "#f0f9f5", border: "1px solid #d1ede3", padding: "3px 9px", borderRadius: "20px", color: "#1a9e6e", fontSize: "0.75rem", cursor: "pointer" }}>+ Partager</button>
       </div>
       {showForm && (
-        <div style={{ marginBottom: "8px", padding: "8px", background: "rgba(26,158,110,0.06)", borderRadius: "9px" }}>
-          <select value={waterLevel} onChange={e => setWaterLevel(e.target.value)} onClick={e => e.stopPropagation()} style={{ width: "100%", marginBottom: "5px", padding: "5px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "8px", color: "#e8f4f0", fontSize: "0.7rem", outline: "none" }}>
+        <div style={{ marginBottom: "8px", padding: "8px", background: "#fff", border: "1px solid #e0ece7", borderRadius: "9px" }}>
+          <select value={waterLevel} onChange={e => setWaterLevel(e.target.value)} onClick={e => e.stopPropagation()} style={{ width: "100%", marginBottom: "5px", padding: "6px", background: "#fff", border: "1px solid #e0ece7", borderRadius: "8px", color: "#1a2e28", fontSize: "0.78rem", outline: "none" }}>
             <option value="bas">💧 Niveau bas</option><option value="normal">💧 Niveau normal</option><option value="haut">🌊 Crue</option>
           </select>
-          <select value={crowd} onChange={e => setCrowd(e.target.value)} onClick={e => e.stopPropagation()} style={{ width: "100%", marginBottom: "6px", padding: "5px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(26,158,110,0.2)", borderRadius: "8px", color: "#e8f4f0", fontSize: "0.7rem", outline: "none" }}>
+          <select value={crowd} onChange={e => setCrowd(e.target.value)} onClick={e => e.stopPropagation()} style={{ width: "100%", marginBottom: "6px", padding: "6px", background: "#fff", border: "1px solid #e0ece7", borderRadius: "8px", color: "#1a2e28", fontSize: "0.78rem", outline: "none" }}>
             <option value="vide">👤 Désert</option><option value="moyenne">👥 Calme</option><option value="plein">👨‍👩‍👧‍👦 Bondé</option>
           </select>
-          <button onClick={submitReport} style={{ width: "100%", padding: "5px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "8px", color: "#fff", fontSize: "0.7rem", cursor: "pointer" }}>📤 Publier</button>
+          <button onClick={submitReport} style={{ width: "100%", padding: "6px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "8px", color: "#fff", fontSize: "0.78rem", cursor: "pointer" }}>📤 Publier</button>
         </div>
       )}
-      {reports.length === 0 ? <p style={{ fontSize: "0.65rem", color: "#3a6a5a" }}>Aucun rapport récent. Sois le premier !</p> : reports.map(r => (
-        <div key={r.id} style={{ display: "flex", gap: "10px", fontSize: "0.65rem", color: "#8ab8b0", padding: "4px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+      {reports.length === 0 ? <p style={{ fontSize: "0.75rem", color: "#9ab0a8" }}>Aucun rapport récent. Sois le premier !</p> : reports.map(r => (
+        <div key={r.id} style={{ display: "flex", gap: "10px", fontSize: "0.75rem", color: "#6a8a80", padding: "4px 0", borderBottom: "1px solid #f0f5f3" }}>
           <span>💧 {r.waterLevel === "bas" ? "Bas" : r.waterLevel === "haut" ? "Crue" : "Normal"}</span>
           <span>👥 {r.crowd === "vide" ? "Désert" : r.crowd === "plein" ? "Bondé" : "Calme"}</span>
-          <span style={{ color: "#3a6a5a", marginLeft: "auto" }}>{new Date(r.date).toLocaleTimeString("fr")}</span>
+          <span style={{ color: "#9ab0a8", marginLeft: "auto" }}>{new Date(r.date).toLocaleTimeString("fr")}</span>
         </div>
       ))}
     </div>
@@ -866,17 +869,17 @@ function SeasonalCalendar() {
   const labels = { off: "Fermé", low: "Possible", good: "Bon", ideal: "Idéal" };
   const cur = new Date().getMonth();
   return (
-    <div style={{ marginTop: "10px", padding: "9px 11px", background: "rgba(255,255,255,0.03)", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
-      <p style={{ fontSize: "0.7rem", fontWeight: 700, color: "#a8edcf", marginBottom: "7px" }}>📅 Navigabilité saisonnière</p>
+    <div style={{ marginTop: "10px", padding: "9px 11px", background: "#f7faf9", borderRadius: "12px", border: "1px solid #e0ece7" }}>
+      <p style={{ fontSize: "0.78rem", fontWeight: 700, color: "#1a2e28", marginBottom: "7px" }}>📅 Navigabilité saisonnière</p>
       <div style={{ display: "flex", gap: "3px", flexWrap: "wrap" }}>
         {months.map((m, i) => (
-          <div key={m} style={{ textAlign: "center", padding: "3px 4px", background: `${colors[statuses[i]]}20`, border: `1px solid ${colors[statuses[i]]}40`, borderRadius: "7px", minWidth: "32px", outline: i === cur ? `2px solid ${colors[statuses[i]]}` : "none" }}>
-            <div style={{ fontSize: "0.55rem", color: colors[statuses[i]], fontWeight: i === cur ? 700 : 400 }}>{m}</div>
+          <div key={m} style={{ textAlign: "center", padding: "3px 4px", background: `${colors[statuses[i]]}18`, border: `1px solid ${colors[statuses[i]]}50`, borderRadius: "7px", minWidth: "32px", outline: i === cur ? `2px solid ${colors[statuses[i]]}` : "none" }}>
+            <div style={{ fontSize: "0.75rem", color: colors[statuses[i]], fontWeight: i === cur ? 700 : 500 }}>{m}</div>
           </div>
         ))}
       </div>
       <div style={{ display: "flex", gap: "8px", marginTop: "6px" }}>
-        {Object.entries(colors).map(([k, v]) => <span key={k} style={{ fontSize: "0.58rem", color: v }}>■ {labels[k]}</span>)}
+        {Object.entries(colors).map(([k, v]) => <span key={k} style={{ fontSize: "0.75rem", color: v }}>■ {labels[k]}</span>)}
       </div>
     </div>
   );
@@ -898,10 +901,10 @@ function AIDescriptionButton({ spot, isPremium, onShowPremium }) {
         {loading ? "⏳ Génération..." : isPremium ? "🤖 Générer description IA" : "⭐ Premium — Générer avec IA"}
       </button>
       {aiDesc && (
-        <div style={{ marginTop: "10px", padding: "12px 14px", background: "linear-gradient(135deg,rgba(99,102,241,0.1),rgba(139,92,246,0.1))", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "12px" }}>
-          <div style={{ fontSize: "0.62rem", color: "#a5b4fc", fontWeight: 700, marginBottom: "5px" }}>🤖 DESCRIPTION IA</div>
-          <p style={{ fontSize: "0.84rem", color: "#c4b5fd", lineHeight: 1.65, fontStyle: "italic" }}>{aiDesc}</p>
-          <button onClick={(e) => { e.stopPropagation(); setAiDesc(null); }} style={{ marginTop: "8px", padding: "3px 10px", background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", borderRadius: "20px", color: "#a5b4fc", fontSize: "0.65rem", cursor: "pointer" }}>🔄 Régénérer</button>
+        <div style={{ marginTop: "10px", padding: "12px 14px", background: "#f5f3ff", border: "1px solid #e9d5ff", borderRadius: "12px" }}>
+          <div style={{ fontSize: "0.75rem", color: "#7c3aed", fontWeight: 700, marginBottom: "5px" }}>🤖 DESCRIPTION IA</div>
+          <p style={{ fontSize: "0.84rem", color: "#4c1d95", lineHeight: 1.65, fontStyle: "italic" }}>{aiDesc}</p>
+          <button onClick={(e) => { e.stopPropagation(); setAiDesc(null); }} style={{ marginTop: "8px", padding: "3px 10px", background: "#fff", border: "1px solid #e9d5ff", borderRadius: "20px", color: "#7c3aed", fontSize: "0.75rem", cursor: "pointer" }}>🔄 Régénérer</button>
         </div>
       )}
     </div>
@@ -1033,7 +1036,7 @@ function TranslateButton({ text, onTranslated }) {
     setLoading(false);
   };
   return (
-    <button onClick={translate} disabled={loading} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", padding: "2px 8px", borderRadius: "20px", fontSize: "0.62rem", color: "#6a9a8c", cursor: "pointer" }}>
+    <button onClick={translate} disabled={loading} style={{ background: "none", border: "1px solid #e0ece7", padding: "2px 8px", borderRadius: "20px", fontSize: "0.75rem", color: "#6a8a80", cursor: "pointer" }}>
       {loading ? "⏳" : `🌐 ${flags[lang]}`}
     </button>
   );
@@ -1586,7 +1589,6 @@ export default function FleuVibe() {
   const [showChallenges, setShowChallenges] = useState(false);
   const [showGroups, setShowGroups] = useState(false);
   const [showAffiliate, setShowAffiliate] = useState(false);
-  const [showTripFinder, setShowTripFinder] = useState(false);
   const [showConversionChat, setShowConversionChat] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [partnerPortal, setPartnerPortal] = useState(null);
@@ -1604,9 +1606,7 @@ export default function FleuVibe() {
   const [selType, setSelType] = useState("ALL");
   const [selDiff, setSelDiff] = useState("ALL");
   const [selContinent, setSelContinent] = useState("ALL");
-  const [darkMode, setDarkMode] = useState(false);
   const [theme, setTheme] = useState("ocean");
-  const [viewMode, setViewMode] = useState("comfort");
   const [groups, setGroups] = useState([]);
   const [affiliateCopied, setAffiliateCopied] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -2140,7 +2140,15 @@ export default function FleuVibe() {
               <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#b45309", marginBottom: "5px" }}>💎 Pépites Cachées</h2>
               <p style={{ color: "#4a7a6a", fontSize: "0.8rem" }}>Spots secrets partagés par la communauté. Pas dans les guides.</p>
             </div>
-            {HIDDEN_GEMS.map(gem => (
+            {!isPremium && (
+              <div style={{ padding: "24px 20px", background: "linear-gradient(135deg,#fffbeb,#fff7ed)", border: "1px solid rgba(245,158,11,0.3)", borderRadius: "20px", textAlign: "center", marginBottom: "20px" }}>
+                <div style={{ fontSize: "2.2rem", marginBottom: "10px" }}>🔒</div>
+                <h3 style={{ fontSize: "1rem", fontWeight: 700, color: "#92400e", marginBottom: "6px" }}>Contenu Premium</h3>
+                <p style={{ color: "#b45309", fontSize: "0.82rem", lineHeight: 1.6, marginBottom: "14px" }}>Les pépites cachées sont réservées aux membres Premium. Accède à des spots secrets et introuvables dans les guides.</p>
+                <button onClick={() => setShowPremium(true)} style={{ padding: "10px 24px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.85rem" }}>⭐ Passer Premium</button>
+              </div>
+            )}
+            {isPremium && HIDDEN_GEMS.map((gem) => (
               <div key={gem.id} style={{ marginBottom: "12px", background: "linear-gradient(135deg,rgba(245,158,11,0.06),rgba(255,255,255,0.02))", border: "1px solid rgba(245,158,11,0.2)", borderRadius: "18px", overflow: "hidden" }}>
                 <div style={{ height: "3px", background: "linear-gradient(90deg,#f59e0b,#ef4444,transparent)" }} />
                 <div style={{ padding: "14px 16px" }}>
@@ -2162,70 +2170,12 @@ export default function FleuVibe() {
                 </div>
               </div>
             ))}
-            <div style={{ padding: "16px", background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: "18px", textAlign: "center" }}>
-              <p style={{ color: "#92400e", fontSize: "0.8rem", marginBottom: "10px" }}>🌟 Tu connais un spot secret ? Partage-le avec la communauté !</p>
-              <button onClick={() => setShowSubmit(true)} style={{ padding: "8px 20px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.8rem" }}>💎 Ajouter une pépite</button>
-            </div>
-          </div>
-        )}
-
-        {/* MÉTÉO */}
-        {page === "weather" && (
-          <div>
-            <div style={{ textAlign: "center", marginBottom: "18px" }}>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a9e6e", marginBottom: "5px" }}>🌤️ Conditions en temps réel</h2>
-              <p style={{ color: "#6a8a80", fontSize: "0.8rem" }}>Météo actuelle + 🤖 conseils IA.</p>
-            </div>
-            {spots.slice(0, 18).map(s => (
-              <div key={s.id} style={{ marginBottom: "10px", padding: "13px 15px", background: "#fff", border: "1px solid #e8f0ed", borderRadius: "14px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "1.1rem" }}>{s.emoji}</span>
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ fontSize: "0.88rem", fontWeight: 700, color: "#1a2e28" }}>{s.name} {COUNTRIES[s.country]?.flag}</h3>
-                    <p style={{ fontSize: "0.68rem", color: "#6a8a80" }}>{s.river} · {s.region}</p>
-                  </div>
-                </div>
-                <WeatherWidget coords={s.coords} spotName={s.name} difficulty={s.difficulty} />
+            {isPremium && (
+              <div style={{ padding: "16px", background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: "18px", textAlign: "center" }}>
+                <p style={{ color: "#92400e", fontSize: "0.8rem", marginBottom: "10px" }}>🌟 Tu connais un spot secret ? Partage-le avec la communauté !</p>
+                <button onClick={() => setShowSubmit(true)} style={{ padding: "8px 20px", background: "linear-gradient(135deg,#f59e0b,#ef4444)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.8rem" }}>💎 Ajouter une pépite</button>
               </div>
-            ))}
-          </div>
-        )}
-
-        {/* DESTINATIONS */}
-        {page === "tourism" && (
-          <div>
-            <div style={{ textAlign: "center", marginBottom: "18px" }}>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#1a2e28", marginBottom: "5px" }}>🤝 Destinations Nautiques Partenaires</h2>
-              <p style={{ color: "#6a8a80", fontSize: "0.8rem" }}>Régions & clubs officiellement partenaires de FleuVibe</p>
-            </div>
-            {SPONSORED.map(r => (
-              <div key={r.id} style={{ marginBottom: "12px", background: `linear-gradient(135deg,${r.color}07,rgba(255,255,255,0.02))`, border: `1px solid ${r.color}26`, borderRadius: "18px", overflow: "hidden" }}>
-                <div style={{ height: "3px", background: `linear-gradient(90deg,${r.color},${r.color}44)` }} />
-                <div style={{ padding: "16px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
-                    <span style={{ fontSize: "1.8rem" }}>{r.flag}</span>
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "3px" }}>
-                        <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "#1a2e28" }}>{r.name}</h3>
-                        <span style={{ padding: "2px 7px", background: `${r.color}16`, border: `1px solid ${r.color}30`, borderRadius: "20px", fontSize: "0.6rem", color: r.color, fontWeight: 700 }}>⭐ {r.badge}</span>
-                      </div>
-                      <p style={{ fontSize: "0.78rem", color: "#6a8a80" }}>{r.desc}</p>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
-                    {spots.filter(s => s.sponsored === r.name).map(s => (
-                      <button key={s.id} onClick={() => { setPage("explore"); }} style={{ padding: "3px 9px", background: "#f0f5f3", border: "1px solid #d4e8e0", borderRadius: "20px", color: "#1a9e6e", fontSize: "0.7rem", fontWeight: 600 }}>{s.emoji} {s.name.split("·")[0]}</button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-            <div style={{ padding: "22px", background: "#fff", border: "1px solid #e8f0ed", borderRadius: "24px", textAlign: "center" }}>
-              <div style={{ fontSize: "1.8rem", marginBottom: "8px" }}>🌍</div>
-              <h3 style={{ fontSize: "0.97rem", fontWeight: 700, color: "#1a2e28", marginBottom: "6px" }}>Vous gérez un site ou club nautique ?</h3>
-              <p style={{ color: "#6a8a80", fontSize: "0.8rem", lineHeight: 1.6, marginBottom: "12px" }}>Mettez vos spots en avant auprès de milliers de passionnés de sports aquatiques.</p>
-              <button style={{ padding: "9px 22px", background: "linear-gradient(135deg,#1a9e6e,#0891b2)", border: "none", borderRadius: "20px", color: "#fff", fontWeight: 700, fontSize: "0.82rem" }}>📩 Nous contacter</button>
-            </div>
+            )}
           </div>
         )}
 
@@ -2292,7 +2242,6 @@ export default function FleuVibe() {
       >💬</button>
 
       {/* AI CHAT MODALS */}
-      {showTripFinder && <AIChat onClose={() => setShowTripFinder(false)} systemPrompt={TRIP_FINDER_SYSTEM} title="🧭 Trip Finder" subtitle="Trouve ton activité rivière idéale" greeting="Salut ! 🌊 Je suis ton guide FleuVibe. Tu cherches plutôt une sortie tranquille ou quelque chose qui envoie du bois ?" accentColor="rgba(26,158,110,0.3)" />}
       {showConversionChat && <AIChat onClose={() => setShowConversionChat(false)} systemPrompt={CONVERSION_SYSTEM} title="💬 On t'aide à réserver" subtitle="Des questions ? On lève tous les freins." greeting="Bonjour ! 😊 Tu hésites ou tu as une question avant de réserver ? Je suis là." accentColor="rgba(245,158,11,0.3)" />}
 
       {/* MODALS */}
