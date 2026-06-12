@@ -7,6 +7,7 @@ import { stripeManager, calcBookingPrice } from "./stripe";
 import { partnershipManager, PARTNERSHIP_TIERS } from "./partnership";
 import { PREMIUM_PLANS as PLANS_V9, DynamicPricing, LoyaltyProgram, AffiliateProgram, getRelevantAd } from "./monetization";
 import SpotImage from "./components/SpotImage";
+import FleuVibeLogo from "./components/FleuVibeLogo";
 import HeroSection from "./components/HeroSection";
 import ProofBar from "./components/ProofBar";
 import ProblemSection from "./components/ProblemSection";
@@ -1886,10 +1887,9 @@ export default function FleuVibe() {
       {/* ── HEADER ── */}
       <header style={{ position: "sticky", top: 0, background: "#fff", boxShadow: "0 1px 0 rgba(0,0,0,0.08)", zIndex: 100, padding: "0 20px" }}>
         <div style={{ maxWidth: "1280px", margin: "0 auto", display: "flex", justifyContent: "space-between", alignItems: "center", height: "64px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
-            <span style={{ fontSize: "1.4rem" }}>🌊</span>
-            <span style={{ fontSize: "1.2rem", fontWeight: 800, color: "#1a9e6e", letterSpacing: "-0.5px" }}>FleuVibe</span>
-            {!isOnline && <span style={{ width: 8, height: 8, background: "#ef4444", borderRadius: "50%", display: "inline-block", marginLeft: 4 }} title="Hors ligne" />}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+            <FleuVibeLogo size="md" />
+            {!isOnline && <span style={{ width: 8, height: 8, background: "#ef4444", borderRadius: "50%", display: "inline-block" }} title="Hors ligne" />}
           </div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
             {session && isAdmin && <button onClick={() => setShowAdmin(true)} style={{ background: "none", border: "none", color: "#6366f1", fontWeight: 600, fontSize: "0.8rem", padding: "6px 10px" }}>Admin</button>}
