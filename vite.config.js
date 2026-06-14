@@ -7,8 +7,10 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          vendor: ['react', 'react-dom'],
-          zod: ['zod'],
+          vendor:   ['react', 'react-dom', 'react-router-dom'],
+          zustand:  ['zustand'],
+          supabase: ['@supabase/supabase-js'],
+          zod:      ['zod'],
         },
       },
     },
@@ -19,5 +21,10 @@ export default defineConfig({
   server: {
     port: 3000,
     allowedHosts: ['sb-64q7sg4mnhrt.vercel.run'],
+  },
+  test: {
+    globals:     true,
+    environment: 'jsdom',
+    setupFiles:  ['./src/test/setup.js'],
   },
 })
