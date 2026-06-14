@@ -6,7 +6,7 @@ export const SpotSubmitSchema = z.object({
   type:        z.enum(['RIVER', 'LAKE', 'SEA']),
   difficulty:  z.enum(['Facile', 'Intermédiaire', 'Sportif']),
   description: z.string().max(1000).optional(),
-  coords:      z.string().regex(/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/, 'Format: lat, lon (ex: 50.185, 5.002)').or(z.literal('')),
+  coords:      z.string().regex(/^-?\d+(\.\d+)?\s*,\s*-?\d+(\.\d+)?$/, 'Format: lat, lon (ex: 50.185, 5.002)').or(z.literal('')).optional(),
   activities:  z.array(z.string()).min(1, 'Sélectionne au moins une activité'),
 });
 
@@ -23,7 +23,7 @@ export const validateSpot = (data) => {
   const result = SpotSubmitSchema.safeParse(data);
   if (result.success) return { valid: true, errors: {} };
   const errors = {};
-  result.error.errors.forEach((e) => { errors[e.path[0]] = e.message; });
+  (result.error.issues ?? result.error.errors ?? []).forEach((e) => { errors[e.path[0]] = e.message; });
   return { valid: false, errors };
 };
 
@@ -35,6 +35,6 @@ export const validateReview = (data) => {
   const result = ReviewSchema.safeParse(data);
   if (result.success) return { valid: true, errors: {} };
   const errors = {};
-  result.error.errors.forEach((e) => { errors[e.path[0]] = e.message; });
+  (result.error.issues ?? result.error.errors ?? []).forEach((e) => { errors[e.path[0]] = e.message; });
   return { valid: false, errors };
 };
