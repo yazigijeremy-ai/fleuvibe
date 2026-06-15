@@ -15,33 +15,56 @@ const ASPECT_RATIO_MAP = {
 
 function buildInput(params) {
   const dims = ASPECT_RATIO_MAP[params.aspect_ratio] || { width: 1280, height: 720 }
-  const base = {
+  const input = {
     prompt: params.prompt,
     num_frames: Math.round(params.duration * params.fps),
     fps: params.fps,
     width: dims.width,
     height: dims.height,
   }
-  if (params.negative_prompt) base.negative_prompt = params.negative_prompt
-  if (params.seed) base.seed = params.seed
-  return base
+  if (params.negative_prompt) input.negative_prompt = params.negative_prompt
+  if (params.seed) input.seed = params.seed
+  return input
 }
 
-export async function generateVideo(params) {
-  const modelId = MODELS[params.model] || MODELS['ltx-video']
-  const input = buildInput(params)
-
-  const response = await fetch('/api/generate', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: modelId, input }),
+async function apiFetch(path, options = {}) {
+  const res = await fetch(path, {
+    ...options,
+    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
   })
+  const data = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`)
+  return data
+}
 
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({ error: 'Erreur serveur' }))
-    throw new Error(err.error || `HTTP ${response.status}`)
+export async function startGeneration(params) {
+  const data = await apiFetch('/api/generate', {
+    method: 'POST',
+    body: JSON.stringify({
+      model: MODELS[params.model] || MODELS['ltx-video'],
+      input: buildInput(params),
+    }),
+  })
+  return data.id
+}
+
+export async function pollPrediction(id) {
+  return apiFetch(`/api/predict/${id}`)
+}
+
+export async function generateVideo(params, onStatus) {
+  const id = await startGeneration(params)
+  let prediction
+  do {
+    await new Promise(r => setTimeout(r, 2500))
+    prediction = await pollPrediction(id)
+    onStatus?.(prediction.status, prediction.logs)
+  } while (!['succeeded', 'failed', 'canceled'].includes(prediction.status))
+
+  if (prediction.status !== 'succeeded') {
+    throw new Error(prediction.error || 'Génération échouée')
   }
 
-  const data = await response.json()
-  return data.url
+  const output = prediction.output
+  return Array.isArray(output) ? output[0] : output
 }
