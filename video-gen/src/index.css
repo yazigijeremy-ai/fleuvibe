@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    @apply bg-surface text-white font-sans antialiased;
+    margin: 0;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-surface-1;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-surface-3 rounded-full;
+  }
+}
+
+@layer utilities {
+  .glow-accent {
+    box-shadow: 0 0 20px rgba(124, 110, 255, 0.4);
+  }
+  .glow-accent-sm {
+    box-shadow: 0 0 10px rgba(124, 110, 255, 0.25);
+  }
+}
