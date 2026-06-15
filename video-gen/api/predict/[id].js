@@ -1,5 +1,7 @@
+const PREDICTION_ID_RE = /^[a-z0-9]{20,30}$/i
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*')
+  res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*')
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
 
@@ -10,15 +12,18 @@ export default async function handler(req, res) {
   if (!key) return res.status(500).json({ error: 'REPLICATE_API_KEY manquante' })
 
   const { id } = req.query
-  if (!id) return res.status(400).json({ error: 'id manquant' })
+  if (!id || !PREDICTION_ID_RE.test(id)) {
+    return res.status(400).json({ error: 'ID de prédiction invalide' })
+  }
 
   try {
     const response = await fetch(`https://api.replicate.com/v1/predictions/${id}`, {
       headers: { Authorization: `Token ${key}` },
     })
+
     const prediction = await response.json()
     if (!response.ok) {
-      return res.status(response.status).json({ error: prediction.detail || 'Replicate error' })
+      return res.status(response.status).json({ error: prediction.detail || 'Erreur Replicate' })
     }
 
     const output = prediction.output

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Navbar from './components/Navbar'
 import GeneratorPanel from './components/GeneratorPanel'
@@ -7,13 +7,55 @@ import AuthModal from './components/AuthModal'
 import { generateVideo } from './api/replicate'
 import { supabase } from './lib/supabase'
 
+const PROGRESS_STAGES = [
+  { at: 5,  label: 'Initialisation…' },
+  { at: 20, label: 'Chargement du modèle…' },
+  { at: 45, label: 'Génération des frames…' },
+  { at: 75, label: 'Assemblage de la vidéo…' },
+  { at: 92, label: 'Finalisation…' },
+]
+
+function useProgress(isGenerating) {
+  const [percent, setPercent] = useState(0)
+  const [label, setLabel] = useState('Initialisation…')
+  const timerRef = useRef(null)
+  const stageRef = useRef(0)
+
+  useEffect(() => {
+    if (!isGenerating) {
+      setPercent(0)
+      setLabel('Initialisation…')
+      stageRef.current = 0
+      return
+    }
+
+    const advance = () => {
+      const stage = PROGRESS_STAGES[stageRef.current]
+      if (!stage) return
+      setPercent(stage.at)
+      setLabel(stage.label)
+      stageRef.current += 1
+      const nextStage = PROGRESS_STAGES[stageRef.current]
+      if (nextStage) {
+        timerRef.current = setTimeout(advance, 12000 + Math.random() * 6000)
+      }
+    }
+
+    advance()
+    return () => clearTimeout(timerRef.current)
+  }, [isGenerating])
+
+  return { percent, label }
+}
+
 function VideoApp() {
   const { user } = useAuth()
   const [videos, setVideos] = useState([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
+  const progress = useProgress(isGenerating)
 
-  // Load videos from Supabase when user logs in
+  // Load history from Supabase on login
   useEffect(() => {
     if (!user) return
     supabase
@@ -36,7 +78,6 @@ function VideoApp() {
       })
   }, [user])
 
-  // Clear local videos when user logs out
   useEffect(() => {
     if (!user) setVideos([])
   }, [user])
@@ -48,7 +89,6 @@ function VideoApp() {
   const handleGenerate = useCallback(async (params) => {
     setIsGenerating(true)
 
-    // Insert pending row in Supabase (if logged in) or use local temp ID
     let videoId
     if (user) {
       const { data, error } = await supabase.from('videos').insert({
@@ -61,7 +101,7 @@ function VideoApp() {
           duration: params.duration,
           fps: params.fps,
           quality: params.quality,
-          seed: params.seed,
+          seed: params.seed ?? null,
         },
         status: 'pending',
       }).select().single()
@@ -72,52 +112,50 @@ function VideoApp() {
       videoId = `local-${Date.now()}`
     }
 
-    const newEntry = {
-      id: videoId,
-      status: 'pending',
-      params,
-      createdAt: new Date(),
-    }
-    setVideos(prev => [newEntry, ...prev])
+    setVideos(prev => [{ id: videoId, status: 'pending', params, createdAt: new Date() }, ...prev])
 
     try {
-      const url = await generateVideo(params, (status) => {
-        updateVideo(videoId, { status: status === 'processing' ? 'pending' : status })
-      })
-
+      const url = await generateVideo(params)
       updateVideo(videoId, { status: 'done', url })
-
-      if (user) {
-        await supabase.from('videos').update({ status: 'done', url }).eq('id', videoId)
-      }
+      if (user) await supabase.from('videos').update({ status: 'done', url }).eq('id', videoId)
     } catch (err) {
       updateVideo(videoId, { status: 'error', error: err.message })
-      if (user) {
-        await supabase.from('videos').update({ status: 'error', error: err.message }).eq('id', videoId)
-      }
+      if (user) await supabase.from('videos').update({ status: 'error', error: err.message }).eq('id', videoId)
     } finally {
       setIsGenerating(false)
     }
   }, [user, updateVideo])
 
+  const handleDelete = useCallback(async (id) => {
+    if (user) await supabase.from('videos').delete().eq('id', id)
+    setVideos(prev => prev.filter(v => v.id !== id))
+  }, [user])
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar onLoginClick={() => setShowAuth(true)} />
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-10 flex flex-col gap-10">
+      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-8 sm:py-12 flex flex-col gap-10">
         {!user && (
-          <div className="flex items-center gap-3 bg-accent/10 border border-accent/20 rounded-xl px-4 py-3 text-sm text-accent/80">
-            <span>💡</span>
-            <span>Connecte-toi pour sauvegarder tes vidéos et retrouver ton historique.</span>
-            <button onClick={() => setShowAuth(true)} className="ml-auto text-accent font-semibold hover:underline whitespace-nowrap">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 bg-accent/10 border border-accent/20 rounded-xl px-4 py-3 text-sm">
+            <span className="text-accent/80 flex-1">
+              💡 Connecte-toi pour sauvegarder tes vidéos et retrouver ton historique.
+            </span>
+            <button
+              onClick={() => setShowAuth(true)}
+              className="text-accent font-semibold hover:underline whitespace-nowrap"
+            >
               Se connecter →
             </button>
           </div>
         )}
-        <GeneratorPanel onGenerate={handleGenerate} isGenerating={isGenerating} />
-        {videos.length > 0 && <Gallery videos={videos} onDelete={user ? async (id) => {
-          await supabase.from('videos').delete().eq('id', id)
-          setVideos(prev => prev.filter(v => v.id !== id))
-        } : null} />}
+        <GeneratorPanel
+          onGenerate={handleGenerate}
+          isGenerating={isGenerating}
+          progress={progress}
+        />
+        {videos.length > 0 && (
+          <Gallery videos={videos} onDelete={user ? handleDelete : null} />
+        )}
       </main>
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </div>
