@@ -1,13 +1,4 @@
 node_modules/
 dist/
-.env.local
 .env
-.env.production
-.env.*.local
-coverage/
-.DS_Store
-*.log
-backups/
-*.sql
-!supabase/**/*.sql
-.vercel/
+.env.local
