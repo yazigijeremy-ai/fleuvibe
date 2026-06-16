@@ -42,17 +42,21 @@ export default async function handler(req, res) {
   if (validationError) return res.status(400).json({ error: validationError })
 
   try {
-    const response = await fetch(`https://api.replicate.com/v1/models/${model}/predictions`, {
+    const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
-        Authorization: `Token ${key}`,
+        Authorization: `Bearer ${key}`,
         'Content-Type': 'application/json',
         Prefer: 'wait=5',
       },
-      body: JSON.stringify({ input }),
+      body: JSON.stringify({ model, input }),
     })
+
     const prediction = await response.json()
-    if (!response.ok) return res.status(response.status).json({ error: prediction.detail || 'Erreur Replicate' })
+    if (!response.ok) {
+      return res.status(response.status).json({ error: prediction.detail || 'Erreur Replicate' })
+    }
+
     res.json({ id: prediction.id, status: prediction.status, output: prediction.output })
   } catch (err) {
     res.status(500).json({ error: err.message })
