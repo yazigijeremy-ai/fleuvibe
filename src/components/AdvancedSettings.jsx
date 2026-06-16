@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { RefreshCw, ChevronDown } from 'lucide-react'
 
 const RATIOS = ['16:9', '9:16', '1:1', '4:3', '3:4', '21:9']
-const DURATIONS = [3, 5, 8, 10]
+const DURATIONS = [3, 5, 8, 10, 15, 20, 30]
 const FPS_OPTIONS = [16, 24, 30]
 const MODELS = [
   { value: 'ltx-video', label: 'LTX-Video', desc: 'Rapide, bonne qualité', badge: 'Rapide' },
@@ -60,8 +60,12 @@ export default function AdvancedSettings({ params, set }) {
         <ToggleGroup options={RATIOS} value={params.aspect_ratio} onChange={set('aspect_ratio')} />
       </Section>
       <div className="grid grid-cols-2 gap-4">
-        <Section title="Durée"><ToggleGroup options={DURATIONS} value={params.duration} onChange={set('duration')} renderLabel={d => `${d}s`} /></Section>
-        <Section title="FPS"><ToggleGroup options={FPS_OPTIONS} value={params.fps} onChange={set('fps')} /></Section>
+        <Section title="Durée">
+          <ToggleGroup options={DURATIONS} value={params.duration} onChange={set('duration')} renderLabel={d => `${d}s`} />
+        </Section>
+        <Section title="FPS">
+          <ToggleGroup options={FPS_OPTIONS} value={params.fps} onChange={set('fps')} />
+        </Section>
       </div>
       <Section title="Qualité">
         <ToggleGroup options={['standard', 'high']} value={params.quality} onChange={set('quality')} renderLabel={q => q === 'standard' ? 'Standard' : 'Haute'} />

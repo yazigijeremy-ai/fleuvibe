@@ -7,7 +7,7 @@ const ALLOWED_MODELS = new Set([
 const ALLOWED_FPS = new Set([16, 24, 30])
 const ALLOWED_DIMS = new Set([544, 720, 768, 1024, 1280])
 const MAX_PROMPT_LENGTH = 1000
-const MAX_FRAMES = 300
+const MAX_FRAMES = 900 // 30s at 30fps
 
 function validate(model, input) {
   if (!model || typeof model !== 'string') return 'Modèle manquant'
@@ -47,15 +47,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Step 1: get latest version SHA for this model
+    // Fetch latest version SHA for this model
     const modelRes = await fetch(`https://api.replicate.com/v1/models/${model}`, { headers })
     const modelData = await modelRes.json()
     const version = modelData.latest_version?.id
 
     let prediction
-
     if (version) {
-      // Step 2a: create prediction with explicit version
       const r = await fetch('https://api.replicate.com/v1/predictions', {
         method: 'POST',
         headers: { ...headers, Prefer: 'wait=5' },
@@ -64,7 +62,6 @@ export default async function handler(req, res) {
       prediction = await r.json()
       if (!r.ok) return res.status(r.status).json({ error: prediction.detail || 'Erreur Replicate' })
     } else {
-      // Step 2b: fallback — try model-based endpoint
       const r = await fetch(`https://api.replicate.com/v1/models/${model}/predictions`, {
         method: 'POST',
         headers: { ...headers, Prefer: 'wait=5' },
