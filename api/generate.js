@@ -41,20 +41,37 @@ export default async function handler(req, res) {
   const validationError = validate(model, input)
   if (validationError) return res.status(400).json({ error: validationError })
 
-  try {
-    const response = await fetch('https://api.replicate.com/v1/predictions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${key}`,
-        'Content-Type': 'application/json',
-        Prefer: 'wait=5',
-      },
-      body: JSON.stringify({ model, input }),
-    })
+  const headers = {
+    Authorization: `Token ${key}`,
+    'Content-Type': 'application/json',
+  }
 
-    const prediction = await response.json()
-    if (!response.ok) {
-      return res.status(response.status).json({ error: prediction.detail || 'Erreur Replicate' })
+  try {
+    // Step 1: get latest version SHA for this model
+    const modelRes = await fetch(`https://api.replicate.com/v1/models/${model}`, { headers })
+    const modelData = await modelRes.json()
+    const version = modelData.latest_version?.id
+
+    let prediction
+
+    if (version) {
+      // Step 2a: create prediction with explicit version
+      const r = await fetch('https://api.replicate.com/v1/predictions', {
+        method: 'POST',
+        headers: { ...headers, Prefer: 'wait=5' },
+        body: JSON.stringify({ version, input }),
+      })
+      prediction = await r.json()
+      if (!r.ok) return res.status(r.status).json({ error: prediction.detail || 'Erreur Replicate' })
+    } else {
+      // Step 2b: fallback — try model-based endpoint
+      const r = await fetch(`https://api.replicate.com/v1/models/${model}/predictions`, {
+        method: 'POST',
+        headers: { ...headers, Prefer: 'wait=5' },
+        body: JSON.stringify({ input }),
+      })
+      prediction = await r.json()
+      if (!r.ok) return res.status(r.status).json({ error: prediction.detail || 'Erreur Replicate' })
     }
 
     res.json({ id: prediction.id, status: prediction.status, output: prediction.output })
