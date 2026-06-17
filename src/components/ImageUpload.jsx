@@ -1,14 +1,47 @@
 import React, { useCallback, useState } from 'react'
-import { ImageIcon, X } from 'lucide-react'
+import { ImageIcon, X, Loader2 } from 'lucide-react'
+
+const MAX_SIDE = 896   // max dimension in pixels
+const JPEG_QUALITY = 0.82
+
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = reject
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onerror = reject
+      img.onload = () => {
+        const { width, height } = img
+        const scale = Math.min(1, MAX_SIDE / Math.max(width, height))
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.round(width * scale)
+        canvas.height = Math.round(height * scale)
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY))
+      }
+      img.src = e.target.result
+    }
+    reader.readAsDataURL(file)
+  })
+}
 
 export default function ImageUpload({ value, onChange }) {
   const [isDragging, setIsDragging] = useState(false)
+  const [isCompressing, setIsCompressing] = useState(false)
 
-  const processFile = useCallback((file) => {
+  const processFile = useCallback(async (file) => {
     if (!file || !file.type.startsWith('image/')) return
-    const reader = new FileReader()
-    reader.onload = (e) => onChange(e.target.result)
-    reader.readAsDataURL(file)
+    setIsCompressing(true)
+    try {
+      const compressed = await compressImage(file)
+      onChange(compressed)
+    } catch {
+      onChange(null)
+    } finally {
+      setIsCompressing(false)
+    }
   }, [onChange])
 
   const handleDrop = useCallback((e) => {
@@ -16,6 +49,15 @@ export default function ImageUpload({ value, onChange }) {
     setIsDragging(false)
     processFile(e.dataTransfer.files[0])
   }, [processFile])
+
+  if (isCompressing) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-2 h-40 rounded-2xl border border-white/8 bg-surface-1">
+        <Loader2 size={20} className="animate-spin text-accent" />
+        <p className="text-xs text-white/30">Compression de l'image…</p>
+      </div>
+    )
+  }
 
   if (value) {
     return (
@@ -57,7 +99,7 @@ export default function ImageUpload({ value, onChange }) {
         <p className="text-sm text-white/40">
           Glisse une image ou <span className="text-accent">clique pour choisir</span>
         </p>
-        <p className="text-xs text-white/20 mt-0.5">JPG, PNG, WebP</p>
+        <p className="text-xs text-white/20 mt-0.5">JPG, PNG, WebP — compressé automatiquement</p>
       </div>
     </label>
   )
