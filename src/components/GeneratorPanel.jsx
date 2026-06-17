@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { Wand2, ChevronDown, ChevronUp, Loader2, Shuffle, Clock, Gauge, Zap, AlertCircle } from 'lucide-react'
+import { Wand2, ChevronDown, ChevronUp, Loader2, Shuffle, Clock, Gauge, Zap, AlertCircle, Type, ImageIcon } from 'lucide-react'
 import AdvancedSettings from './AdvancedSettings'
+import ImageUpload from './ImageUpload'
 
 const EXAMPLE_PROMPTS = [
   'A majestic eagle soaring over snow-capped mountains at golden hour, cinematic 4K',
@@ -8,6 +9,13 @@ const EXAMPLE_PROMPTS = [
   'Slow motion ocean waves crashing on a volcanic black sand beach, aerial drone shot',
   'A lone astronaut walking on Mars surface, red dust storm in the distance, epic scale',
   'Cherry blossom petals falling in a Japanese garden at sunset, peaceful and serene',
+]
+
+const I2V_PROMPTS = [
+  'Gentle camera zoom in, soft breeze moving through the scene',
+  'Slow dolly forward, cinematic lighting shift, subtle motion',
+  'Pan left smoothly, golden hour light, cinematic atmosphere',
+  'Zoom out slowly revealing the full scene, epic scale',
 ]
 
 const DEFAULT_PARAMS = {
@@ -24,6 +32,8 @@ const DEFAULT_PARAMS = {
 const MAX_PROMPT = 1000
 
 export default function GeneratorPanel({ onGenerate, isGenerating, progress }) {
+  const [mode, setMode] = useState('text')
+  const [image, setImage] = useState(null)
   const [params, setParams] = useState(DEFAULT_PARAMS)
   const [showAdvanced, setShowAdvanced] = useState(false)
 
@@ -31,27 +41,85 @@ export default function GeneratorPanel({ onGenerate, isGenerating, progress }) {
   const remaining = MAX_PROMPT - params.prompt.length
   const overLimit = remaining < 0
 
+  const switchMode = (newMode) => {
+    setMode(newMode)
+    setImage(null)
+    setParams(prev => ({
+      ...prev,
+      model: newMode === 'image' ? 'wan-i2v' : 'ltx-video',
+      prompt: '',
+    }))
+  }
+
   const randomPrompt = () => {
-    const p = EXAMPLE_PROMPTS[Math.floor(Math.random() * EXAMPLE_PROMPTS.length)]
+    const list = mode === 'image' ? I2V_PROMPTS : EXAMPLE_PROMPTS
+    const p = list[Math.floor(Math.random() * list.length)]
     setParams(prev => ({ ...prev, prompt: p }))
   }
 
+  const canSubmit = mode === 'image'
+    ? (image && !isGenerating && !overLimit)
+    : (params.prompt.trim() && !isGenerating && !overLimit)
+
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!params.prompt.trim() || isGenerating || overLimit) return
-    onGenerate({ ...params, seed: params.seed ? parseInt(params.seed) : undefined })
+    if (!canSubmit) return
+    onGenerate({
+      ...params,
+      seed: params.seed ? parseInt(params.seed) : undefined,
+      image: mode === 'image' ? image : undefined,
+      mode,
+    })
   }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <div className="text-center space-y-1.5 pb-2">
         <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white via-white/90 to-white/40 bg-clip-text text-transparent leading-tight">Génère tes vidéos avec l'IA</h1>
-        <p className="text-white/40 text-sm">Décris ta vidéo et laisse l'IA faire le reste</p>
+        <p className="text-white/40 text-sm">Texte, image ou les deux — laisse l'IA faire le reste</p>
       </div>
 
+      {/* Mode switcher */}
+      <div className="flex gap-1.5 p-1 bg-surface-1 border border-white/8 rounded-xl">
+        <button
+          type="button"
+          onClick={() => switchMode('text')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            mode === 'text' ? 'bg-accent text-white shadow-sm' : 'text-white/40 hover:text-white/60'
+          }`}
+        >
+          <Type size={14} />
+          Texte → Vidéo
+        </button>
+        <button
+          type="button"
+          onClick={() => switchMode('image')}
+          className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            mode === 'image' ? 'bg-accent text-white shadow-sm' : 'text-white/40 hover:text-white/60'
+          }`}
+        >
+          <ImageIcon size={14} />
+          Image → Vidéo
+        </button>
+      </div>
+
+      {/* Image upload (i2v mode) */}
+      {mode === 'image' && (
+        <div className="space-y-2">
+          <label className="text-xs font-medium text-white/40 uppercase tracking-wider">Image source</label>
+          <ImageUpload value={image} onChange={setImage} />
+          {!image && (
+            <p className="text-xs text-white/25 text-center">L'IA animera ton image pour créer une vidéo</p>
+          )}
+        </div>
+      )}
+
+      {/* Prompt */}
       <div className={`bg-surface-1 border rounded-2xl p-4 space-y-3 transition-colors ${overLimit ? 'border-red-500/50' : 'border-white/8 focus-within:border-accent/50'}`}>
         <div className="flex items-center justify-between">
-          <label className="text-xs font-medium text-white/40 uppercase tracking-wider">Prompt</label>
+          <label className="text-xs font-medium text-white/40 uppercase tracking-wider">
+            {mode === 'image' ? 'Mouvement (optionnel)' : 'Prompt'}
+          </label>
           <button type="button" onClick={randomPrompt} className="flex items-center gap-1.5 text-xs text-white/30 hover:text-accent transition-colors">
             <Shuffle size={12} />Exemple
           </button>
@@ -59,8 +127,10 @@ export default function GeneratorPanel({ onGenerate, isGenerating, progress }) {
         <textarea
           value={params.prompt}
           onChange={e => set('prompt')(e.target.value)}
-          placeholder="Ex: A cinematic drone shot flying over a misty forest at sunrise, golden light rays piercing through the fog..."
-          rows={4}
+          placeholder={mode === 'image'
+            ? 'Ex: Gentle zoom in, soft wind, cinematic motion…'
+            : 'Ex: A cinematic drone shot flying over a misty forest at sunrise…'}
+          rows={mode === 'image' ? 2 : 4}
           className="w-full bg-transparent text-white placeholder-white/20 text-sm resize-none outline-none leading-relaxed"
         />
         <div className="flex items-center justify-between pt-1 border-t border-white/5">
@@ -86,11 +156,16 @@ export default function GeneratorPanel({ onGenerate, isGenerating, progress }) {
         {showAdvanced ? <ChevronUp size={14} className="text-white/30" /> : <ChevronDown size={14} className="text-white/30" />}
       </button>
 
-      {showAdvanced && <AdvancedSettings params={params} set={set} />}
+      {showAdvanced && <AdvancedSettings params={params} set={set} mode={mode} />}
 
-      <button type="submit" disabled={!params.prompt.trim() || isGenerating || overLimit}
+      <button type="submit" disabled={!canSubmit}
         className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-semibold text-sm transition-all bg-accent hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed glow-accent hover:glow-accent active:scale-[0.99]">
-        {isGenerating ? (<><Loader2 size={16} className="animate-spin" />{progress?.label || 'Génération en cours…'}</>) : (<><Wand2 size={16} />Générer la vidéo</>)}
+        {isGenerating
+          ? (<><Loader2 size={16} className="animate-spin" />{progress?.label || 'Génération en cours…'}</>)
+          : mode === 'image'
+            ? (<><ImageIcon size={16} />Animer l'image</>)
+            : (<><Wand2 size={16} />Générer la vidéo</>)
+        }
       </button>
 
       {isGenerating && (

@@ -2,6 +2,7 @@ const MODELS = {
   'ltx-video': 'lightricks/ltx-video',
   'cogvideox-5b': 'lucataco/cogvideox-5b',
   'wan-t2v': 'wavespeedai/wan-2.1-t2v-480p',
+  'wan-i2v': 'wavespeedai/wan-2.1-i2v-480p',
 }
 
 const ASPECT_RATIO_MAP = {
@@ -16,12 +17,13 @@ const ASPECT_RATIO_MAP = {
 function buildInput(params) {
   const dims = ASPECT_RATIO_MAP[params.aspect_ratio] || { width: 1280, height: 720 }
   const input = {
-    prompt: params.prompt,
+    prompt: params.prompt || '',
     num_frames: Math.round(params.duration * params.fps),
     fps: params.fps,
     width: dims.width,
     height: dims.height,
   }
+  if (params.image) input.image = params.image
   if (params.negative_prompt) input.negative_prompt = params.negative_prompt
   if (params.seed) input.seed = params.seed
   return input

@@ -4,10 +4,14 @@ import { RefreshCw, ChevronDown } from 'lucide-react'
 const RATIOS = ['16:9', '9:16', '1:1', '4:3', '3:4', '21:9']
 const DURATIONS = [3, 5, 8, 10, 15, 20, 30]
 const FPS_OPTIONS = [16, 24, 30]
-const MODELS = [
+const T2V_MODELS = [
   { value: 'ltx-video', label: 'LTX-Video', desc: 'Rapide, bonne qualité', badge: 'Rapide' },
   { value: 'cogvideox-5b', label: 'CogVideoX-5B', desc: 'Haute qualité, plus lent', badge: 'Qualité' },
   { value: 'wan-t2v', label: 'Wan 2.1', desc: 'Excellent mouvement', badge: 'Mouvement' },
+]
+
+const I2V_MODELS = [
+  { value: 'wan-i2v', label: 'Wan 2.1 I2V', desc: 'Anime ton image en vidéo', badge: 'I2V' },
 ]
 
 function Section({ title, children }) {
@@ -34,15 +38,16 @@ function ToggleGroup({ options, value, onChange, renderLabel }) {
   )
 }
 
-export default function AdvancedSettings({ params, set }) {
+export default function AdvancedSettings({ params, set, mode = 'text' }) {
   const [showNegative, setShowNegative] = useState(!!params.negative_prompt)
   const randomSeed = () => set('seed')(Math.floor(Math.random() * 9_999_999).toString())
+  const models = mode === 'image' ? I2V_MODELS : T2V_MODELS
 
   return (
     <div className="bg-surface-1 border border-white/8 rounded-2xl p-5 space-y-5 animate-fade-in">
       <Section title="Modèle IA">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          {MODELS.map(m => (
+          {models.map(m => (
             <button key={m.value} type="button" onClick={() => set('model')(m.value)}
               className={`p-3 rounded-xl border text-left transition-all ${
                 params.model === m.value ? 'border-accent bg-accent/10' : 'border-white/8 hover:border-white/20'

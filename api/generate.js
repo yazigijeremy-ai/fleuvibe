@@ -2,6 +2,7 @@ const ALLOWED_MODELS = new Set([
   'lightricks/ltx-video',
   'lucataco/cogvideox-5b',
   'wavespeedai/wan-2.1-t2v-480p',
+  'wavespeedai/wan-2.1-i2v-480p',
 ])
 
 const ALLOWED_FPS = new Set([16, 24, 30])
@@ -9,12 +10,22 @@ const ALLOWED_DIMS = new Set([544, 720, 768, 1024, 1280])
 const MAX_PROMPT_LENGTH = 1000
 const MAX_FRAMES = 900 // 30s at 30fps
 
+const I2V_MODELS = new Set(['wavespeedai/wan-2.1-i2v-480p'])
+const MAX_IMAGE_SIZE = 8 * 1024 * 1024 // 8MB in base64
+
 function validate(model, input) {
   if (!model || typeof model !== 'string') return 'Modèle manquant'
   if (!ALLOWED_MODELS.has(model)) return `Modèle non autorisé: ${model}`
-  if (!input?.prompt || typeof input.prompt !== 'string') return 'Prompt manquant'
-  if (input.prompt.trim().length < 3) return 'Prompt trop court (min 3 caractères)'
-  if (input.prompt.length > MAX_PROMPT_LENGTH) return `Prompt trop long (max ${MAX_PROMPT_LENGTH} caractères)`
+  const isI2V = I2V_MODELS.has(model)
+  if (isI2V) {
+    if (!input?.image || typeof input.image !== 'string') return 'Image manquante pour ce modèle'
+    if (!input.image.startsWith('data:image/') && !input.image.startsWith('https://')) return 'Format d\'image invalide'
+    if (input.image.startsWith('data:image/') && input.image.length > MAX_IMAGE_SIZE) return 'Image trop volumineuse (max 6MB)'
+  } else {
+    if (!input?.prompt || typeof input.prompt !== 'string') return 'Prompt manquant'
+    if (input.prompt.trim().length < 3) return 'Prompt trop court (min 3 caractères)'
+  }
+  if (input?.prompt && input.prompt.length > MAX_PROMPT_LENGTH) return `Prompt trop long (max ${MAX_PROMPT_LENGTH} caractères)`
   if (input.fps && !ALLOWED_FPS.has(input.fps)) return 'FPS non autorisé'
   if (input.width && !ALLOWED_DIMS.has(input.width)) return 'Largeur non autorisée'
   if (input.height && !ALLOWED_DIMS.has(input.height)) return 'Hauteur non autorisée'
