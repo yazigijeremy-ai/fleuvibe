@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Wand2, ChevronDown, ChevronUp, Loader2, Shuffle, Clock, Gauge, Zap, AlertCircle, Type, ImageIcon } from 'lucide-react'
 import AdvancedSettings from './AdvancedSettings'
 import ImageUpload from './ImageUpload'
+import { uploadImage } from '../lib/supabase'
 
 const EXAMPLE_PROMPTS = [
   'A majestic eagle soaring over snow-capped mountains at golden hour, cinematic 4K',
@@ -81,13 +82,28 @@ export default function GeneratorPanel({ onGenerate, isGenerating, progress, pre
     ? (image && !isGenerating && !overLimit)
     : (params.prompt.trim() && !isGenerating && !overLimit)
 
-  const handleSubmit = (e) => {
+  const [isUploading, setIsUploading] = useState(false)
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!canSubmit) return
+
+    let imageUrl = undefined
+    if (mode === 'image' && image) {
+      setIsUploading(true)
+      try {
+        imageUrl = image.startsWith('data:') ? await uploadImage(image) : image
+      } catch (err) {
+        setIsUploading(false)
+        return
+      }
+      setIsUploading(false)
+    }
+
     onGenerate({
       ...params,
       seed: params.seed ? parseInt(params.seed) : undefined,
-      image: mode === 'image' ? image : undefined,
+      image: imageUrl,
       mode,
     })
   }
@@ -178,13 +194,15 @@ export default function GeneratorPanel({ onGenerate, isGenerating, progress, pre
 
       {showAdvanced && <AdvancedSettings params={params} set={set} mode={mode} />}
 
-      <button type="submit" disabled={!canSubmit}
+      <button type="submit" disabled={!canSubmit || isUploading}
         className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-semibold text-sm transition-all bg-accent hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed glow-accent hover:glow-accent active:scale-[0.99]">
-        {isGenerating
-          ? (<><Loader2 size={16} className="animate-spin" />{progress?.label || 'Génération en cours…'}</>)
-          : mode === 'image'
-            ? (<><ImageIcon size={16} />Animer l'image</>)
-            : (<><Wand2 size={16} />Générer la vidéo</>)
+        {isUploading
+          ? (<><Loader2 size={16} className="animate-spin" />Upload de l'image…</>)
+          : isGenerating
+            ? (<><Loader2 size={16} className="animate-spin" />{progress?.label || 'Génération en cours…'}</>)
+            : mode === 'image'
+              ? (<><ImageIcon size={16} />Animer l'image</>)
+              : (<><Wand2 size={16} />Générer la vidéo</>)
         }
       </button>
 
