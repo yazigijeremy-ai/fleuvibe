@@ -15,6 +15,20 @@ const ASPECT_RATIO_MAP = {
 }
 
 function buildInput(params) {
+  const isI2V = params.model === 'wan-i2v'
+
+  if (isI2V) {
+    // Wan I2V : width/height/fps déduits de l'image par le modèle
+    const input = {
+      image: params.image,
+      prompt: params.prompt || '',
+      num_frames: Math.min(Math.round(params.duration * 16), 81), // wan-i2v max ~81 frames à 16fps
+    }
+    if (params.negative_prompt) input.negative_prompt = params.negative_prompt
+    if (params.seed) input.seed = params.seed
+    return input
+  }
+
   const dims = ASPECT_RATIO_MAP[params.aspect_ratio] || { width: 1280, height: 720 }
   const input = {
     prompt: params.prompt || '',
@@ -23,7 +37,6 @@ function buildInput(params) {
     width: dims.width,
     height: dims.height,
   }
-  if (params.image) input.image = params.image
   if (params.negative_prompt) input.negative_prompt = params.negative_prompt
   if (params.seed) input.seed = params.seed
   return input

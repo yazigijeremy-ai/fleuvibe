@@ -26,9 +26,12 @@ function validate(model, input) {
     if (input.prompt.trim().length < 3) return 'Prompt trop court (min 3 caractères)'
   }
   if (input?.prompt && input.prompt.length > MAX_PROMPT_LENGTH) return `Prompt trop long (max ${MAX_PROMPT_LENGTH} caractères)`
-  if (input.fps && !ALLOWED_FPS.has(input.fps)) return 'FPS non autorisé'
-  if (input.width && !ALLOWED_DIMS.has(input.width)) return 'Largeur non autorisée'
-  if (input.height && !ALLOWED_DIMS.has(input.height)) return 'Hauteur non autorisée'
+  // i2v models don't send fps/width/height — skip those validations
+  if (!isI2V) {
+    if (input.fps && !ALLOWED_FPS.has(input.fps)) return 'FPS non autorisé'
+    if (input.width && !ALLOWED_DIMS.has(input.width)) return 'Largeur non autorisée'
+    if (input.height && !ALLOWED_DIMS.has(input.height)) return 'Hauteur non autorisée'
+  }
   if (input.num_frames && (input.num_frames < 1 || input.num_frames > MAX_FRAMES)) return `Nombre de frames invalide (max ${MAX_FRAMES})`
   if (input.seed !== undefined && input.seed !== null) {
     const seed = Number(input.seed)
