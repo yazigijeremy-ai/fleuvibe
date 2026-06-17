@@ -40,6 +40,25 @@ function validate(model, input) {
   return null
 }
 
+async function uploadImageToReplicate(dataUri, key) {
+  const [meta, base64] = dataUri.split(',')
+  const mimeType = meta.match(/:(.*?);/)?.[1] || 'image/jpeg'
+  const buffer = Buffer.from(base64, 'base64')
+
+  const r = await fetch('https://api.replicate.com/v1/files', {
+    method: 'POST',
+    headers: {
+      Authorization: `Token ${key}`,
+      'Content-Type': mimeType,
+      'Content-Length': String(buffer.length),
+    },
+    body: buffer,
+  })
+  const data = await r.json()
+  if (!r.ok) throw new Error(data.detail || 'Échec upload image vers Replicate')
+  return data.urls?.get || data.url
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGIN || '*')
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
@@ -61,6 +80,11 @@ export default async function handler(req, res) {
   }
 
   try {
+    // Upload image to Replicate CDN if data URI (i2v mode)
+    if (input.image?.startsWith('data:image/')) {
+      input.image = await uploadImageToReplicate(input.image, key)
+    }
+
     // Fetch latest version SHA for this model
     const modelRes = await fetch(`https://api.replicate.com/v1/models/${model}`, { headers })
     const modelData = await modelRes.json()
