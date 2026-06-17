@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import GeneratorPanel from './components/GeneratorPanel'
 import Gallery from './components/Gallery'
 import AuthModal from './components/AuthModal'
+import { ToastProvider, useToast } from './components/Toast'
 import { generateVideo } from './api/replicate'
 import { supabase } from './lib/supabase'
 
@@ -44,11 +45,22 @@ function useProgress(isGenerating) {
   return { percent, label }
 }
 
+function friendlyError(msg = '') {
+  if (msg.includes('insufficient credit')) return 'Crédits Replicate insuffisants — ajoute des crédits sur replicate.com/account/billing'
+  if (msg.includes('timeout') || msg.includes('timed out') || msg.includes('Timeout')) return 'La génération a pris trop de temps. Essaie avec une durée plus courte.'
+  if (msg.includes('NSFW') || msg.includes('safety')) return 'Contenu non autorisé détecté. Modifie ton prompt.'
+  if (msg.includes('version')) return 'Version du modèle introuvable. Réessaie dans quelques instants.'
+  if (msg.includes('503') || msg.includes('502')) return 'Replicate est momentanément indisponible. Réessaie dans 1 minute.'
+  return msg || 'Erreur inconnue lors de la génération.'
+}
+
 function VideoApp() {
   const { user } = useAuth()
+  const toast = useToast()
   const [videos, setVideos] = useState([])
   const [isGenerating, setIsGenerating] = useState(false)
   const [showAuth, setShowAuth] = useState(false)
+  const [prefill, setPrefill] = useState(null)
   const progress = useProgress(isGenerating)
 
   useEffect(() => {
@@ -85,7 +97,7 @@ function VideoApp() {
     if (user) {
       const { data, error } = await supabase.from('videos').insert({
         user_id: user.id,
-        prompt: params.prompt,
+        prompt: params.prompt || null,
         negative_prompt: params.negative_prompt || null,
         model: params.model,
         params: {
@@ -94,6 +106,7 @@ function VideoApp() {
           fps: params.fps,
           quality: params.quality,
           seed: params.seed ?? null,
+          image: params.image ? '[image]' : null,
         },
         status: 'pending',
       }).select().single()
@@ -107,18 +120,30 @@ function VideoApp() {
       const url = await generateVideo(params)
       updateVideo(videoId, { status: 'done', url })
       if (user) await supabase.from('videos').update({ status: 'done', url }).eq('id', videoId)
+      toast.success('Vidéo générée !', 'Ta vidéo est prête dans la galerie ci-dessous.')
     } catch (err) {
-      updateVideo(videoId, { status: 'error', error: err.message })
-      if (user) await supabase.from('videos').update({ status: 'error', error: err.message }).eq('id', videoId)
+      const msg = friendlyError(err.message)
+      updateVideo(videoId, { status: 'error', error: msg })
+      if (user) await supabase.from('videos').update({ status: 'error', error: msg }).eq('id', videoId)
+      toast.error('Erreur de génération', msg)
     } finally {
       setIsGenerating(false)
     }
-  }, [user, updateVideo])
+  }, [user, updateVideo, toast])
 
   const handleDelete = useCallback(async (id) => {
     if (user) await supabase.from('videos').delete().eq('id', id)
     setVideos(prev => prev.filter(v => v.id !== id))
   }, [user])
+
+  const handleRetry = useCallback((params) => {
+    handleGenerate(params)
+  }, [handleGenerate])
+
+  const handleReuse = useCallback((params) => {
+    setPrefill({ ...params, _ts: Date.now() })
+    toast.success('Paramètres chargés', 'Le formulaire a été remis à jour.')
+  }, [toast])
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -130,8 +155,19 @@ function VideoApp() {
             <button onClick={() => setShowAuth(true)} className="text-accent font-semibold hover:underline whitespace-nowrap">Se connecter →</button>
           </div>
         )}
-        <GeneratorPanel onGenerate={handleGenerate} isGenerating={isGenerating} progress={progress} />
-        {videos.length > 0 && <Gallery videos={videos} onDelete={user ? handleDelete : null} />}
+        <GeneratorPanel
+          onGenerate={handleGenerate}
+          isGenerating={isGenerating}
+          progress={progress}
+          prefill={prefill}
+        />
+        <Gallery
+          videos={videos}
+          onDelete={user ? handleDelete : null}
+          onRetry={handleRetry}
+          onReuse={handleReuse}
+          isAnon={!user}
+        />
       </main>
       {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </div>
@@ -141,7 +177,9 @@ function VideoApp() {
 export default function App() {
   return (
     <AuthProvider>
-      <VideoApp />
+      <ToastProvider>
+        <VideoApp />
+      </ToastProvider>
     </AuthProvider>
   )
 }

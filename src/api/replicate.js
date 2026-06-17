@@ -54,11 +54,15 @@ export async function pollPrediction(id) {
   return apiFetch(`/api/predict/${id}`)
 }
 
+const MAX_POLL_MS = 5 * 60 * 1000 // 5 minutes max
+
 export async function generateVideo(params, onStatus) {
   const id = await startGeneration(params)
+  const deadline = Date.now() + MAX_POLL_MS
   let prediction
   do {
     await new Promise(r => setTimeout(r, 2500))
+    if (Date.now() > deadline) throw new Error('Timeout — la génération dépasse 5 minutes. Essaie une durée plus courte.')
     prediction = await pollPrediction(id)
     onStatus?.(prediction.status, prediction.logs)
   } while (!['succeeded', 'failed', 'canceled'].includes(prediction.status))

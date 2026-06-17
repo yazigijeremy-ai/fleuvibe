@@ -31,11 +31,31 @@ const DEFAULT_PARAMS = {
 
 const MAX_PROMPT = 1000
 
-export default function GeneratorPanel({ onGenerate, isGenerating, progress }) {
+export default function GeneratorPanel({ onGenerate, isGenerating, progress, prefill }) {
   const [mode, setMode] = useState('text')
   const [image, setImage] = useState(null)
   const [params, setParams] = useState(DEFAULT_PARAMS)
   const [showAdvanced, setShowAdvanced] = useState(false)
+
+  // Pré-remplir le formulaire quand l'utilisateur clique "Réutiliser"
+  React.useEffect(() => {
+    if (!prefill) return
+    const isI2V = prefill.model === 'wan-i2v'
+    setMode(isI2V ? 'image' : 'text')
+    setImage(isI2V ? (prefill.image || null) : null)
+    setParams({
+      prompt: prefill.prompt || '',
+      negative_prompt: prefill.negative_prompt || '',
+      duration: prefill.duration || 5,
+      aspect_ratio: prefill.aspect_ratio || '16:9',
+      fps: prefill.fps || 24,
+      quality: prefill.quality || 'standard',
+      seed: prefill.seed ? String(prefill.seed) : '',
+      model: prefill.model || 'ltx-video',
+    })
+    setShowAdvanced(true)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [prefill])
 
   const set = (key) => (val) => setParams(p => ({ ...p, [key]: val }))
   const remaining = MAX_PROMPT - params.prompt.length
